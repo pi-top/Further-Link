@@ -4,7 +4,7 @@ import os
 
 import shutil
 
-from diglett import app
+from settings import PITOP_CONF
 
 
 class Singleton(object):
@@ -53,7 +53,7 @@ os.path.supports_unicode_filenames  #设置是否支持unicode路径名
 class FileTool(Singleton):
     def __init__(self):
         self.cf = configparser.ConfigParser()
-        self.cf.read(app.config['PITOP_CONF'])
+        self.cf.read(PITOP_CONF)
 
     def create_file(self, path):
         """
@@ -149,7 +149,7 @@ class FileTool(Singleton):
                             list.append({"oldPath": old_file.replace(root_path, ""),
                                          "newPath": new_file.replace(root_path, "")})
         else:
-            shutil.move(old_path, new_path)
+            shutil.move(old_file_path, new_file_path)
             list.append({"oldPath": old_path, "newPath": new_path})
 
         return list

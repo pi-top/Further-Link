@@ -2,6 +2,7 @@
 import os
 
 from flask import Blueprint, request, json
+from flask_restplus import Api
 
 from diglett import logger
 from diglett.base.beanret import BeanRet
@@ -23,8 +24,9 @@ stop it.
 7.delete file and folder ,if there some files and sub folders delete all of them
 """
 
-pitop = Blueprint('process', __name__)
+pitop = Blueprint('process', __name__, url_prefix="/process")
 ws = Blueprint('ws_process', __name__)
+Api(pitop, prefix="/v1", title="process", description="the process api service")
 
 
 @ws.route('/process/ws')
