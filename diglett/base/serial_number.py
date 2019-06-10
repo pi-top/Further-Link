@@ -7,7 +7,7 @@ import configparser
 
 from ptcommon.i2c_device import I2CDevice
 
-from support import app
+from diglett import app
 
 
 class SerialNumber:

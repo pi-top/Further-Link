@@ -5,11 +5,10 @@ PUT 启动后的状态反馈与记录
 """
 import os
 
-from support.service.basesv import BaseSV
+from diglett.service.basesv import BaseSV
 
 
 class BatterySV(BaseSV):
-
     def battery(self):
         '''
         监测电池状态

@@ -4,7 +4,7 @@ import os
 
 import shutil
 
-from support import app
+from diglett import app
 
 
 class Singleton(object):

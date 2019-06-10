@@ -5,10 +5,10 @@
 
 from flask import Blueprint, render_template
 
-from support import logger
-from support.base.beanret import BeanRet
-from support.base.cachedata import CacheData
-from support.base.tools.cachedataclient import CacheDataClient
+from diglett import logger
+from diglett.base.beanret import BeanRet
+from diglett.base.cachedata import CacheData
+from diglett.base.tools.cachedataclient import CacheDataClient
 
 pitop = Blueprint('beatheart', __name__)
 

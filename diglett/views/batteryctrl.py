@@ -5,12 +5,11 @@
 
 from flask import Blueprint
 
-from support import logger
-from support.base.beanret import BeanRet
-from support.service.batterysv import BatterySV
+from diglett import logger
+from diglett.base.beanret import BeanRet
+from diglett.service.batterysv import BatterySV
 
 pitop = Blueprint('battery', __name__)
-
 
 ws = Blueprint('wsbattery', __name__)
 
@@ -26,6 +25,7 @@ def wsKeyboard(socket):
         message = socket.receive()
         if not message:
             logger.info(str(message))
+
 
 @pitop.route('/battery.shtml')
 def battery():

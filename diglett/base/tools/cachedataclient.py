@@ -1,6 +1,6 @@
 # coding=utf-8
-from support import app
-from support.base.cachedata import CacheData
+from diglett import app
+from diglett.base.cachedata import CacheData
 
 """
 缓存数据工具

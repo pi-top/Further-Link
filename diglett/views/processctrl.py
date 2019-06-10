@@ -3,11 +3,11 @@ import os
 
 from flask import Blueprint, request, json
 
-from support import logger
-from support.base.beanret import BeanRet
-from support.base.file_tool import FileTool
-from support.entity.tree_vo import TreeVO
-from support.views.process_thread import Process
+from diglett import logger
+from diglett.base.beanret import BeanRet
+from diglett.base.file_tool import FileTool
+from diglett.entity.tree_vo import TreeVO
+from diglett.views.process_thread import Process
 
 """
 this is main process of python file exec on OS,

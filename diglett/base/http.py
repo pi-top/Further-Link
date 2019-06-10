@@ -1,7 +1,7 @@
 from urllib import request, parse
 
-from support import logger
-from support.base.beanret import BeanRet
+from diglett import logger
+from diglett.base.beanret import BeanRet
 
 
 def http(url, data, method="GET"):

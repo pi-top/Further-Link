@@ -3,8 +3,8 @@ from flask import Flask
 from flask_sockets import Sockets
 from flask_cors import CORS
 
-from support.base.log4py import logger
-from support.base.tools.regexConverter import RegexConverter
+from diglett.base.log4py import logger
+from diglett.base.tools.regexConverter import RegexConverter
 
 app = Flask(__name__)
 sockets = Sockets(app)
@@ -18,7 +18,7 @@ app.url_map.converters['regex'] = RegexConverter
 logger.info("配置文件路径 ====> " + app.config["PITOP_CONF"])
 logger.info("缓存文件路径 ====> " + app.config["CACHEDATA_JSON"])
 
-from support.views import beatheartctrl, batteryctrl, osoptctrl, processctrl
+from diglett.views import beatheartctrl, batteryctrl, osoptctrl, processctrl
 
 # http
 app.register_blueprint(processctrl.pitop)

@@ -1,12 +1,10 @@
-#!/usr/bin/env python
 # coding=utf-8
 import os
 
-from support import logger
+from diglett import logger
 
 
 class OSInfoSV(object):
-
     def getIp(self):
         '''
         get eth0 ip

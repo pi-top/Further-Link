@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding=utf-8
 import linecache
 import os
@@ -7,8 +6,8 @@ import time
 
 from flask import Blueprint
 
-from support import logger
-from support.base.beanret import BeanRet
+from diglett import logger
+from diglett.base.beanret import BeanRet
 
 pitop = Blueprint('osopt', __name__)
 

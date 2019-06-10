@@ -1,12 +1,12 @@
 # coding=utf-8
 import os
 
-from support import logger
-from support.base.cachedata import CacheData
-from support.base.http import post, get
-from support.base.serial_number import SerialNumber
-from support.base.tools.cachedataclient import CacheDataClient
-from support.service.basesv import BaseSV
+from diglett import logger
+from diglett.base.cachedata import CacheData
+from diglett.base.http import post, get
+from diglett.base.serial_number import SerialNumber
+from diglett.base.tools.cachedataclient import CacheDataClient
+from diglett.service.basesv import BaseSV
 
 
 class SignInServerSV(BaseSV):

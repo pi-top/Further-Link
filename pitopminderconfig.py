@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding=utf-8
 """
 配置上下文 文件

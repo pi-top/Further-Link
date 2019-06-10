@@ -6,7 +6,6 @@ from ptoled import PTOLEDDisplay
 
 
 class Token(object):
-
     def display(self, token=None):
         '''
         传入token将自动显示token到小显示器上
