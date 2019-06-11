@@ -35,7 +35,7 @@ class SignInServerSV(BaseSV):
 
         # 缓存注册数据
         if beanRet.success:
-            data = beanRet.getData
+            data = beanRet.data
             code = data['code']
             token = data['token']
             nat_port = data['natTraversePort']
