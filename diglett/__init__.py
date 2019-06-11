@@ -7,6 +7,7 @@ from diglett.base.log4py import logger
 from diglett.base.tools.regexConverter import RegexConverter
 from diglett.rest import api, api_blueprint
 from diglett.rest.endpoints.battery import ns_pitop
+from diglett.rest.endpoints.codefile import ns_file
 from diglett.rest.endpoints.process import ns_process
 
 app = Flask(__name__)
@@ -25,6 +26,7 @@ logger.info("缓存文件路径 ====> " + app.config["CACHEDATA_JSON"])
 from diglett.views import beatheartctrl, batteryctrl, osoptctrl, processctrl
 
 api.add_namespace(ns_pitop)
+api.add_namespace(ns_file)
 api.add_namespace(ns_process)
 
 app.register_blueprint(blueprint=api_blueprint)

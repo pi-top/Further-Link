@@ -1,9 +1,9 @@
 # coding=utf-8
-import os
 import logging
+import os
 
 from flask import Blueprint, request, json
-from flask_restplus import Api, Namespace, Resource, reqparse, fields
+from flask_restplus import Namespace, Resource
 
 from diglett import logger
 from diglett.base.beanret import BeanRet
@@ -101,95 +101,9 @@ class InitProject(Resource):
         return tree_vo
 
 
-@ns_process.route("/rename/")
-@ns_process.param('oldPath', 'The path like  /xx/xx/xx.py')
-@ns_process.param('newPath', 'The path like  /xx/xx/xx.py')
-class Rename(Resource):
-    def put(self):
-        """
-        rename the old path to the new path,if it is a file just rename the file name,
-        but if it is a folder and has some sub folders, it will iterate all of them and
-        move them to the folder
-        :return:
-        """
-        old_path = request.args.get("oldPath")
-        new_path = request.args.get("newPath")
-        if not old_path or not new_path:
-            return BeanRet(success=False)
-        file_tool = FileTool()
-        root_path = file_tool.workspace()
-        list = file_tool.rename(root_path, old_path, new_path)
-        return BeanRet(True, data=list).toJson()
-
-
-@ns_process.route("/file/")
-class CodeFile(Resource):
-    def put(self):
-        """
-        write the content to the file
-        :return:
-        """
-        path = request.args.get("path")
-        content = request.args.get("content")
-        if not path or not content:
-            return BeanRet(success=False).toJson()
-
-        file_tool = FileTool()
-        file_path = file_tool.workspace(path)
-        file_tool.write(file_path, content)
-        return BeanRet(success=True).toJson()
-
-    @ns_process.doc(parser=parser)
-    def get(self):
-        """
-        read python file content
-        :return:  content
-        """
-        path = parser.parse_args()['path']
-        if not path:
-            return BeanRet(success=False).toJson()
-
-        file_tool = FileTool()
-        file_path = file_tool.workspace(path)
-        content = file_tool.read(file_path)
-
-        if content:
-            return BeanRet(success=True, data={"content": content}).toJson()
-        else:
-            return BeanRet(success=False).toJson()
-
-    @ns_process.doc(parser=parser)
-    def delete(self):
-        """
-        remove file
-        :return: True
-        """
-
-        path = parser.parse_args()['path']
-        if not path:
-            return BeanRet(success=False).toJson()
-
-        file_tool = FileTool()
-        file_path = file_tool.workspace(path)
-        file_tool.remove(file_path)
-        return BeanRet(success=True, data=path).toJson()
-
-    def post(self):
-        """
-        create a python file
-        :return: BeanRet
-        """
-        path = request.form.get("path")
-        content = request.form.get("content")
-        file_tool = FileTool()
-        file_tool.careate_file(path)
-
-        return BeanRet(success=True).toJson()
-
-
 @ns_process.route("/exec/start/")
+@ns_process.param('path', 'The path like  /xx/xx/xx.py')
 class ExecStart(Resource):
-    @ns_process.doc(parser=parser)
     def get(self):
         """
         exec a python file
@@ -197,8 +111,7 @@ class ExecStart(Resource):
         2.exec the file
         :return: BeanRet
         """
-        args = parser.parse_args()
-        path = args['path']
+        path = request.args.get("path")
         file_tool = FileTool()
         pyfile = file_tool.workspace(path)
         # 1.check the file exist
