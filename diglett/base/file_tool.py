@@ -83,7 +83,7 @@ class FileTool(Singleton):
 
             return True
         else:
-            raise FileNotFoundError("check the file path,the file not exists!")
+            return False
 
     def exists(self, file_path):
         """

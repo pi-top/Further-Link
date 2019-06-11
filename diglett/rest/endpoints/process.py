@@ -9,7 +9,8 @@ from diglett import logger
 from diglett.base.beanret import BeanRet
 from diglett.base.file_tool import FileTool
 from diglett.entity.tree_vo import TreeVO
-from diglett.views.process_thread import Process
+from diglett.rest.endpoints.process_thread import Process
+from diglett.rest.endpoints.serializers import code_vo
 
 """
 this is main process of python file exec on OS,
@@ -31,9 +32,6 @@ ws = Blueprint('ws_process', __name__)
 log = logging.getLogger(__name__)
 ns_process = Namespace(name='process', description='Describes the operations related with the teams')
 
-parser = ns_process.parser()
-parser.add_argument('path', type=str, required=True, help='The path like  /xx/xx/xx.py', location='args')
-
 
 @ws.route('/process/ws')
 def process(socket):
@@ -47,9 +45,9 @@ def process(socket):
 
 @ns_process.route("/init/")
 class InitProject(Resource):
+    @ns_process.expect([code_vo])
     def post(self):
-        data = request.get_data()
-        codes = json.loads(data)
+        codes = request.json
         file_tool = FileTool()
         workspace = file_tool.workspace()
         scan_workspace = None
@@ -63,11 +61,11 @@ class InitProject(Resource):
 
         tree_vo = TreeVO()
         tree_vo.file_path = scan_workspace
-        tree_vo_result = self.list_file(tree_vo.__dict__, workspace, codes)
+        tree_vo_result = self.__list_file(tree_vo.__dict__, workspace, codes)
         print(json.dumps(tree_vo_result["children"]))
-        return BeanRet(success=True, data=tree_vo_result["children"]).toJson()
+        return BeanRet(success=True, data=tree_vo_result["children"]).to_json()
 
-    def list_file(self, tree_vo, workspace, codes):
+    def __list_file(self, tree_vo, workspace, codes):
         """
         scan files and build a tree data for frontend file tree
         :param tree_vo:
@@ -95,7 +93,7 @@ class InitProject(Resource):
                 tree_vo_tmp.is_leaf = True
                 list.append(tree_vo_tmp.__dict__)
             elif os.path.isdir(tree_vo_tmp.file_path):
-                list.append(self.list_file(tree_vo_tmp.__dict__, workspace, codes))
+                list.append(self.__list_file(tree_vo_tmp.__dict__, workspace, codes))
 
         tree_vo["children"] = list
         return tree_vo
@@ -122,7 +120,7 @@ class ExecStart(Resource):
             process_thread = Process(cmd, process_ws)
             process_thread.start()
 
-        return BeanRet(success=True).toJson()
+        return BeanRet(success=True).to_json()
 
 
 @ns_process.route("/exec/stop/")
@@ -134,4 +132,4 @@ class ExecStop(Resource):
         """
         if process_thread and process_thread.is_alive():
             process_thread.stop()
-        return BeanRet(success=True).toJson()
+        return BeanRet(success=True).to_json()

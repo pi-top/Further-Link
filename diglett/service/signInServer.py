@@ -31,7 +31,7 @@ class SignInServerSV(BaseSV):
         logger.info(data)
 
         beanRet = post(url, data)
-        logger.info(beanRet.toJson())
+        logger.info(beanRet.to_json())
 
         # 缓存注册数据
         if beanRet.success:
@@ -44,7 +44,7 @@ class SignInServerSV(BaseSV):
             device_name = data['codeName']
             cache_data = CacheData(str(code), str(token), str(nat_port), str(server_addr), str(server_port),
                                    str(device_name))
-            CacheDataClient().write(cache_data.toJson())
+            CacheDataClient().write(cache_data.to_json())
             return True, token
         else:
             return False, None
@@ -58,7 +58,7 @@ class SignInServerSV(BaseSV):
         '''
         try:
             # 1.生成内网穿透的配置文件
-            cache_data = CacheData().toObj(CacheDataClient().read())
+            cache_data = CacheData().to_obj(CacheDataClient().read())
             file_temp = open(frp_ini, 'r')
             result = file_temp.read()
             logger.info(result)
@@ -85,7 +85,7 @@ class SignInServerSV(BaseSV):
         :return:
         '''
         try:
-            cache_data = CacheData().toObj(CacheDataClient().read())
+            cache_data = CacheData().to_obj(CacheDataClient().read())
             url = self.pingUri.replace("{device_name}", cache_data.getDeviceName)
             beanRet = get(url)
             if beanRet.success:
@@ -102,7 +102,7 @@ class SignInServerSV(BaseSV):
         :return:
         '''
         try:
-            cache_data = CacheData().toObj(CacheDataClient().read())
+            cache_data = CacheData().to_obj(CacheDataClient().read())
             domain = self.pingUri.replace("{device_name}", cache_data.getDeviceName)
             url = self.notifyUri.replace("{code}", cache_data.getCode).replace("{domain}", domain)
             logger.info(url)

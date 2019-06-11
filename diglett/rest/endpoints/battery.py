@@ -1,19 +1,22 @@
 # coding=utf-8
 import logging
 
-from flask_restplus import Namespace, Resource, fields
+from flask_restplus import Namespace, Resource
 
 from diglett.base.beanret import BeanRet
+from diglett.service.batterysv import BatterySV
 
 log = logging.getLogger(__name__)
 
-ns_pitop = Namespace(name='battery', description='Describes the operations related with the teams')
+ns_battery = Namespace(name='battery', description='check battery status and capacity')
 
-@ns_pitop.route('/')
+
+@ns_battery.route('/')
 class Battery(Resource):
     def get(self):
         '''
-        ping 心跳检测
+        battery check
         :return: BeanRet
         '''
-        return BeanRet(success=True, data={"capacity": 100, "state": "Full"}).toJson()
+        batteryCapacity, state = BatterySV().battery()
+        return BeanRet(success=True, data={"capacity": batteryCapacity, "state": state}).to_json()

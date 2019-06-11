@@ -2,7 +2,7 @@
 import logging
 
 from flask import request
-from flask_restplus import Namespace, Resource, fields
+from flask_restplus import Namespace, Resource
 
 from diglett.base.beanret import BeanRet
 from diglett.base.file_tool import FileTool
@@ -43,7 +43,7 @@ class Rename(Resource):
         file_tool = FileTool()
         root_path = file_tool.workspace()
         list = file_tool.rename(root_path, old_path, new_path)
-        return BeanRet(True, data=list).toJson()
+        return BeanRet(True, data=list).to_json()
 
 
 @ns_file.route("/")
@@ -58,12 +58,12 @@ class CodeFile(Resource):
         path = request.args.get("path")
         content = request.args.get('content')
         if not path or not content:
-            return BeanRet(success=False).toJson()
+            return BeanRet(success=False).to_json()
 
         file_tool = FileTool()
         file_path = file_tool.workspace(path)
         file_tool.write(file_path, content)
-        return BeanRet(success=True).toJson()
+        return BeanRet(success=True).to_json()
 
     def get(self):
         """
@@ -72,16 +72,16 @@ class CodeFile(Resource):
         """
         path = request.args.get("path")
         if not path:
-            return BeanRet(success=False).toJson()
+            return BeanRet(success=False).to_json()
 
         file_tool = FileTool()
         file_path = file_tool.workspace(path)
         content = file_tool.read(file_path)
 
         if content:
-            return BeanRet(success=True, data={"content": content}).toJson()
+            return BeanRet(success=True, data={"content": content}).to_json()
         else:
-            return BeanRet(success=False).toJson()
+            return BeanRet(success=False).to_json()
 
     def delete(self):
         """
@@ -90,9 +90,9 @@ class CodeFile(Resource):
         """
         path = request.args.get("path")
         if not path:
-            return BeanRet(success=False).toJson()
+            return BeanRet(success=False).to_json()
 
         file_tool = FileTool()
         file_path = file_tool.workspace(path)
         file_tool.remove(file_path)
-        return BeanRet(success=True, data=path).toJson()
+        return BeanRet(success=True, data=path).to_json()

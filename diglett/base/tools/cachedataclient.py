@@ -35,7 +35,7 @@ class CacheDataClient(object):
         :param cacheDataObj: CacheData的对象
         :return:
         '''
-        cacheData = CacheData().toObj(self.read())
+        cacheData = CacheData().to_obj(self.read())
         if cacheDataObj.getJobnumber:
             cacheData.setJobnumber(cacheDataObj.getJobnumber)
         if cacheDataObj.getSN:
@@ -44,7 +44,7 @@ class CacheDataClient(object):
             cacheData.setSN(cacheDataObj.getSampleCode)
 
         file = open(self.cachePath, 'w')
-        file.write(cacheData.toJson())
+        file.write(cacheData.to_json())
         file.flush()
 
 

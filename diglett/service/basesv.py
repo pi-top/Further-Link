@@ -1,13 +1,13 @@
 # coding=utf-8
 import configparser
 
-from diglett import app
+from settings import PITOP_CONF
 
 
 class BaseSV:
     def __init__(self):
         cf = configparser.ConfigParser()
-        cf.read(app.config['PITOP_CONF'])
+        cf.read(PITOP_CONF)
         host = cf.get("sys", "host")
         nat_check_url = cf.get("sys", "nat_check_url")
         self.local_port = cf.get("sys", "local_port")
