@@ -24,6 +24,7 @@ stop it.
 log = logging.getLogger(__name__)
 ns_file = Namespace(name='file', description='Describes the operations related with the teams')
 
+
 @ns_file.route("/rename/")
 @ns_file.param('oldPath', 'The path like  /xx/xx/xx.py')
 @ns_file.param('newPath', 'The path like  /xx/xx/xx.py')
@@ -43,7 +44,6 @@ class Rename(Resource):
         root_path = file_tool.workspace()
         list = file_tool.rename(root_path, old_path, new_path)
         return BeanRet(True, data=list).toJson()
-
 
 
 @ns_file.route("/")
