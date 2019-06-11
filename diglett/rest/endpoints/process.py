@@ -10,7 +10,7 @@ from diglett.base.beanret import BeanRet
 from diglett.base.file_tool import FileTool
 from diglett.entity.tree_vo import TreeVO
 from diglett.rest.endpoints.process_thread import Process
-from diglett.rest.endpoints.serializers import code_vo
+from diglett.rest.endpoints.serializers import code_vo, bean
 
 """
 this is main process of python file exec on OS,
@@ -46,6 +46,7 @@ def process(socket):
 @ns_process.route("/init/")
 class InitProject(Resource):
     @ns_process.expect([code_vo])
+    @ns_process.marshal_with(bean)
     def post(self):
         codes = request.json
         file_tool = FileTool()
@@ -63,7 +64,7 @@ class InitProject(Resource):
         tree_vo.file_path = scan_workspace
         tree_vo_result = self.__list_file(tree_vo.__dict__, workspace, codes)
         print(json.dumps(tree_vo_result["children"]))
-        return BeanRet(success=True, data=tree_vo_result["children"]).to_json()
+        return BeanRet(success=True, data=tree_vo_result["children"])
 
     def __list_file(self, tree_vo, workspace, codes):
         """
@@ -102,6 +103,7 @@ class InitProject(Resource):
 @ns_process.route("/exec/start/")
 @ns_process.param('path', 'The path like  /xx/xx/xx.py')
 class ExecStart(Resource):
+    @ns_process.marshal_with(bean)
     def get(self):
         """
         exec a python file
@@ -120,11 +122,12 @@ class ExecStart(Resource):
             process_thread = Process(cmd, process_ws)
             process_thread.start()
 
-        return BeanRet(success=True).to_json()
+        return BeanRet(success=True)
 
 
 @ns_process.route("/exec/stop/")
 class ExecStop(Resource):
+    @ns_process.marshal_with(bean)
     def get(self):
         """
         stop exec thread
@@ -132,4 +135,4 @@ class ExecStop(Resource):
         """
         if process_thread and process_thread.is_alive():
             process_thread.stop()
-        return BeanRet(success=True).to_json()
+        return BeanRet(success=True)

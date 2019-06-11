@@ -12,3 +12,10 @@ code_vo = api.model('code vo object', {
 code_vo_list = api.inherit('code vo list', {
     'code_vos': fields.List(fields.Nested(code_vo))
 })
+
+bean = api.model('', {
+    'success': fields.Boolean(description=''),
+    'info': fields.String(description=''),
+    'code': fields.String(description=''),
+    'data': fields.String()
+})

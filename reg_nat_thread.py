@@ -28,7 +28,7 @@ class RegNat(threading.Thread):
         '''
         for i in range(10, 0, -1):
             time.sleep(2)
-            beanret = get("http://127.0.0.1:" + str(self.local_port) + "/ping.shtml")
+            beanret = get("http://127.0.0.1:" + str(self.local_port) + "/api/ping/")
             if beanret.success:
                 return True
             elif i == 1:
