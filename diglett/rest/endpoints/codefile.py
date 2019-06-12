@@ -24,12 +24,42 @@ stop it.
 
 log = logging.getLogger(__name__)
 ns_file = Namespace(name='file', description='Describes the operations related with the teams')
+parser = ns_file.parser()
+parser.add_argument('path', type=str, required=True, help='The path like  /xx/xx/xx.py', location='form')
+parser.add_argument('content', type=str, help='The file content≈', location='form')
+
+parser_reaname = ns_file.parser()
+parser_reaname.add_argument('oldPath', type=str, required=True, help='old path', location='form')
+parser_reaname.add_argument('newPath', type=str, required=True, help='new path', location='form')
 
 
-@ns_file.route("/rename/")
-@ns_file.param('oldPath', 'The path like  /xx/xx/xx.py')
-@ns_file.param('newPath', 'The path like  /xx/xx/xx.py')
-class Rename(Resource):
+@ns_file.route("/")
+@ns_file.param('path', 'The path like  /xx/xx/xx.py')
+class CodeFile(Resource):
+    @ns_file.doc(parser=parser)
+    @ns_file.marshal_with(bean)
+    def post(self):
+        """
+        create & write the content to the file
+        :return:
+        """
+        path = request.form.get("path")
+        content = request.form.get("content")
+        if not path and not content:
+            return BeanRet(success=False)
+
+        file_tool = FileTool()
+        file_path = file_tool.workspace(path)
+        if path and content:
+            file_tool.write(file_path, content)
+        elif path and not content:
+            file_tool.create_folder(file_path)
+        else:
+            return BeanRet(success=False)
+
+        return BeanRet(success=True)
+
+    @ns_file.doc(parser=parser_reaname)
     @ns_file.marshal_with(bean)
     def put(self):
         """
@@ -38,35 +68,14 @@ class Rename(Resource):
         move them to the folder
         :return:
         """
-        old_path = request.args.get("oldPath")
-        new_path = request.args.get("newPath")
+        old_path = request.form.get("oldPath")
+        new_path = request.form.get("newPath")
         if not old_path or not new_path:
             return BeanRet(success=False)
         file_tool = FileTool()
         root_path = file_tool.workspace()
         list = file_tool.rename(root_path, old_path, new_path)
-        return BeanRet(True, data=list)
-
-
-@ns_file.route("/")
-@ns_file.param('path', 'The path like  /xx/xx/xx.py')
-@ns_file.param('content', 'the file content')
-class CodeFile(Resource):
-    @ns_file.marshal_with(bean)
-    def put(self):
-        """
-        create & write the content to the file
-        :return:
-        """
-        path = request.args.get("path")
-        content = request.args.get('content')
-        if not path or not content:
-            return BeanRet(success=False)
-
-        file_tool = FileTool()
-        file_path = file_tool.workspace(path)
-        file_tool.write(file_path, content)
-        return BeanRet(success=True)
+        return BeanRet(success=True, data=list)
 
     @ns_file.marshal_with(bean)
     def get(self):
@@ -87,17 +96,19 @@ class CodeFile(Resource):
         else:
             return BeanRet(success=False)
 
+    @ns_file.doc(parser=parser)
     @ns_file.marshal_with(bean)
     def delete(self):
         """
         remove file
         :return: True
         """
-        path = request.args.get("path")
+        path = request.form.get("path")
         if not path:
             return BeanRet(success=False)
 
         file_tool = FileTool()
         file_path = file_tool.workspace(path)
+        all_file = file_tool.all_file(file_path, is_dir=False, filter=file_tool.workspace())
         file_tool.remove(file_path)
-        return BeanRet(success=True, data=path)
+        return BeanRet(success=True, data=all_file)

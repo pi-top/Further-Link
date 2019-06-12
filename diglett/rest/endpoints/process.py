@@ -31,6 +31,9 @@ ws = Blueprint('ws_process', __name__)
 
 log = logging.getLogger(__name__)
 ns_process = Namespace(name='process', description='Describes the operations related with the teams')
+parser = ns_process.parser()
+parser.add_argument('path', type=str, required=True, help='The path like  /xx/xx/xx.py', location='form')
+parser.add_argument('content', type=str, help='The file content≈', location='form')
 
 
 @ws.route('/process/ws')
@@ -43,11 +46,15 @@ def process(socket):
             logger.info(str(message))
 
 
-@ns_process.route("/init/")
+@ns_process.route("/")
 class InitProject(Resource):
     @ns_process.expect([code_vo])
     @ns_process.marshal_with(bean)
     def post(self):
+        """
+        init project files
+        :return: BeanRet
+        """
         codes = request.json
         file_tool = FileTool()
         workspace = file_tool.workspace()
@@ -72,7 +79,7 @@ class InitProject(Resource):
         :param tree_vo:
         :param workspace:
         :param codes:
-        :return:
+        :return: []
         """
         file_path = tree_vo["file_path"]
         file_list = os.listdir(file_path)
@@ -99,10 +106,7 @@ class InitProject(Resource):
         tree_vo["children"] = list
         return tree_vo
 
-
-@ns_process.route("/exec/start/")
-@ns_process.param('path', 'The path like  /xx/xx/xx.py')
-class ExecStart(Resource):
+    @ns_process.doc(parser=parser)
     @ns_process.marshal_with(bean)
     def get(self):
         """
@@ -124,11 +128,8 @@ class ExecStart(Resource):
 
         return BeanRet(success=True)
 
-
-@ns_process.route("/exec/stop/")
-class ExecStop(Resource):
     @ns_process.marshal_with(bean)
-    def get(self):
+    def put(self):
         """
         stop exec thread
         :return:

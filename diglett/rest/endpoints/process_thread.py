@@ -1,10 +1,14 @@
 import threading
-
+import logging
 import subprocess
+
+import time
 
 '''
  process running some cmd and use webcoket send result back
 '''
+
+log = logging.getLogger(__name__)
 
 
 class Process(threading.Thread):
@@ -42,12 +46,14 @@ class Process(threading.Thread):
             if self.is_stop:
                 break
             # decode byte to str
-            log = line.decode(encoding='utf-8')
-            if log == '' and self.pipe_process.poll() != None:
+            result = line.decode(encoding='utf-8')
+            if result == '' and self.pipe_process.poll() != None:
                 break
 
             # sending the log to client
-            self.websocket.send(log)
+            log.info(result)
+            self.websocket.send(result)
+            time.sleep(.05)
 
         # end of file (EOF)
         self.websocket.send("EOF")

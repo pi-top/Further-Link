@@ -13,9 +13,15 @@ code_vo_list = api.inherit('code vo list', {
     'code_vos': fields.List(fields.Nested(code_vo))
 })
 
+
+class Item(fields.Raw):
+    def format(self, value):
+        return value
+
+
 bean = api.model('bean is response result', {
     'success': fields.Boolean(description=''),
     'info': fields.String(description=''),
     'code': fields.String(description=''),
-    'data': fields.String()
+    'data': Item()
 })

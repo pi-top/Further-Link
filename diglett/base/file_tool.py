@@ -59,14 +59,20 @@ class FileTool(Singleton):
         """
         create a empty file
         :param path: xxx/xxx/xx.xx
-        :return:
         """
         if not self.exists(path):
             files = os.path.split(path)
             base_path = files[0]
-            if not os.path.exists(base_path):
-                os.makedirs(base_path)
+            self.create_folder(base_path)
             os.mknod(path)
+
+    def create_folder(self, path):
+        """
+        create  new folder or folders
+        :param path: xxx/xxx/
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
 
     def remove(self, file_path):
         """
@@ -154,7 +160,7 @@ class FileTool(Singleton):
 
         return list
 
-    def all_file(self, file_path):
+    def all_file(self, file_path, is_dir=True, filter=None):
         """
         list all files in file path
         :param file_path: file absolute path
@@ -162,10 +168,15 @@ class FileTool(Singleton):
         """
         all_file = []
         for dir_path, dir_names, file_names in os.walk(file_path):
-            for dir in dir_names:
-                all_file.append(os.path.join(dir_path, dir))
+            if is_dir:
+                for dir in dir_names:
+                    all_file.append(os.path.join(dir_path, dir))
             for name in file_names:
+                if filter:
+                    dir_path = dir_path.replace(filter, "")
+
                 all_file.append(os.path.join(dir_path, name))
+
         return all_file
 
     def workspace(self, path=None):
