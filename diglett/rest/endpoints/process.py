@@ -70,7 +70,6 @@ class InitProject(Resource):
         tree_vo = TreeVO()
         tree_vo.file_path = scan_workspace
         tree_vo_result = self.__list_file(tree_vo.__dict__, workspace, codes)
-        print(json.dumps(tree_vo_result["children"]))
         return BeanRet(success=True, data=tree_vo_result["children"])
 
     def __list_file(self, tree_vo, workspace, codes):

@@ -18,7 +18,6 @@ sockets = Sockets(app)
 CORS(app, supports_credentials=True, resources={r'/*': {"origins": "*"}})
 
 app.config.from_object('settings')
-# app.config.from_object('pitopminderconfig')
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 app.url_map.converters['regex'] = RegexConverter
 

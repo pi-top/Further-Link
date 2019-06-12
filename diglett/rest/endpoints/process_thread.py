@@ -51,7 +51,7 @@ class Process(threading.Thread):
                 break
 
             # sending the log to client
-            log.info(result)
+            log.debug(result)
             self.websocket.send(result)
             time.sleep(.05)
 
