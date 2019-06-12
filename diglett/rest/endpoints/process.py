@@ -47,7 +47,7 @@ def process(socket):
 
 
 @ns_process.route("/")
-class Process(Resource):
+class Project(Resource):
     @ns_process.expect([code_vo])
     @ns_process.marshal_with(bean)
     def post(self):
