@@ -19,11 +19,6 @@ stop it.
 
 1.create python file and stop running
 2.run python file and return result
-3.init project from further
-4.rename a file and folder
-5.write code to file
-6.read file content to webide frontend
-7.delete file and folder ,if there some files and sub folders delete all of them
 """
 
 pitop = Blueprint('process', __name__, url_prefix="/process")

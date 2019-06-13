@@ -2,6 +2,12 @@ from flask_restplus import fields
 
 from diglett.rest import api
 
+
+exec_code = api.model('code for running', {
+    'path': fields.String(required=True, description='the code path and name'),
+    'content': fields.String(required=True, description='the code')
+})
+
 code_vo = api.model('code vo object', {
     'id': fields.String(required=True, description='the code block id'),
     'path': fields.String(required=True, description='the code path and name'),
