@@ -6,12 +6,11 @@ from flask_sockets import Sockets
 from diglett.base.log4py import logger
 from diglett.base.tools.regexConverter import RegexConverter
 from diglett.rest import api, api_blueprint
-from diglett.rest.endpoints import process, execute
+from diglett.rest.endpoints import execute
 from diglett.rest.endpoints.battery import ns_battery
 from diglett.rest.endpoints.beatheart import ns_beatheart
 from diglett.rest.endpoints.codefile import ns_file
 from diglett.rest.endpoints.execute import ns_exec
-from diglett.rest.endpoints.process import ns_process
 
 app = Flask(__name__)
 sockets = Sockets(app)
@@ -29,10 +28,8 @@ api.add_namespace(ns_battery)
 api.add_namespace(ns_beatheart)
 api.add_namespace(ns_exec)
 # api.add_namespace(ns_file)
-# api.add_namespace(ns_process)
 
 app.register_blueprint(blueprint=api_blueprint)
 
 # ws
-# sockets.register_blueprint(process.ws)
 sockets.register_blueprint(execute.ws)

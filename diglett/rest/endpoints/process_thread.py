@@ -52,11 +52,15 @@ class Process(threading.Thread):
 
             # sending the log to client
             log.debug(result)
+            if self.websocket.closed:
+                break
+
             self.websocket.send(result)
             time.sleep(.05)
 
         # end of file (EOF)
-        self.websocket.send("EOF")
+        if not self.websocket.closed:
+            self.websocket.send("EOF")
 
         # close stdout that real stop subprocess running
         self.pipe_process.stdout.close()

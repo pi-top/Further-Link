@@ -4,7 +4,6 @@ import logging
 from flask_restplus import Namespace, Resource
 
 from diglett.base.beanret import BeanRet
-from diglett.entity.tree_vo import TreeVO
 from diglett.rest.endpoints.serializers import bean
 
 log = logging.getLogger(__name__)
