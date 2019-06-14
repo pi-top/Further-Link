@@ -38,16 +38,22 @@ class Process(threading.Thread):
         self.is_stop = True
         self.join()
 
+    def write(self, content):
+        if self.is_alive():
+            self.pipe.stdin.write(content)
+            self.pipe.stdin.flush()
+
     def __run(self):
-        self.pipe_process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.pipe = subprocess.Popen(self.cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT)
 
         # iterate lines and use websocket send them to frontend
-        for line in iter(self.pipe_process.stdout.readline, 'b'):
+        for line in iter(self.pipe.stdout.readline, 'b'):
             if self.is_stop:
                 break
             # decode byte to str
             result = line.decode(encoding='utf-8')
-            if result == '' and self.pipe_process.poll() != None:
+            if result == '' and self.pipe.poll() != None:
                 break
 
             # sending the log to client
@@ -63,6 +69,6 @@ class Process(threading.Thread):
             self.websocket.send("EOF")
 
         # close stdout that real stop subprocess running
-        self.pipe_process.stdout.close()
+        self.pipe.stdout.close()
         # kill subprocess
-        self.pipe_process.kill()
+        self.pipe.kill()
