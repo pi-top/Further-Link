@@ -22,6 +22,8 @@ class Process(threading.Thread):
         self.cmd = cmd
         self.websocket = websocket
         self.is_stop = False
+        self.pipe = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT)
 
     def run(self):
         '''
@@ -40,13 +42,10 @@ class Process(threading.Thread):
 
     def write(self, content):
         if self.is_alive():
-            self.pipe.stdin.write(content)
+            self.pipe.stdin.write(content.encode("utf-8"))
             self.pipe.stdin.flush()
 
     def __run(self):
-        self.pipe = subprocess.Popen(self.cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                     stderr=subprocess.STDOUT)
-
         # iterate lines and use websocket send them to frontend
         for line in iter(self.pipe.stdout.readline, 'b'):
             if self.is_stop:
