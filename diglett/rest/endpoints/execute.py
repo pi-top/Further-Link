@@ -59,6 +59,8 @@ def exec_websocket(socket):
                     file_tool = FileTool()
                     file_path = file_tool.workspace(projectVersionId)
                     file_tool.remove(file_path)
+            elif data["cmd"].__eq__(Command.Input.value):
+                pass
             else:
                 pass
 
