@@ -1,6 +1,8 @@
 # coding=utf-8
+import hashlib
 import logging
 import os
+import uuid
 
 from diglett.base.cachedata import CacheData
 from diglett.base.http import post, get
@@ -23,8 +25,16 @@ class SignInServerSV(BaseSV):
             "groupCode": str(self.group_code)
         }
         serial_number = SerialNumber().serial_number()
-        if serial_number:
-            data["serialNumber"] = serial_number
+        if not serial_number:
+            cache_data = CacheDataClient().read()
+            if not cache_data:
+                serial_number = str(uuid.uuid1()).replace("-", "")
+                md5 = hashlib.md5()
+                serial_number_byte = serial_number.encode(encoding='utf-8')
+                md5.update(serial_number_byte)
+                serial_number = md5.hexdigest()
+
+        data["serialNumber"] = serial_number
 
         url = self.regUri
         log.debug("reg to server [POST]===>" + url)
@@ -43,7 +53,7 @@ class SignInServerSV(BaseSV):
             server_port = data['natServerPort']
             device_name = data['codeName']
             cache_data = CacheData(str(code), str(token), str(nat_port), str(server_addr), str(server_port),
-                                   str(device_name))
+                                   str(device_name), serial_number=serial_number)
             CacheDataClient().write(cache_data.to_json())
             return True, token
         else:
