@@ -1,8 +1,11 @@
 # coding=utf-8
 import _thread
-from time import sleep
+import logging
 
 from ptoled import PTOLEDDisplay
+from time import sleep
+
+log = logging.getLogger(__name__)
 
 
 class Token(object):
@@ -15,6 +18,9 @@ class Token(object):
         '''
 
         try:
+            if not token:
+                return
+            log.info("token:" + token)
             _thread.start_new_thread(self.__display__, (token,))
         except Exception as e:
             print(e)
@@ -28,9 +34,6 @@ class Token(object):
 
         canvas.clear()
         canvas.multiline_text((35, 16), token)
-        ptoled.draw()
-        sleep(30)
-        canvas.clear()
         ptoled.draw()
 
 

@@ -51,21 +51,16 @@ class RegNat(threading.Thread):
         os = osInfo.getOSInfo()
         signInServerSV = SignInServerSV()
         flag, token = signInServerSV.reg(eth0, os)
-        if flag:
-            logger.info("generate configure file")
-            # 生成内网穿透配置文件
-            frp_ini = app.config['FRP_INI']
-            flag = signInServerSV.gen_nat_config(frp_ini)
-            time.sleep(1)
-
-        # todo 暂时注释掉
         # if flag:
-        #     logger.info("检测穿透是否成功")
-        #     flag = signInServerSV.check_nat_runing()
+        #     logger.info("generate configure file")
+        #     # 生成内网穿透配置文件
+        #     frp_ini = app.config['FRP_INI']
+        #     flag = signInServerSV.gen_nat_config(frp_ini)
+        #     time.sleep(1)
 
-        if flag:
-            logger.info("notify server")
-            signInServerSV.notify()
+        # if flag:
+        #     logger.info("notify server")
+        #     signInServerSV.notify()
 
         oled = Token()
         oled.display(token)

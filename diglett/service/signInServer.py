@@ -1,12 +1,14 @@
 # coding=utf-8
+import logging
 import os
 
-from diglett import logger
 from diglett.base.cachedata import CacheData
 from diglett.base.http import post, get
 from diglett.base.serial_number import SerialNumber
 from diglett.base.tools.cachedataclient import CacheDataClient
 from diglett.service.basesv import BaseSV
+
+log = logging.getLogger(__name__)
 
 
 class SignInServerSV(BaseSV):
@@ -20,18 +22,16 @@ class SignInServerSV(BaseSV):
             "os": str(os),
             "groupCode": str(self.group_code)
         }
-        # TODO 增加读取序列号的接口
-        serial_number = "999999"
-        # serial_number = SerialNumber().serial_number()
+        serial_number = SerialNumber().serial_number()
         if serial_number:
             data["serialNumber"] = serial_number
 
         url = self.regUri
-        logger.info("reg to server [POST]===>" + url)
-        logger.info(data)
+        log.debug("reg to server [POST]===>" + url)
+        log.debug(data)
 
         beanRet = post(url, data)
-        logger.info(beanRet.to_json())
+        log.debug(beanRet.to_json())
 
         # 缓存注册数据
         if beanRet.success:
@@ -61,13 +61,13 @@ class SignInServerSV(BaseSV):
             cache_data = CacheData().to_obj(CacheDataClient().read())
             file_temp = open(frp_ini, 'r')
             result = file_temp.read()
-            logger.info(result)
+            log.info(result)
             result = result.replace('{{server_addr}}', cache_data.getServerAddr) \
                 .replace('{{server_port}}', cache_data.getServerPort) \
                 .replace('{{device_name}}', cache_data.getDeviceName) \
                 .replace('{{nat_port}}', cache_data.getNatPort) \
                 .replace("{{local_port}}", self.local_port)
-            logger.info(result)
+            log.info(result)
             file = open("/etc/frp.ini", 'w')
             file.write(result)
             file.flush()
@@ -93,7 +93,7 @@ class SignInServerSV(BaseSV):
             else:
                 return False
         except Exception as e:
-            logger.error(e.message)
+            log.error(e.message)
             return False
 
     def notify(self):
@@ -105,12 +105,12 @@ class SignInServerSV(BaseSV):
             cache_data = CacheData().to_obj(CacheDataClient().read())
             domain = self.pingUri.replace("{device_name}", cache_data.getDeviceName)
             url = self.notifyUri.replace("{code}", cache_data.getCode).replace("{domain}", domain)
-            logger.info(url)
+            log.info(url)
             beanRet = get(url)
             if beanRet.success:
                 return True
             else:
                 return False
         except Exception as e:
-            logger.error(str(e.code) + e.message)
+            log.error(str(e.code) + e.message)
             return False

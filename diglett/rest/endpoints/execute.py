@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 ns_exec = Namespace(name='exec', description='Describes the operations related with the teams')
 
 
-@ws.route('/exec/ws')
+@ws.route('/ws/exec')
 def exec_websocket(socket):
     global process_ws
     process_ws = socket

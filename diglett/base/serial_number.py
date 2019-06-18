@@ -20,14 +20,10 @@ class SerialNumber:
 
             cf = configparser.ConfigParser()
             cf.read(app.config['PITOP_CONF'])
-            # hub地址
-            self.hub_address = cf.get("sys", "hub_address")
-            # 序列号地址
-            self.serial_address = cf.get("sys", "serial_address")
-            i2c_device = I2CDevice("/dev/i2c-1", self.hub_address)
+            i2c_device = I2CDevice("/dev/i2c-1", 0x10)
             i2c_device.set_delays(0.001, 0.001)
             i2c_device.connect()
-            sn_hex = i2c_device.read_n_unsigned_bytes(self.serial_address, 4, False)
+            sn_hex = i2c_device.read_n_unsigned_bytes(0xE7, 4, False)
             i2c_device.disconnect()
             if sn_hex:
                 sn = str(hex(sn_hex)).replace('0x', '')
@@ -35,3 +31,8 @@ class SerialNumber:
 
         except:
             return None
+
+
+if __name__ == '__main__':
+    sn = SerialNumber().serial_number()
+    print(sn)
