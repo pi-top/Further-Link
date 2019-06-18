@@ -1,8 +1,9 @@
-import threading
 import logging
 import subprocess
-
+import threading
 import time
+
+from diglett.base.command import Command
 
 '''
  process running some cmd and use webcoket send result back
@@ -65,7 +66,7 @@ class Process(threading.Thread):
 
         # end of file (EOF)
         if not self.websocket.closed:
-            self.websocket.send("EOF")
+            self.websocket.send(Command.EOF.value)
 
         # close stdout that real stop subprocess running
         self.pipe.stdout.close()

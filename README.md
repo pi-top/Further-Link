@@ -74,10 +74,7 @@ this  ws api for running code
      {
        "cmd":"[start|stop|input]",
        "projectVersionId":"xxxxx",
-       "data":{
-          "path":"xxx/xxx.py",
-          "content":""
-        }
+       "data":"xxx/xxxx/sss.py | ps -ef"
       }
 ```
 

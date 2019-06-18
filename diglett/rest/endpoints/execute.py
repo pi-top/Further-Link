@@ -38,14 +38,13 @@ def exec_websocket(socket):
             projectVersionId = data["projectVersionId"]
 
             if data["cmd"].__eq__(Command.Start.value):
-                path = projectVersionId + "/" + data["data"]["path"]
-                content = data["data"]["content"]
+                path = projectVersionId + "/" + data["data"]
 
                 # 1.check the file exist
                 file_tool = FileTool()
                 file_path = file_tool.workspace(path)
                 if not os.path.exists(file_path):
-                    file_tool.write(file_path, content)
+                    process_ws.send(Command.EOF.value)
 
                 # 2.exec the file
                 cmd = file_tool.python3_cmd(file_path)
@@ -60,7 +59,7 @@ def exec_websocket(socket):
                     file_path = file_tool.workspace(projectVersionId)
                     file_tool.remove(file_path)
             elif data["cmd"].__eq__(Command.Input.value):
-                pass
+                cmd = data["data"]
             else:
                 pass
 
