@@ -25,15 +25,25 @@ class SignInServerSV(BaseSV):
             "groupCode": str(self.group_code)
         }
 
-        cache_data = CacheDataClient().read()
-        if cache_data and cache_data["serial_number"]:
-            serial_number = SerialNumber().serial_number()
-        else:
-            serial_number = str(uuid.uuid1()).replace("-", "")
-            md5 = hashlib.md5()
-            serial_number_byte = serial_number.encode(encoding='utf-8')
-            md5.update(serial_number_byte)
-            serial_number = md5.hexdigest()
+        serial_number = SerialNumber().serial_number()
+        if not serial_number:
+            cache_data = CacheDataClient().read()
+            if cache_data:
+                cache_data_obj = CacheData().to_obj(cache_data)
+                if cache_data_obj["serial_number"]:
+                    serial_number = cache_data_obj["serial_number"]
+                else:
+                    serial_number = str(uuid.uuid1()).replace("-", "")
+                    md5 = hashlib.md5()
+                    serial_number_byte = serial_number.encode(encoding='utf-8')
+                    md5.update(serial_number_byte)
+                    serial_number = md5.hexdigest()
+            else:
+                serial_number = str(uuid.uuid1()).replace("-", "")
+                md5 = hashlib.md5()
+                serial_number_byte = serial_number.encode(encoding='utf-8')
+                md5.update(serial_number_byte)
+                serial_number = md5.hexdigest()
 
         data["serialNumber"] = serial_number
 
