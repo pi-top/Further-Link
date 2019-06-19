@@ -19,7 +19,7 @@ class SerialNumber:
         try:
             cf = configparser.ConfigParser()
             cf.read(app.config['PITOP_CONF'])
-            i2c_device = I2CDevice("/dev/i2c-1", 0x10a)
+            i2c_device = I2CDevice("/dev/i2c-1", 0x10)
             i2c_device.set_delays(0.001, 0.001)
             i2c_device.connect()
             sn_hex = i2c_device.read_n_unsigned_bytes(0xE7, 4, False)

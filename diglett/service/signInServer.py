@@ -24,7 +24,8 @@ class SignInServerSV(BaseSV):
             "os": str(os),
             "groupCode": str(self.group_code)
         }
-        serial_number = SerialNumber().serial_number()
+        serial_number = 9999
+        # serial_number = SerialNumber().serial_number()
         if not serial_number:
             cache_data = CacheDataClient().read()
             if not cache_data:
@@ -113,8 +114,9 @@ class SignInServerSV(BaseSV):
         '''
         try:
             cache_data = CacheData().to_obj(CacheDataClient().read())
-            domain = self.pingUri.replace("{device_name}", cache_data.getDeviceName)
-            url = self.notifyUri.replace("{code}", cache_data.getCode).replace("{domain}", domain)
+            domain = "null"
+            # domain = self.pingUri.replace("{device_name}", cache_data.getDeviceName)
+            url = self.notifyUri.replace("{code}", cache_data.code).replace("{domain}", domain)
             log.info(url)
             beanRet = get(url)
             if beanRet.success:

@@ -58,9 +58,9 @@ class RegNat(threading.Thread):
         #     flag = signInServerSV.gen_nat_config(frp_ini)
         #     time.sleep(1)
 
-        # if flag:
-        #     logger.info("notify server")
-        #     signInServerSV.notify()
+        if flag:
+            logger.info("notify server")
+            signInServerSV.notify()
 
         oled = Token()
         oled.display(token)
