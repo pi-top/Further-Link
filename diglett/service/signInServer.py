@@ -6,7 +6,7 @@ import uuid
 
 from diglett.base.cachedata import CacheData
 from diglett.base.http import post, get
-from diglett.base.serial_number import SerialNumber
+# from diglett.base.serial_number import SerialNumber
 from diglett.base.tools.cachedataclient import CacheDataClient
 from diglett.service.basesv import BaseSV
 
