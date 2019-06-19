@@ -2,7 +2,6 @@
 import configparser
 import logging.config
 
-from diglett.base.serial_number import SerialNumber
 from reg_nat_thread import RegNat
 from diglett import app
 
@@ -14,8 +13,6 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
     log.info('>>>>> Starting server <<<<<')
     try:
-        sn = SerialNumber().serial_number()
-        log.debug(sn)
         # 启动flask 服务
         cf = configparser.ConfigParser()
         cf.read(app.config['PITOP_CONF'])

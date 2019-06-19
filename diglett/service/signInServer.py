@@ -6,7 +6,7 @@ import uuid
 
 from diglett.base.cachedata import CacheData
 from diglett.base.http import post, get
-# from diglett.base.serial_number import SerialNumber
+from diglett.base.serial_number import SerialNumber
 from diglett.base.tools.cachedataclient import CacheDataClient
 from diglett.service.basesv import BaseSV
 
@@ -24,16 +24,16 @@ class SignInServerSV(BaseSV):
             "os": str(os),
             "groupCode": str(self.group_code)
         }
-        serial_number = 9999
-        # serial_number = SerialNumber().serial_number()
-        if not serial_number:
-            cache_data = CacheDataClient().read()
-            if not cache_data:
-                serial_number = str(uuid.uuid1()).replace("-", "")
-                md5 = hashlib.md5()
-                serial_number_byte = serial_number.encode(encoding='utf-8')
-                md5.update(serial_number_byte)
-                serial_number = md5.hexdigest()
+
+        cache_data = CacheDataClient().read()
+        if cache_data and cache_data["serial_number"]:
+            serial_number = SerialNumber().serial_number()
+        else:
+            serial_number = str(uuid.uuid1()).replace("-", "")
+            md5 = hashlib.md5()
+            serial_number_byte = serial_number.encode(encoding='utf-8')
+            md5.update(serial_number_byte)
+            serial_number = md5.hexdigest()
 
         data["serialNumber"] = serial_number
 

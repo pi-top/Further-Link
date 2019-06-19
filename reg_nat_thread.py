@@ -6,7 +6,7 @@ import time
 from diglett import app
 from diglett import logger
 from diglett.base.http import get
-# from diglett.base.oled_token import Token
+from diglett.base.oled_token import Token
 from diglett.service.osinfosv import OSInfoSV
 from diglett.service.signInServer import SignInServerSV
 
@@ -62,9 +62,9 @@ class RegNat(threading.Thread):
             logger.info("notify server")
             signInServerSV.notify()
 
-        # oled = Token()
-        # oled.display(token)
-        # time.sleep(int(display_token_time))
+        oled = Token()
+        oled.display(token)
+        time.sleep(int(display_token_time))
 
         # except Exception as e:
         #     logger.error("reg to server failed")
