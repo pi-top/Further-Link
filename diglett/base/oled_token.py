@@ -18,7 +18,7 @@ class Token(object):
 
             if not token:
                 return False
-            log.info("token:" + token)
+            log.info("the oled Token [" + token + "]")
             _thread.start_new_thread(self.__display__, (token,))
         except Exception as e:
             log.error("oled display token error")
