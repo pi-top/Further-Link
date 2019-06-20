@@ -42,7 +42,7 @@ class RegNat(threading.Thread):
         '''
         # try:
         cf = configparser.ConfigParser()
-        cf.read(app.config['PITOP_CONF'])
+        cf.read(app.config['PITOP_CONF'], encoding='UTF-8')
         display_token_time = cf.get("sys", "display_token_time")
         # 向服务器注册
         logger.info("reg to server")

@@ -30,5 +30,5 @@ class CacheData:
         :param value:json字符串
         :return:BeanRet对象
         '''
-        self.__dict__ = json.loads(value)
+        self.__dict__ = json.loads(value, encoding="UTF-8")
         return self

@@ -19,7 +19,7 @@ class CacheDataClient(object):
         '''
         if not os.path.exists(self.cachePath):
             return None
-        file = open(self.cachePath, 'r')
+        file = open(self.cachePath, 'r', encoding="UTF-8")
         jsonData = file.read()
         return jsonData
 

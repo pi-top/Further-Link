@@ -2,9 +2,6 @@
 import _thread
 import logging
 
-from ptoled import PTOLEDDisplay
-from time import sleep
-
 log = logging.getLogger(__name__)
 
 
@@ -18,23 +15,29 @@ class Token(object):
         '''
 
         try:
+
             if not token:
-                return
+                return False
             log.info("token:" + token)
             _thread.start_new_thread(self.__display__, (token,))
         except Exception as e:
-            print(e)
+            log.error("oled display token error")
+            return False
 
     def __display__(self, token):
-        ptoled = PTOLEDDisplay()
-        ptoled.set_max_fps(1)
+        try:
+            from ptoled import PTOLEDDisplay
+            ptoled = PTOLEDDisplay()
+            ptoled.set_max_fps(1)
 
-        canvas = ptoled.canvas
-        canvas.set_font_size(25)
+            canvas = ptoled.canvas
+            canvas.set_font_size(25)
 
-        canvas.clear()
-        canvas.multiline_text((35, 16), token)
-        ptoled.draw()
+            canvas.clear()
+            canvas.multiline_text((35, 16), token)
+            ptoled.draw()
+        except:
+            log.error("oled display token error")
 
 
 if __name__ == '__main__':

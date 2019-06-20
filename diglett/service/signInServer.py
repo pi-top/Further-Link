@@ -1,5 +1,6 @@
 # coding=utf-8
 import hashlib
+import json
 import logging
 import os
 import uuid
@@ -29,7 +30,7 @@ class SignInServerSV(BaseSV):
         if not serial_number:
             cache_data = CacheDataClient().read()
             if cache_data:
-                cache_data_obj = CacheData().to_obj(cache_data)
+                cache_data_obj = json.loads(cache_data, encoding="UTF-8")
                 if cache_data_obj["serial_number"]:
                     serial_number = cache_data_obj["serial_number"]
                 else:

@@ -5,18 +5,17 @@ DUT 启动后的状态反馈与记录
 """
 import configparser
 
-from ptcommon.i2c_device import I2CDevice
-
 from diglett import app
 
 
 class SerialNumber:
     def serial_number(self):
-        '''
+        """
         获取系统的sn码并保存
         :return:
-        '''
+        """
         try:
+            from ptcommon.i2c_device import I2CDevice
             cf = configparser.ConfigParser()
             cf.read(app.config['PITOP_CONF'])
             i2c_device = I2CDevice("/dev/i2c-1", 0x10)
