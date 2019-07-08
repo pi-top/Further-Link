@@ -1,7 +1,5 @@
 import configparser
-
 import os
-
 import shutil
 
 from settings import PITOP_CONF
@@ -135,30 +133,14 @@ class FileTool(Singleton):
         rename the old path to the new path,if it is a file just rename the file name,
         but if it is a folder and has some sub folders, it will iterate all of them and
         move them to the folder
-        :param root_path:
-        :param old_path:
-        :param new_path:
+        :param root_path: root path
+        :param old_path: old path
+        :param new_path: new  path
         :return:
         """
         old_file_path = os.path.join(root_path, old_path)
         new_file_path = os.path.join(root_path, new_path)
-        list = []
-        if os.path.isdir(old_file_path) and os.listdir(old_file_path).__len__() > 0:
-            list_dirs = os.listdir(old_file_path)
-            if list_dirs.__len__() > 0:
-                old_file_list = self.all_file(old_file_path)
-                shutil.move(old_file_path, new_file_path)
-                new_file_list = self.all_file(new_file_path)
-                for old_file in old_file_list:
-                    for new_file in new_file_list:
-                        if new_file.replace(new_path, old_path).__eq__(old_file):
-                            list.append({"oldPath": old_file.replace(root_path, ""),
-                                         "newPath": new_file.replace(root_path, "")})
-        else:
-            shutil.move(old_file_path, new_file_path)
-            list.append({"oldPath": old_path, "newPath": new_path})
-
-        return list
+        shutil.move(old_file_path, new_file_path)
 
     def all_file(self, file_path, is_dir=True, filter=None):
         """

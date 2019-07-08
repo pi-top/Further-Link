@@ -74,8 +74,8 @@ class CodeFile(Resource):
             return BeanRet(success=False)
         file_tool = FileTool()
         root_path = file_tool.workspace()
-        list = file_tool.rename(root_path, old_path, new_path)
-        return BeanRet(success=True, data=list)
+        file_tool.rename(root_path, old_path, new_path)
+        return BeanRet(success=True)
 
     @ns_file.marshal_with(bean)
     def get(self):
