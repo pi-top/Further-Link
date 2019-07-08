@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 ns_file = Namespace(name='file', description='Describes the operations related with the teams')
 parser = ns_file.parser()
 parser.add_argument('path', type=str, required=True, help='The path like  /xx/xx/xx.py', location='form')
-parser.add_argument('content', type=str, help='The file content≈', location='form')
+parser.add_argument('content', type=str, help='The file content', location='form')
 
 parser_reaname = ns_file.parser()
 parser_reaname.add_argument('oldPath', type=str, required=True, help='old path', location='form')

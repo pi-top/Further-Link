@@ -13,7 +13,7 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
     log.info('>>>>> Starting server <<<<<')
     try:
-        # 启动flask 服务
+        # start flask service
         cf = configparser.ConfigParser()
         cf.read(app.config['PITOP_CONF'], encoding='UTF-8')
         local_port = cf.get("sys", "local_port")

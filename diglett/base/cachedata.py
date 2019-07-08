@@ -2,7 +2,7 @@
 import json
 
 """
-缓存数据对象
+the cache data object
 """
 
 
@@ -18,17 +18,14 @@ class CacheData:
         self.serial_number = serial_number
 
     def to_json(self):
-        '''
-        json序列化
-        :return:json字符串
-        '''
+        """
+        obj to json str
+        """
         return json.dumps(self.__dict__)
 
     def to_obj(self, value):
-        '''
-        转化成beanret对象
-        :param value:json字符串
-        :return:BeanRet对象
-        '''
+        """
+        str to obj
+        """
         self.__dict__ = json.loads(value, encoding="UTF-8")
         return self

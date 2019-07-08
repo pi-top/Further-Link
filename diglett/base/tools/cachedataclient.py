@@ -3,10 +3,6 @@ import os
 
 from diglett import app
 
-"""
-缓存数据工具
-"""
-
 
 class CacheDataClient(object):
     def __init__(self):
@@ -14,8 +10,8 @@ class CacheDataClient(object):
 
     def read(self):
         '''
-        读取缓存
-        :return:jsonData数据
+        read the cache data
+        :return:json Data
         '''
         if not os.path.exists(self.cachePath):
             return None
@@ -25,8 +21,8 @@ class CacheDataClient(object):
 
     def write(self, jsonData):
         '''
-        写入缓存
-        :param jsonData:json 格式数据
+        write the data to json
+        :param jsonData:json
         '''
         file = open(self.cachePath, 'w')
         file.write(jsonData)

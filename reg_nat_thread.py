@@ -44,24 +44,13 @@ class RegNat(threading.Thread):
         cf = configparser.ConfigParser()
         cf.read(app.config['PITOP_CONF'], encoding='UTF-8')
         display_token_time = cf.get("sys", "display_token_time")
-        # 向服务器注册
+        # reg to server
         logger.info("reg to server")
         osInfo = OSInfoSV()
         eth0, wlan = osInfo.getIp()
         os = osInfo.getOSInfo()
         signInServerSV = SignInServerSV()
-        flag, token = signInServerSV.reg(eth0, os)
-        # if flag:
-        #     logger.info("generate configure file")
-        #     # 生成内网穿透配置文件
-        #     frp_ini = app.config['FRP_INI']
-        #     flag = signInServerSV.gen_nat_config(frp_ini)
-        #     time.sleep(1)
-
-        if flag:
-            logger.info("notify server")
-            signInServerSV.notify()
-
+        token = signInServerSV.reg(eth0, os)
         oled = Token()
         oled.display(token)
         time.sleep(int(display_token_time))

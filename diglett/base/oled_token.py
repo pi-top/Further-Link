@@ -8,8 +8,7 @@ log = logging.getLogger(__name__)
 class Token(object):
     def display(self, token=None):
         '''
-        传入token将自动显示token到小显示器上
-        显示token
+        display show on the oled
         :param token:
         :return:
         '''

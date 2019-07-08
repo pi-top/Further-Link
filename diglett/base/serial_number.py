@@ -1,8 +1,4 @@
 # coding=utf-8
-
-"""
-DUT 启动后的状态反馈与记录
-"""
 import configparser
 
 from diglett import app
@@ -11,7 +7,7 @@ from diglett import app
 class SerialNumber:
     def serial_number(self):
         """
-        获取系统的sn码并保存
+        get the serial number from hub
         :return:
         """
         try:

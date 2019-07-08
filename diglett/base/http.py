@@ -4,10 +4,6 @@ from diglett import logger
 from diglett.base.beanret import BeanRet
 
 
-def http(url, data, method="GET"):
-    pass
-
-
 def get(url):
     logger.info(url)
     response = request.urlopen(url)

@@ -7,28 +7,25 @@ return a json object like {"code":"0000","success":True,"info":"failed!","data":
 
 
 class BeanRet:
-    def __init__(self, code="0000", success=False, info="操作失败", data=None):
+    def __init__(self, code="0000", success=False, info="failed", data=None):
         self.code = code
         self.success = success
-        if success and info == '操作失败':
-            self.info = '操作成功'
+        if success and info == 'failed':
+            self.info = 'success'
         else:
             self.info = info
         self.data = data
 
-
     def to_json(self):
         '''
-        json序列化
-        :return:json字符串
+        obj to json str
+        :return:
         '''
         return json.dumps(self.__dict__)
 
     def to_obj(self, value):
         '''
-        转化成beanret对象
-        :param value:json字符串
-        :return:BeanRet对象
+        str to obj
         '''
         self.__dict__ = json.loads(value)
         return self
