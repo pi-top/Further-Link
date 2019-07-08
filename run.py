@@ -3,7 +3,7 @@ import configparser
 import logging.config
 
 from diglett import app
-from reg_nat_thread import RegNat
+from reg_thread import RegToServer
 
 if __name__ == "__main__":
     from gevent import pywsgi
@@ -17,7 +17,7 @@ if __name__ == "__main__":
         cf = configparser.ConfigParser()
         cf.read(app.config['PITOP_CONF'], encoding='UTF-8')
         local_port = cf.get("sys", "local_port")
-        RegNat(local_port).start()
+        RegToServer(local_port).start()
         log.info("The Server  port [" + local_port + "]")
         server = pywsgi.WSGIServer(('0.0.0.0', int(local_port)), app, log=log, handler_class=WebSocketHandler)
         server.serve_forever()

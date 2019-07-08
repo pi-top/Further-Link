@@ -11,7 +11,7 @@ from diglett.service.osinfosv import OSInfoSV
 from diglett.service.signInServer import SignInServerSV
 
 
-class RegNat(threading.Thread):
+class RegToServer(threading.Thread):
     def __init__(self, local_port=5000):
         threading.Thread.__init__(self)
         self.local_port = local_port
