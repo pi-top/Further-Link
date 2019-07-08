@@ -28,6 +28,16 @@ ns_exec = Namespace(name='exec', description='Describes the operations related w
 
 @ws.route('/ws/exec')
 def exec_websocket(socket):
+    '''
+    this is websocket api for websocket client
+    data :
+     {
+       "cmd":"[start|stop|input]",
+       "projectVersionId":"xxxxx",
+       "data":"xxx/xxxx/sss.py | ps -ef"
+     }
+    '''
+
     global process_ws
     process_ws = socket
     while not socket.closed:
