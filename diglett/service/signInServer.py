@@ -14,13 +14,14 @@ log = logging.getLogger(__name__)
 
 
 class SignInServerSV(BaseSV):
-    def reg(self, ip, os):
+    def reg(self, ip, os, port=80):
         '''
         register to server
         :return: oled token
         '''
         data = {
             "ip": str(ip),
+            "port": str(port),
             "os": str(os),
             "groupCode": str(self.group_code)
         }
@@ -59,12 +60,8 @@ class SignInServerSV(BaseSV):
             data = beanRet.data
             code = data['code']
             token = data['token']
-            nat_port = data['natTraversePort']
-            server_addr = data['natServerIp']
-            server_port = data['natServerPort']
             device_name = data['codeName']
-            cache_data = CacheData(str(code), str(token), str(nat_port), str(server_addr), str(server_port),
-                                   str(device_name), serial_number=serial_number)
+            cache_data = CacheData(str(code), str(token), str(device_name), serial_number=serial_number)
             CacheDataClient().write(cache_data.to_json())
             return token
         else:

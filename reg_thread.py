@@ -49,8 +49,11 @@ class RegToServer(threading.Thread):
         osInfo = OSInfoSV()
         eth0, wlan = osInfo.getIp()
         os = osInfo.getOSInfo()
+        port = cf.get("sys", "local_port")
+        if not port:
+            port = 80
         signInServerSV = SignInServerSV()
-        token = signInServerSV.reg(eth0, os)
+        token = signInServerSV.reg(eth0, os, port)
         oled = Token()
         oled.display(token)
         time.sleep(int(display_token_time))
