@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 
 class SignInServerSV(BaseSV):
-    def reg(self, ip, os, port=80):
+    def reg(self, ip, os, port=5000):
         '''
         register to server
         :return: oled token
