@@ -1,5 +1,7 @@
 # ~diglett~ ~webide-~ * further-link * ~jv-rover-pi-client-connector~
-this is python project like pokemon diglett,it can make a tunnel from client to server and runing code,register to cloud,check status and do more coding things.
+this is python project, ~like pokemon diglett,it can make a tunnel from client to server and~ running code,register to cloud,check status and do more coding things.
+
+see https://github.com/LLK/scratch-link
 
 # Usage
 
