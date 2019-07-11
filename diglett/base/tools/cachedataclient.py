@@ -1,10 +1,7 @@
 # coding=utf-8
-from diglett import app
-from diglett.base.cachedata import CacheData
+import os
 
-"""
-缓存数据工具
-"""
+from diglett import app
 
 
 class CacheDataClient(object):
@@ -13,38 +10,22 @@ class CacheDataClient(object):
 
     def read(self):
         '''
-        读取缓存
-        :return:jsonData数据
+        read the cache data
+        :return:json Data
         '''
-        file = open(self.cachePath, 'r')
+        if not os.path.exists(self.cachePath):
+            return None
+        file = open(self.cachePath, 'r', encoding="UTF-8")
         jsonData = file.read()
         return jsonData
 
     def write(self, jsonData):
         '''
-        写入缓存
-        :param jsonData:json 格式数据
+        write the data to json
+        :param jsonData:json
         '''
         file = open(self.cachePath, 'w')
         file.write(jsonData)
-        file.flush()
-
-    def readAndWrite(self, cacheDataObj):
-        '''
-        根据CacheData对象进行增量保存
-        :param cacheDataObj: CacheData的对象
-        :return:
-        '''
-        cacheData = CacheData().toObj(self.read())
-        if cacheDataObj.getJobnumber:
-            cacheData.setJobnumber(cacheDataObj.getJobnumber)
-        if cacheDataObj.getSN:
-            cacheData.setSN(cacheDataObj.getSN)
-        if cacheDataObj.getSampleCode:
-            cacheData.setSN(cacheDataObj.getSampleCode)
-
-        file = open(self.cachePath, 'w')
-        file.write(cacheData.toJson())
         file.flush()
 
 

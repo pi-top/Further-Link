@@ -16,6 +16,8 @@ class OSInfoSV(object):
 
         if eths.__len__() > 1:
             eth0 = eths[1]
+        else:
+            eth0 = "0.0.0.0/0"
 
         if wlans.__len__() > 1:
             wlan0 = wlans[1]
@@ -35,4 +37,7 @@ class OSInfoSV(object):
         n = os.popen("uname -n").readlines()
         r = os.popen("uname -r").readlines()
         s = os.popen("uname -s").readlines()
-        return (n[0] + " " + s[0] + " " + r[0]).replace("\n", "").replace('\r', '')
+        if n.__len__() > 0 and r.__len__() > 0 and s.__len__() > 0:
+            return (n[0] + " " + s[0] + " " + r[0]).replace("\n", "").replace('\r', '')
+        else:
+            return "Not Linux"

@@ -4,10 +4,6 @@ from diglett import logger
 from diglett.base.beanret import BeanRet
 
 
-def http(url, data, method="GET"):
-    pass
-
-
 def get(url):
     logger.info(url)
     response = request.urlopen(url)
@@ -15,7 +11,7 @@ def get(url):
     logger.info(result)
     if result != None:
         beanret = BeanRet()
-        beanret.toObj(result)
+        beanret.to_obj(result)
         return beanret
 
 
@@ -27,7 +23,7 @@ def post(url, data=None):
         response = request.urlopen(req)
         result = response.read().decode(encoding='utf-8')
         logger.info(result)
-        beanret = BeanRet().toObj(result)
+        beanret = BeanRet().to_obj(result)
         return beanret
     except:
         return BeanRet(success=False)
