@@ -3,7 +3,7 @@ import subprocess
 import threading
 import time
 
-from diglett.base.command import Command
+from src.base.command import Command
 
 '''
  process running some cmd and use webcoket send result back

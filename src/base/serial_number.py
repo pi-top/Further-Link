@@ -1,7 +1,7 @@
 # coding=utf-8
 import configparser
 
-from diglett import app
+from src import app
 
 
 class SerialNumber:

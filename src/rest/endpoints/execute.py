@@ -5,11 +5,11 @@ import os
 from flask import Blueprint, request, json
 from flask_restplus import Namespace, Resource
 
-from diglett.base.beanret import BeanRet
-from diglett.base.command import Command
-from diglett.base.file_tool import FileTool
-from diglett.rest.endpoints.process_thread import Process
-from diglett.rest.endpoints.serializers import bean, code_vo
+from src.base.beanret import BeanRet
+from src.base.command import Command
+from src.base.file_tool import FileTool
+from src.rest.endpoints.process_thread import Process
+from src.rest.endpoints.serializers import bean, code_vo
 
 """
 this is main process of python file exec on OS,

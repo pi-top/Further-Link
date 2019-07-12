@@ -1,7 +1,7 @@
 from urllib import request, parse
 
-from diglett import logger
-from diglett.base.beanret import BeanRet
+from src import logger
+from src.base.beanret import BeanRet
 
 
 def get(url):

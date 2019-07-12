@@ -2,7 +2,7 @@
 import configparser
 import logging.config
 
-from diglett import app
+from src import app
 from reg_thread import RegToServer
 
 if __name__ == "__main__":

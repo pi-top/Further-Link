@@ -4,11 +4,11 @@ import json
 import logging
 import uuid
 
-from diglett.base.cachedata import CacheData
-from diglett.base.http import post
-from diglett.base.serial_number import SerialNumber
-from diglett.base.tools.cachedataclient import CacheDataClient
-from diglett.service.basesv import BaseSV
+from src.base.cachedata import CacheData
+from src.base.http import post
+from src.base.serial_number import SerialNumber
+from src.base.tools.cachedataclient import CacheDataClient
+from src.service.basesv import BaseSV
 
 log = logging.getLogger(__name__)
 

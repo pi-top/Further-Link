@@ -1,7 +1,7 @@
 # coding=utf-8
 import os
 
-from diglett.service.basesv import BaseSV
+from src.service.basesv import BaseSV
 
 
 class BatterySV(BaseSV):

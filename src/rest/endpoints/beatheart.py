@@ -3,8 +3,8 @@ import logging
 
 from flask_restplus import Namespace, Resource
 
-from diglett.base.beanret import BeanRet
-from diglett.rest.endpoints.serializers import bean
+from src.base.beanret import BeanRet
+from src.rest.endpoints.serializers import bean
 
 log = logging.getLogger(__name__)
 

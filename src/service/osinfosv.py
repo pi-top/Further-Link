@@ -1,7 +1,7 @@
 # coding=utf-8
 import os
 
-from diglett import logger
+from src import logger
 
 
 class OSInfoSV(object):

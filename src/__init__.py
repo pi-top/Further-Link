@@ -3,14 +3,14 @@ from flask import Flask
 from flask_cors import CORS
 from flask_sockets import Sockets
 
-from diglett.base.log4py import logger
-from diglett.base.tools.regexConverter import RegexConverter
-from diglett.rest import api, api_blueprint
-from diglett.rest.endpoints import execute
-from diglett.rest.endpoints.battery import ns_battery
-from diglett.rest.endpoints.beatheart import ns_beatheart
-from diglett.rest.endpoints.codefile import ns_file
-from diglett.rest.endpoints.execute import ns_exec
+from src.base.log4py import logger
+from src.base.tools.regexConverter import RegexConverter
+from src.rest import api, api_blueprint
+from src.rest.endpoints import execute
+from src.rest.endpoints.battery import ns_battery
+from src.rest.endpoints.beatheart import ns_beatheart
+from src.rest.endpoints.codefile import ns_file
+from src.rest.endpoints.execute import ns_exec
 
 app = Flask(__name__)
 sockets = Sockets(app)

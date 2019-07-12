@@ -1,7 +1,7 @@
 # coding=utf-8
 import os
 
-from diglett import app
+from src import app
 
 
 class CacheDataClient(object):

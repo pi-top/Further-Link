@@ -1,6 +1,6 @@
 from flask_restplus import fields
 
-from diglett.rest import api
+from src.rest import api
 
 
 exec_code = api.model('code for running', {

@@ -3,12 +3,12 @@ import configparser
 import threading
 import time
 
-from diglett import app
-from diglett import logger
-from diglett.base.http import get
-from diglett.base.oled_token import Token
-from diglett.service.osinfosv import OSInfoSV
-from diglett.service.signInServer import SignInServerSV
+from src import app
+from src import logger
+from src.base.http import get
+from src.base.oled_token import Token
+from src.service.osinfosv import OSInfoSV
+from src.service.signInServer import SignInServerSV
 
 
 class RegToServer(threading.Thread):

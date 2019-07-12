@@ -4,9 +4,9 @@ import logging
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from diglett.base.beanret import BeanRet
-from diglett.base.file_tool import FileTool
-from diglett.rest.endpoints.serializers import bean
+from src.base.beanret import BeanRet
+from src.base.file_tool import FileTool
+from src.rest.endpoints.serializers import bean
 
 """
 this is main process of python file exec on OS,
