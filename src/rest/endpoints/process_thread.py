@@ -1,15 +1,13 @@
-import logging
 import subprocess
 import threading
 import time
 
+from src import logger
 from src.base.command import Command
 
 '''
  process running some cmd and use webcoket send result back
 '''
-
-log = logging.getLogger(__name__)
 
 
 class Process(threading.Thread):
@@ -57,7 +55,7 @@ class Process(threading.Thread):
                 break
 
             # sending the log to client
-            log.debug(result)
+            logger.debug(result)
             if self.websocket.closed:
                 break
 

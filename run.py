@@ -2,14 +2,15 @@
 import configparser
 import logging.config
 
-from src import app
 from reg_thread import RegToServer
+from settings import LOGGING_CONF
+from src import app
 
 if __name__ == "__main__":
     from gevent import pywsgi
     from geventwebsocket.handler import WebSocketHandler
 
-    logging.config.fileConfig('logging.conf')
+    logging.config.fileConfig(LOGGING_CONF)
     log = logging.getLogger(__name__)
     log.info('>>>>> Starting server <<<<<')
     try:

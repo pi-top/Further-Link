@@ -13,6 +13,8 @@ PITOP_CONF = os.path.join(_basedir, 'pitop.conf')
 # cachedata 缓存文件
 CACHEDATA_JSON = os.path.join(_basedir, 'cachedata.json')
 
+LOGGING_CONF = os.path.join(_basedir, 'logging.conf')
+
 # Flask settings
 FLASK_DEBUG = True  # Do not use debug mode in production
 
