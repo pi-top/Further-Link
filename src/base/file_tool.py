@@ -152,4 +152,4 @@ class FileTool(Singleton):
         :return: cmd to run the python file
         """
 
-        return "python3 -u " + pyfile
+        return "python3 " + pyfile

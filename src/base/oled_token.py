@@ -14,7 +14,6 @@ class Token(object):
         '''
 
         try:
-
             if not token:
                 return False
             log.info("the oled Token [" + token + "]")

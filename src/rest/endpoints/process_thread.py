@@ -1,3 +1,4 @@
+import os
 import subprocess
 import threading
 import time
@@ -37,6 +38,7 @@ class Process(threading.Thread):
         :return:
         '''
         self.is_stop = True
+        self.__kill()
         self.join()
 
     def write(self, content):
@@ -62,11 +64,42 @@ class Process(threading.Thread):
             self.websocket.send(result)
             time.sleep(.05)
 
+        self.__kill()
+
+    def __kill(self):
+        # kill pid
+        flag = self.__grep_awk()
+
+        if not flag:
+            # close stdout that real stop subprocess running
+            self.pipe.stdout.close()
+
+            # kill subprocess
+            self.pipe.kill()
+
         # end of file (EOF)
         if not self.websocket.closed:
             self.websocket.send(Command.EOF.value)
 
-        # close stdout that real stop subprocess running
-        self.pipe.stdout.close()
-        # kill subprocess
-        self.pipe.kill()
+    def __grep_awk(self):
+        """
+        find the cmd thread pid
+        :return:  pid
+        """
+        command = "ps -ef|grep '" + (
+            self.cmd.replace('python3', '').replace("  ", "").replace(" ", "")) + "'|awk '{print $2}'"
+        pids = os.popen(command).readlines()
+        if pids:
+            count = 0
+            for pid in pids:
+                if pid:
+                    kill_pid = pid.replace('\n', '')
+                    os.popen("kill -9 " + kill_pid)
+                    count += 1
+
+            if count > 0:
+                return True
+            else:
+                return False
+        else:
+            return False
