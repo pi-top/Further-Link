@@ -9,7 +9,6 @@ verify_ssl = true
 pytest = "*"
 Flask = "==1.0.3"
 Flask-Sockets = "==0.2.1"
-requests = "*"
 
 [requires]
 python_version = "3.7"
