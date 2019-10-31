@@ -1,7 +1,8 @@
 from flask import Flask
 from flask_sockets import Sockets
 import json
-# import execute
+
+from .process_handler import ProcessHandler
 
 app = Flask(__name__)
 sockets = Sockets(app)
@@ -12,14 +13,29 @@ def ok():
 
 @sockets.route('/exec')
 def api(socket):
+    proccess_handler = ProcessHandler(socket)
+    bad_message_message = json.dumps({
+        "type":"error",
+        "data": {
+            "message": "Bad message"
+        }
+    })
+
     while True:
         try:
-            message = json.loads(socket.receive())
-        except Exception:
-            socket.send(json.dumps( {"type":"error"} ))
+            m = socket.receive()
+            message = json.loads(m)
+            type = message['type']
+        except Exception as e:
+            socket.send(bad_message_message)
+            continue
 
-        if message['type'] == 'start':
-            socket.send('{"type":"started"}')
+        if (type == 'start'
+            and 'data' in message
+            and 'sourceScript' in message['data']
+            and isinstance(message.get('data').get('sourceScript'), str)):
+                proccess_handler.start(message['data']['sourceScript']);
+                socket.send('{"type":"started"}')
 
-            if message['data']:
-                socket.send(json.dumps({ "type" : "stdout", "data" : {"output":"hi"}}))
+        else:
+            socket.send(bad_message_message)

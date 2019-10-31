@@ -10,6 +10,7 @@ pytest = "*"
 Flask = "==1.0.3"
 Flask-Sockets = "==0.2.1"
 websocket-client = "*"
+pytest-timeout = "*"
 
 [requires]
 python_version = "3.7"

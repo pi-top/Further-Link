@@ -2,8 +2,8 @@ import pytest
 import threading
 import asyncio
 import websocket
-import time
 import json
+from datetime import datetime
 
 from run import run, app
 
@@ -19,18 +19,25 @@ def test_status():
     assert '200 OK' == r.status
     assert 'OK' == r.data.decode("utf-8")
 
-def test_start():
+def test_bad_message():
     websocket_client.connect("ws://localhost:8080/exec")
     start_cmd = json.dumps({"type":"start"})
     websocket_client.send(start_cmd)
-    r = websocket_client.recv()
-    assert r == '{"type":"started"}'
 
-def test_runstuff():
-    websocket_client.connect("ws://localhost:8080/exec")
-    start_cmd = json.dumps({"type":"start", "data": {"sourceScript":"print('hi')"}})
-    websocket_client.send(start_cmd)
-    r = websocket_client.recv()
-    assert r == '{"type":"started"}'
     r = json.loads(websocket_client.recv())
-    assert r == { "type" : "stdout", "data" : {"output":"hi"}}
+    assert r == {"type":"error", "data": {"message": "Bad message"}}
+
+def test_run_code():
+    websocket_client.connect("ws://localhost:8080/exec")
+    code = "from datetime import datetime\nprint(datetime.now().strftime('%A'))"
+    start_cmd = json.dumps({
+        "type": "start",
+        "data": { "sourceScript": code }
+    })
+    websocket_client.send(start_cmd)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"started"}
+    r = json.loads(websocket_client.recv())
+    day = datetime.now().strftime('%A')
+    assert r == { "type" : "stdout", "data" : {"output": day + '\n' }}
