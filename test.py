@@ -77,12 +77,7 @@ def test_bad_code():
     assert r == {"type":"started"}
 
     r = json.loads(websocket_client.recv())
-    assert r == {
-        "type":"stderr",
-        "data": {
-            "output": "  File \"<string>\", line 1\n"
-        }
-    }
+    assert r['data']['output'].startswith('  File');
 
     r = json.loads(websocket_client.recv())
     assert r == {

@@ -8,8 +8,9 @@ class ProcessHandler:
         self.socket = socket
 
     def start(self, script):
-        open("/tmp/guru99.py","w+").write(script)
-        command = 'python3 -u /tmp/guru99.py'
+        filename = '/tmp/' + str(id(self.socket)) + '.py'
+        open(filename,"w+").write(script)
+        command = 'python3 -u ' + filename
         self.process = subprocess.Popen(command, shell=True,
                                      stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE,
