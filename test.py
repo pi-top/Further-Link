@@ -38,6 +38,10 @@ def test_run_code():
 
     r = json.loads(websocket_client.recv())
     assert r == {"type":"started"}
+
     r = json.loads(websocket_client.recv())
     day = datetime.now().strftime('%A')
     assert r == { "type" : "stdout", "data" : {"output": day + '\n' }}
+
+    r = json.loads(websocket_client.recv())
+    assert r == { "type" : "stopped"}

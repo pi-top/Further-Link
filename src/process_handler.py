@@ -8,20 +8,21 @@ class ProcessHandler:
 
     def start(self, script):
         command = 'python -c "' + script + '"'
-        self.pipe = subprocess.Popen(command, shell=True,
+        self.process = subprocess.Popen(command, shell=True,
                                      stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT)
 
-        handler = threading.Thread(target=self.handle_process, daemon=True)
-        handler.start()
+        self.handler = threading.Thread(target=self.handle_process, daemon=True)
+        self.handler.start()
 
 
     def handle_process(self):
-        for line in iter(self.pipe.stdout.readline, 'b'):
+        for line in iter(self.process.stdout.readline, 'b'):
             # decode byte to str
             output = line.decode(encoding='utf-8')
-            if output == '' and self.pipe.poll() != None:
+            stopped = self.process.poll() != None
+            if output == '' and stopped:
                 break
 
             # sending the log to client
@@ -31,3 +32,5 @@ class ProcessHandler:
                     'output': output
                 }
             }))
+
+        self.socket.send(json.dumps({ "type": "stopped" }))
