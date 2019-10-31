@@ -34,8 +34,14 @@ def api(socket):
             and 'data' in message
             and 'sourceScript' in message['data']
             and isinstance(message.get('data').get('sourceScript'), str)):
-                proccess_handler.start(message['data']['sourceScript']);
+                proccess_handler.start(message['data']['sourceScript'])
                 socket.send('{"type":"started"}')
+
+        elif (type == 'stdin'
+            and 'data' in message
+            and 'input' in message['data']
+            and isinstance(message.get('data').get('input'), str)):
+                proccess_handler.input(message['data']['input'])
 
         elif type == 'stop':
             proccess_handler.stop()

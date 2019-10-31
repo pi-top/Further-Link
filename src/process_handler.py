@@ -8,7 +8,8 @@ class ProcessHandler:
         self.socket = socket
 
     def start(self, script):
-        command = 'python -c "' + script + '"'
+        open("/tmp/guru99.py","w+").write(script)
+        command = 'python3 -u /tmp/guru99.py'
         self.process = subprocess.Popen(command, shell=True,
                                      stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE,
@@ -20,6 +21,10 @@ class ProcessHandler:
 
     def stop(self):
         self.process.kill()
+
+    def input(self, input):
+        self.process.stdin.write(input.encode("utf-8"))
+
 
     def handle_stdout(self):
         for line in iter(self.process.stdout.readline, 'b'):

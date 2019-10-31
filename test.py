@@ -48,7 +48,7 @@ def test_run_code():
 
 def test_stop_early():
     websocket_client.connect("ws://localhost:8080/exec")
-    code = "whileTrue: pass"
+    code = "while True: pass"
     start_cmd = json.dumps({
         "type": "start",
         "data": { "sourceScript": code }
@@ -110,3 +110,56 @@ def test_bad_code():
 
     r = json.loads(websocket_client.recv())
     assert r == {"type":"stopped", "data": { "exitCode": 1 }}
+
+def test_input():
+    websocket_client.connect("ws://localhost:8080/exec")
+    code = """s = input()
+while "BYE" != s:
+    print(["HUH?! SPEAK UP, SONNY!","NO, NOT SINCE 1930"][s.isupper()])
+    s = input()"""
+
+    start_cmd = json.dumps({
+        "type": "start",
+        "data": { "sourceScript": code }
+    })
+    websocket_client.send(start_cmd)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"started"}
+
+    user_input = json.dumps({
+        "type": "stdin",
+        "data": { "input": "hello" }
+    })
+    websocket_client.send(user_input)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {
+        "type":"stdout",
+        "data": {
+            "output": "HUH?! SPEAK UP, SONNY!"
+        }
+    }
+
+    user_input = json.dumps({
+        "type": "stdin",
+        "data": { "input": "HEY GRANDMA" }
+    })
+    websocket_client.send(user_input)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {
+        "type":"stdout",
+        "data": {
+            "output": "NO, NOT SINCE 1930"
+        }
+    }
+
+    user_input = json.dumps({
+        "type": "stdin",
+        "data": { "input": "BYE" }
+    })
+    websocket_client.send(user_input)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"stopped", "data": { "exitCode": 0 }}
