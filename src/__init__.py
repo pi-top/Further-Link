@@ -37,5 +37,8 @@ def api(socket):
                 proccess_handler.start(message['data']['sourceScript']);
                 socket.send('{"type":"started"}')
 
+        elif type == 'stop':
+            proccess_handler.stop()
+
         else:
             socket.send(bad_message_message)
