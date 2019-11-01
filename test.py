@@ -12,7 +12,6 @@ http_client = app.test_client()
 server = threading.Thread(target=run, daemon=True)
 server.start()
 websocket_client = websocket.WebSocket()
-websocket_client.connect("ws://localhost:8080/exec")
 
 def test_status():
     r = http_client.get('/status')
@@ -158,3 +157,33 @@ while "BYE" != s:
 
     r = json.loads(websocket_client.recv())
     assert r == {"type":"stopped", "data": { "exitCode": 0 }}
+
+def test_two_clients():
+    websocket_client2 = websocket.WebSocket()
+    websocket_client.connect("ws://localhost:8080/exec")
+    websocket_client2.connect("ws://localhost:8080/exec")
+
+    code = "while True: pass"
+    start_cmd = json.dumps({
+        "type": "start",
+        "data": { "sourceScript": code }
+    })
+    websocket_client.send(start_cmd)
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"started"}
+
+    websocket_client2.send(start_cmd)
+    r = json.loads(websocket_client2.recv())
+    assert r == {"type":"started"}
+
+    stop_cmd = json.dumps({ "type": "stop" })
+    websocket_client.send(stop_cmd)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"stopped", "data": { "exitCode": -9 }}
+
+    stop_cmd = json.dumps({ "type": "stop" })
+    websocket_client2.send(stop_cmd)
+
+    r = json.loads(websocket_client2.recv())
+    assert r == {"type":"stopped", "data": { "exitCode": -9 }}
