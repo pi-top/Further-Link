@@ -1,35 +1,57 @@
-# coding=utf-8
 from flask import Flask
-from flask_cors import CORS
 from flask_sockets import Sockets
+import json
 
-from src.base.log4py import logger
-from src.base.tools.regexConverter import RegexConverter
-from src.rest import api, api_blueprint
-from src.rest.endpoints import execute
-from src.rest.endpoints.battery import ns_battery
-from src.rest.endpoints.beatheart import ns_beatheart
-from src.rest.endpoints.codefile import ns_file
-from src.rest.endpoints.execute import ns_exec
+from .process_handler import ProcessHandler
 
 app = Flask(__name__)
 sockets = Sockets(app)
-# 跨域设置，允许跨域
-CORS(app, supports_credentials=True, resources={r'/*': {"origins": "*"}})
 
-app.config.from_object('settings')
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
-app.url_map.converters['regex'] = RegexConverter
+@app.route('/status')
+def ok():
+    return 'OK'
 
-logger.info("配置文件路径 ====> " + app.config["PITOP_CONF"])
-logger.info("缓存文件路径 ====> " + app.config["CACHEDATA_JSON"])
+@sockets.route('/exec')
+def api(socket):
+    process_handler = ProcessHandler(socket)
+    bad_message_message = json.dumps({
+        'type':'error',
+        'data': {
+            'message': 'Bad message'
+        }
+    })
 
-api.add_namespace(ns_battery)
-api.add_namespace(ns_beatheart)
-api.add_namespace(ns_exec)
-# api.add_namespace(ns_file)
+    while True:
+        try:
+            # calling receive is necessary before checking if closed
+            m = socket.receive()
+            if (socket.closed):
+                if process_handler.is_running():
+                    process_handler.stop()
+                break;
+            message = json.loads(m)
+            type = message['type']
+        except Exception as e:
+            socket.send(bad_message_message)
+            continue
 
-app.register_blueprint(blueprint=api_blueprint)
+        if (type == 'start'
+            and 'data' in message
+            and 'sourceScript' in message['data']
+            and isinstance(message.get('data').get('sourceScript'), str)):
+                process_handler.start(message['data']['sourceScript'])
+                socket.send(json.dumps({'type': 'started'}))
 
-# ws
-sockets.register_blueprint(execute.ws)
+        elif (type == 'stdin'
+            and process_handler.is_running()
+            and 'data' in message
+            and 'input' in message['data']
+            and isinstance(message.get('data').get('input'), str)):
+                process_handler.input(message['data']['input'])
+
+        elif (type == 'stop'
+            and process_handler.is_running()):
+            process_handler.stop()
+
+        else:
+            socket.send(bad_message_message)

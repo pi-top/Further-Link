@@ -1,83 +1,62 @@
 # ~diglett~ ~webide-~ * further-link * ~jv-rover-pi-client-connector~
-this is python project, ~like pokemon diglett,it can make a tunnel from client to server and~ running code,register to cloud,check status and do more coding things.
+flask-sockets server for executing python code and accessing stdin/out/err
+streams over websockets.
+~like pokemon diglett, it can make a tunnel from client to server~
 
-see https://github.com/LLK/scratch-link
+![exeggcute](https://cdn.bulbagarden.net/upload/thumb/a/af/102Exeggcute.png/250px-102Exeggcute.png) ![remote](http://aux.iconspalace.com/uploads/1362096024564616892.png) ![python](https://i.pinimg.com/originals/c3/8a/8e/c38a8ed8ae5148e1441045fea19cfd20.png)
 
-# Usage
+see also https://github.com/LLK/scratch-link
 
- Before running install flask  modules using:
- ```
-  pip install -r requirements.txt
- ```
- if your pyton3 but pip is pip3 you should useing:
- ```
-   pip3 install -r requirements.txt
- ```
-
- To start production use:
- ```
-  python3 run.py
- ```
-
-The Api you can use swagger show them,when you running it,if you are not change the default
-port it should be [80] or [5000] port
-you can try :
-  ```
-   http://ip:[80|5000]/api/
-  ```
-
-
-# API
-### Battery
-battery check
-
-GET /battery/
-
+### Usage
+We are using [pipenv](https://github.com/pypa/pipenv) for dependencies
 ```
-    curl -X GET "http://ip:[port]/api/battery/" -H "accept: application/json"
-```
-```
-    {
-      "info": "success",
-      "code": "0000",
-      "data": {
-        "state": "FullyCharged",
-        "capacity": "100"
-      },
-      "success": true
-    }
+pipenv shell
+pipenv sync
+python3 run.py
 ```
 
-
-### Execute Code
-init project files
-
-POST /exec/
+### Websocket API
+Each connected websocket client can manage a single python process.
 ```
-    curl -X POST "http://ip:[port]/api/exec/" -H "accept: application/json" -H "Content-Type: application/json" -d "[ { \"projectVersionId\": \"string\", \"path\": \"string\", \"content\": \"string\", \"id\": \"string\" }]"
-```
-```
-    {
-      "info": "success",
-      "code": "0000",
-      "data": null,
-      "success": true
-    }
+ws://ip:[port]/exec
 ```
 
-### Websocket
-this  ws api for running code
-
+Commands:
 ```
-     ws://ip:[port]/ws/exec
-
-     Data:
-
-     {
-       "cmd":"[start|stop|input]",
-       "projectVersionId":"xxxxx",
-       "data":"xxx/xxxx/sss.py | ps -ef"
-      }
+{
+ "type":"[start|stop|stdin]",
+ "data": {...}
+}
+```
+Responses:
+```
+{
+ "type":"[error|started|stopped|stdout|stderr]",
+ "data": {...}
+}
 ```
 
+server or command errors will return a `error` type response with eg `data: { message: "something went wrong and it's not python code" }`
+
+`start` command will start a new python process. The code to run can be specified in data by either `data: {sourceScript:"print('hi')"}` or `data: {sourcePath: "/home/pi/run.py"}`
+`started` response does not have data.
+
+`stdin` command has `data: { input: "this can be read by python\n"}`. *NB* It's
+important to end all input with a newline (`\n`).
+`stdout` response has data: { output: "this was printed by python"}
+
+`stop` command has no data
+`stopped` response returns the exit code int `data: {exitCode: 0}`
+
+python errors will trigger a `stderr` response with `data: { output: "Traceback bleh bleh"}}`
+
+#### Example usage:
+- Connect to websocket on /exec: `websocat ws://localhost:8500/exec`
+- Input start command: `{"type":"start","data":{"sourceScript":"print('hi')"}}`
+- Recieve response on websocket: `{"type":"stdout","data":"hi\n"}`
+
+### HTTP API
+```
+/status => :ok_hand:
+```
 
