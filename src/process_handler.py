@@ -25,7 +25,7 @@ class ProcessHandler:
 
     def input(self, input):
         self.process.stdin.write(input.encode("utf-8"))
-
+        self.process.stdin.flush()
 
     def handle_stdout(self):
         for line in iter(self.process.stdout.readline, 'b'):
