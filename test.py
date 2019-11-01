@@ -124,7 +124,7 @@ while "BYE" != s:
 
     user_input = json.dumps({
         "type": "stdin",
-        "data": { "input": "hello" }
+        "data": { "input": "hello\n" }
     })
     websocket_client.send(user_input)
 
@@ -132,13 +132,13 @@ while "BYE" != s:
     assert r == {
         "type":"stdout",
         "data": {
-            "output": "HUH?! SPEAK UP, SONNY!"
+            "output": "HUH?! SPEAK UP, SONNY!\n"
         }
     }
 
     user_input = json.dumps({
         "type": "stdin",
-        "data": { "input": "HEY GRANDMA" }
+        "data": { "input": "HEY GRANDMA\n" }
     })
     websocket_client.send(user_input)
 
@@ -146,13 +146,13 @@ while "BYE" != s:
     assert r == {
         "type":"stdout",
         "data": {
-            "output": "NO, NOT SINCE 1930"
+            "output": "NO, NOT SINCE 1930\n"
         }
     }
 
     user_input = json.dumps({
         "type": "stdin",
-        "data": { "input": "BYE" }
+        "data": { "input": "BYE\n" }
     })
     websocket_client.send(user_input)
 
