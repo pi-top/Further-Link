@@ -13,11 +13,11 @@ def ok():
 
 @sockets.route('/exec')
 def api(socket):
-    proccess_handler = ProcessHandler(socket)
+    process_handler = ProcessHandler(socket)
     bad_message_message = json.dumps({
-        "type":"error",
-        "data": {
-            "message": "Bad message"
+        'type':'error',
+        'data': {
+            'message': 'Bad message'
         }
     })
 
@@ -34,17 +34,19 @@ def api(socket):
             and 'data' in message
             and 'sourceScript' in message['data']
             and isinstance(message.get('data').get('sourceScript'), str)):
-                proccess_handler.start(message['data']['sourceScript'])
-                socket.send('{"type":"started"}')
+                process_handler.start(message['data']['sourceScript'])
+                socket.send(json.dumps({'type': 'started'}))
 
         elif (type == 'stdin'
+            and process_handler.is_running()
             and 'data' in message
             and 'input' in message['data']
             and isinstance(message.get('data').get('input'), str)):
-                proccess_handler.input(message['data']['input'])
+                process_handler.input(message['data']['input'])
 
-        elif type == 'stop':
-            proccess_handler.stop()
+        elif (type == 'stop'
+            and process_handler.is_running()):
+            process_handler.stop()
 
         else:
             socket.send(bad_message_message)

@@ -187,3 +187,41 @@ def test_two_clients():
 
     r = json.loads(websocket_client2.recv())
     assert r == {"type":"stopped", "data": { "exitCode": -9 }}
+
+def test_out_of_order_commands():
+    websocket_client.connect("ws://localhost:8080/exec")
+
+    user_input = json.dumps({
+        "type": "stdin",
+        "data": { "input": "hello\n" }
+    })
+    websocket_client.send(user_input)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"error", "data": {"message": "Bad message"}}
+
+    stop_cmd = json.dumps({ "type": "stop" })
+    websocket_client.send(stop_cmd)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"error", "data": {"message": "Bad message"}}
+    code = "while True: pass"
+    start_cmd = json.dumps({
+        "type": "start",
+        "data": { "sourceScript": code }
+    })
+    websocket_client.send(start_cmd)
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"started"}
+
+    stop_cmd = json.dumps({ "type": "stop" })
+    websocket_client.send(stop_cmd)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"stopped", "data": { "exitCode": -9 }}
+
+    stop_cmd = json.dumps({ "type": "stop" })
+    websocket_client.send(stop_cmd)
+
+    r = json.loads(websocket_client.recv())
+    assert r == {"type":"error", "data": {"message": "Bad message"}}
