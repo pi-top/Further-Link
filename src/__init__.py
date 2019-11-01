@@ -23,7 +23,12 @@ def api(socket):
 
     while True:
         try:
+            # calling receive is necessary before checking if closed
             m = socket.receive()
+            if (socket.closed):
+                if process_handler.is_running():
+                    process_handler.stop()
+                break;
             message = json.loads(m)
             type = message['type']
         except Exception as e:

@@ -10,6 +10,7 @@ class ProcessHandler:
     def start(self, script):
         filename = '/tmp/' + str(id(self.socket)) + '.py'
         open(filename, 'w+').write(script)
+        # TODO clean up the file
         command = 'python3 -u ' + filename
         self.process = subprocess.Popen(command, shell=True,
                                         stdin=subprocess.PIPE,
