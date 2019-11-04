@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sockets import Sockets
-import json
 
+from .message import parse_message, create_message
 from .process_handler import ProcessHandler
 
 app = Flask(__name__)
@@ -14,43 +14,39 @@ def ok():
 @sockets.route('/exec')
 def api(socket):
     process_handler = ProcessHandler(socket)
-    bad_message_message = json.dumps({
-        'type':'error',
-        'data': {
-            'message': 'Bad message'
-        }
-    })
+    bad_message_message = create_message('error', { 'message': 'Bad message' })
 
     while True:
         try:
             # calling receive is necessary before checking if closed
-            m = socket.receive()
+            message = socket.receive()
+            print(message)
             if (socket.closed):
                 if process_handler.is_running():
                     process_handler.stop()
                 break;
-            message = json.loads(m)
-            type = message['type']
+
+            m_type, m_data = parse_message(message)
+
         except Exception as e:
-            socket.send(bad_message_message)
+            if isinstance(message, str):
+                socket.send(bad_message_message)
             continue
 
-        if (type == 'start'
-            and 'data' in message
-            and 'sourceScript' in message['data']
-            and isinstance(message.get('data').get('sourceScript'), str)):
-                process_handler.start(message['data']['sourceScript'])
-                socket.send(json.dumps({'type': 'started'}))
+        if (m_type == 'start'
+            and not process_handler.is_running() # TODO this should be tested in outofordercommands
+            and 'sourceScript' in m_data
+            and isinstance(m_data.get('sourceScript'), str)):
+                process_handler.start(m_data['sourceScript'])
+                socket.send(create_message('started'))
 
-        elif (type == 'stdin'
+        elif (m_type == 'stdin'
             and process_handler.is_running()
-            and 'data' in message
-            and 'input' in message['data']
-            and isinstance(message.get('data').get('input'), str)):
-                process_handler.input(message['data']['input'])
+            and 'input' in m_data
+            and isinstance(m_data.get('input'), str)):
+                process_handler.input(m_data['input'])
 
-        elif (type == 'stop'
-            and process_handler.is_running()):
+        elif (m_type == 'stop' and process_handler.is_running()):
             process_handler.stop()
 
         else:

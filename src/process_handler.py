@@ -1,7 +1,8 @@
 import subprocess
-import json
 import threading
 from time import sleep
+
+from .message import create_message
 
 class ProcessHandler:
     def __init__(self, socket):
@@ -40,11 +41,8 @@ class ProcessHandler:
 
             # sending the log to client
             if output != '':
-                self.socket.send(json.dumps({
-                    'type': 'stdout',
-                    'data': {
-                        'output': output
-                    }
+                self.socket.send(create_message('stdout', {
+                    'output': output
                 }))
 
     def handle_stderr(self):
@@ -56,23 +54,15 @@ class ProcessHandler:
 
             # sending the log to client
             if output != '':
-                self.socket.send(json.dumps({
-                    'type': 'stderr',
-                    'data': {
-                        'output': output
-                    }
+                self.socket.send(create_message('stderr', {
+                    'output': output
                 }))
-
 
     def handle_stopped(self):
         while True:
             sleep(0.1)
-            stopped = self.process.poll() != None
-            if stopped:
-                self.socket.send(json.dumps({
-                    'type': 'stopped',
-                    'data': {
-                        'exitCode': self.process.returncode
-                    }
+            if not self.is_running():
+                self.socket.send(create_message('stopped', {
+                    'exitCode': self.process.returncode
                 }))
                 break

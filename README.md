@@ -32,7 +32,7 @@ websocat ws://[IP]:[PORT]/exec
 ```
 
 Messages sent between client and server must be in JSON with two top level
-properties: string `type` and object `data`.
+properties: required string `type` and optional object `data`.
 
 Command types accepted by the server are:
 ```
@@ -53,14 +53,14 @@ Response types sent by the server are:
 Command and response details:
 - `start`: command will start a new python process. The code to run can be specified in data as either a `souceScript` or `sourcePath` e.g.
 `data: {sourceScript:"print('hi')"}` or `data: {sourcePath: "/home/pi/run.py"}`
-- `started`: response will be sent after a successful process `start` and does not have data.
+- `started`: response will be sent after a successful process `start`, has no data.
 
 - `stdin`: command is used to send data to process stdin e.g. `data: { input: "this can be read by python\n"}`.
 *NB* It's important to end all input with a newline (`\n`).
 - `stdout`: response sent when process prints to stdout. e.g. `data: { output: "this was printed by python"}`
 - `stderr`: response sent when process prints to stderr e.g. `data: { output: "Traceback bleh bleh"}`
 
-- `stop`: command is used to stop a running process early. has no data.
+- `stop`: command is used to stop a running process early, has no data.
 - `stopped`: response is sent when a process finished and has the exit code in e.g. `data: {exitCode: 0}`
 
 - `error`: response will be sent for bad commands or server errors e.g. `data: { message: "something went wrong and it's not your python code" }`
