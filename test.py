@@ -205,3 +205,40 @@ def test_out_of_order_commands():
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
+
+def test_discard_old_input():
+    code = 'print("hello world")'
+    start_cmd = create_message('start', { 'sourceScript': code })
+    websocket_client.send(start_cmd)
+
+    m_type, m_data = parse_message(websocket_client.recv())
+    assert m_type == 'started'
+
+    unterminated_input = create_message('stdin', {'input': 'unterminated input'})
+    websocket_client.send(unterminated_input)
+
+    m_type, m_data = parse_message(websocket_client.recv())
+    assert m_type == 'stdout'
+    assert m_data == {'output': 'hello world\n'}
+
+    m_type, m_data = parse_message(websocket_client.recv())
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
+
+    code = 'print(input())'
+    start_cmd = create_message('start', { 'sourceScript': code })
+    websocket_client.send(start_cmd)
+
+    m_type, m_data = parse_message(websocket_client.recv())
+    assert m_type == 'started'
+
+    user_input = create_message('stdin', {'input': 'hello\n'})
+    websocket_client.send(user_input)
+
+    m_type, m_data = parse_message(websocket_client.recv())
+    assert m_type == 'stdout'
+    assert m_data == {'output': 'hello\n'}
+
+    m_type, m_data = parse_message(websocket_client.recv())
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
