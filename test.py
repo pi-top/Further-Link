@@ -12,6 +12,7 @@ http_client = app.test_client()
 server = threading.Thread(target=run, daemon=True)
 server.start()
 websocket_client = websocket.WebSocket()
+websocket_client.connect("ws://localhost:8028/exec")
 
 def test_status():
     r = http_client.get('/status')
@@ -19,7 +20,6 @@ def test_status():
     assert 'OK' == r.data.decode("utf-8")
 
 def test_bad_message():
-    websocket_client.connect("ws://localhost:8080/exec")
     start_cmd = json.dumps({"type":"start"})
     websocket_client.send(start_cmd)
 
@@ -27,7 +27,6 @@ def test_bad_message():
     assert r == {"type":"error", "data": {"message": "Bad message"}}
 
 def test_run_code():
-    websocket_client.connect("ws://localhost:8080/exec")
     code = "from datetime import datetime\nprint(datetime.now().strftime('%A'))"
     start_cmd = json.dumps({
         "type": "start",
@@ -46,7 +45,6 @@ def test_run_code():
     assert r == {"type":"stopped", "data": { "exitCode": 0 }}
 
 def test_stop_early():
-    websocket_client.connect("ws://localhost:8080/exec")
     code = "while True: pass"
     start_cmd = json.dumps({
         "type": "start",
@@ -64,7 +62,6 @@ def test_stop_early():
     assert r == {"type":"stopped", "data": { "exitCode": -9 }}
 
 def test_bad_code():
-    websocket_client.connect("ws://localhost:8080/exec")
     code = "i'm not valid python"
     start_cmd = json.dumps({
         "type": "start",
@@ -106,7 +103,6 @@ def test_bad_code():
     assert r == {"type":"stopped", "data": { "exitCode": 1 }}
 
 def test_input():
-    websocket_client.connect("ws://localhost:8080/exec")
     code = """s = input()
 while "BYE" != s:
     print(["HUH?! SPEAK UP, SONNY!","NO, NOT SINCE 1930"][s.isupper()])
@@ -160,8 +156,7 @@ while "BYE" != s:
 
 def test_two_clients():
     websocket_client2 = websocket.WebSocket()
-    websocket_client.connect("ws://localhost:8080/exec")
-    websocket_client2.connect("ws://localhost:8080/exec")
+    websocket_client2.connect("ws://localhost:8028/exec")
 
     code = "while True: pass"
     start_cmd = json.dumps({
@@ -189,8 +184,6 @@ def test_two_clients():
     assert r == {"type":"stopped", "data": { "exitCode": -9 }}
 
 def test_out_of_order_commands():
-    websocket_client.connect("ws://localhost:8080/exec")
-
     user_input = json.dumps({
         "type": "stdin",
         "data": { "input": "hello\n" }
