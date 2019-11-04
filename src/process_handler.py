@@ -57,13 +57,12 @@ class ProcessHandler:
 
     def handle_output(self, stream):
         for line in iter(getattr(self.process, stream).readline, 'b'):
-            # decode byte to str
             output = line.decode(encoding='utf-8')
-            if not self.is_running():
-                break
 
-            # sending the log to client
             if output != '':
                 self.socket.send(create_message(stream, {
                     'output': output
                 }))
+
+            if not self.is_running():
+                break
