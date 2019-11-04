@@ -32,7 +32,7 @@ def api(socket):
             continue
 
         if (m_type == 'start'
-            and not process_handler.is_running() # TODO this should be tested in outofordercommands
+            and not process_handler.is_running()
             and 'sourceScript' in m_data
             and isinstance(m_data.get('sourceScript'), str)):
                 process_handler.start(m_data['sourceScript'])
