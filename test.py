@@ -152,37 +152,56 @@ def test_two_clients():
     assert m_data == {'exitCode': -9}
 
 def test_out_of_order_commands():
+    # send input
     user_input = create_message('stdin', {'input': 'hello\n'})
     websocket_client.send(user_input)
 
+    # bad message
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
+    # send stop
     stop_cmd = create_message('stop')
     websocket_client.send(stop_cmd)
 
+    # bad message
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
+    # send start
     code = "while True: pass"
     start_cmd = create_message('start', { 'sourceScript': code })
     websocket_client.send(start_cmd)
 
+    # started
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'started'
 
+    # send start
+    start_cmd = create_message('start', { 'sourceScript': code })
+    websocket_client.send(start_cmd)
+
+    # bad message
+    m_type, m_data = parse_message(websocket_client.recv())
+    assert m_type == 'error'
+    assert m_data == {'message': 'Bad message'}
+
+    # send stop
     stop_cmd = create_message('stop')
     websocket_client.send(stop_cmd)
 
+    # stopped
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'stopped'
     assert m_data == {'exitCode': -9}
 
+    # send stop
     stop_cmd = create_message('stop')
     websocket_client.send(stop_cmd)
 
+    # bad message
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
