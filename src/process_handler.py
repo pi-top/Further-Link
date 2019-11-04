@@ -1,5 +1,6 @@
 import subprocess
 import threading
+import os
 from time import sleep
 from functools import partial
 
@@ -30,7 +31,8 @@ class ProcessHandler:
             self.process.kill()
 
     def clean_up(self):
-        # TODO clean up the file
+        try: os.remove(self.get_filename())
+        except: pass
         self.stop();
 
     def get_filename(self):
@@ -50,6 +52,7 @@ class ProcessHandler:
                 self.socket.send(create_message('stopped', {
                     'exitCode': self.process.returncode
                 }))
+                self.clean_up()
                 break
 
     def handle_output(self, stream):
