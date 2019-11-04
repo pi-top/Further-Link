@@ -1,6 +1,7 @@
 import subprocess
 import threading
 from time import sleep
+from functools import partial
 
 from .message import create_message
 
@@ -9,54 +10,38 @@ class ProcessHandler:
         self.socket = socket
 
     def start(self, script):
-        filename = '/tmp/' + str(id(self.socket)) + '.py'
+        filename = self.get_filename()
         open(filename, 'w+').write(script)
-        # TODO clean up the file
         command = 'python3 -u ' + filename
         self.process = subprocess.Popen(command, shell=True,
                                         stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
 
-        threading.Thread(target=self.handle_stdout, daemon=True).start()
-        threading.Thread(target=self.handle_stderr, daemon=True).start()
+        handle_stdout = partial(self.handle_output, stream='stdout')
+        handle_stderr = partial(self.handle_output, stream='stderr')
+
+        threading.Thread(target=handle_stdout, daemon=True).start()
+        threading.Thread(target=handle_stderr, daemon=True).start()
         threading.Thread(target=self.handle_stopped, daemon=True).start()
 
     def stop(self):
-        self.process.kill()
+        if self.is_running():
+            self.process.kill()
 
-    def input(self, input):
-        self.process.stdin.write(input.encode('utf-8'))
-        self.process.stdin.flush()
+    def clean_up(self):
+        # TODO clean up the file
+        self.stop();
+
+    def get_filename(self):
+        return '/tmp/' + str(id(self.socket)) + '.py'
 
     def is_running(self):
         return hasattr(self, 'process') and self.process.poll() is None
 
-    def handle_stdout(self):
-        for line in iter(self.process.stdout.readline, 'b'):
-            # decode byte to str
-            output = line.decode(encoding='utf-8')
-            if not self.is_running():
-                break
-
-            # sending the log to client
-            if output != '':
-                self.socket.send(create_message('stdout', {
-                    'output': output
-                }))
-
-    def handle_stderr(self):
-        for line in iter(self.process.stderr.readline, 'b'):
-            # decode byte to str
-            output = line.decode(encoding='utf-8')
-            if not self.is_running():
-                break
-
-            # sending the log to client
-            if output != '':
-                self.socket.send(create_message('stderr', {
-                    'output': output
-                }))
+    def send_input(self, content):
+        self.process.stdin.write(content.encode('utf-8'))
+        self.process.stdin.flush()
 
     def handle_stopped(self):
         while True:
@@ -66,3 +51,16 @@ class ProcessHandler:
                     'exitCode': self.process.returncode
                 }))
                 break
+
+    def handle_output(self, stream):
+        for line in iter(getattr(self.process, stream).readline, 'b'):
+            # decode byte to str
+            output = line.decode(encoding='utf-8')
+            if not self.is_running():
+                break
+
+            # sending the log to client
+            if output != '':
+                self.socket.send(create_message(stream, {
+                    'output': output
+                }))

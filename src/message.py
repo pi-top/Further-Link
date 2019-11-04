@@ -14,5 +14,4 @@ def parse_message(message):
     m_type = m_type if isinstance(m_type, str) else ''
     m_data = m_data if isinstance(m_data, dict) else {}
 
-    print(m_type, m_data)
     return m_type, m_data

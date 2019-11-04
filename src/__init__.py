@@ -20,10 +20,8 @@ def api(socket):
         try:
             # calling receive is necessary before checking if closed
             message = socket.receive()
-            print(message)
             if (socket.closed):
-                if process_handler.is_running():
-                    process_handler.stop()
+                process_handler.clean_up()
                 break;
 
             m_type, m_data = parse_message(message)
@@ -44,7 +42,7 @@ def api(socket):
             and process_handler.is_running()
             and 'input' in m_data
             and isinstance(m_data.get('input'), str)):
-                process_handler.input(m_data['input'])
+                process_handler.send_input(m_data['input'])
 
         elif (m_type == 'stop' and process_handler.is_running()):
             process_handler.stop()
