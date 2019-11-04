@@ -55,21 +55,18 @@ Command and response details:
 - `start` command will start a new python process. The code to run can be specified in data as either a `souceScript` or `sourcePath` e.g.
 `data: {sourceScript:"print('hi')"}` or `data: {sourcePath: "/home/pi/run.py"}`
 - `started` response is sent after a successful process `start`, has no data.
-
-
+<br />
 - `stdin` command is used to send data to process stdin e.g. `data: { input: "this can be read by python\n"}`.
 *NB* It's important to end all input with a newline (`\n`).
 - `stdout` response is sent when process prints to stdout. e.g. `data: { output: "this was printed by python"}`
 - `stderr` response is sent when process prints to stderr e.g. `data: { output: "Traceback bleh bleh"}`
-
-
+<br />
 - `stop`: command is used to stop a running process early, has no data.
 - `stopped`: response is sent when a process finished and has the exit code in e.g. `data: {exitCode: 0}`
-
-
+<br />
 - `error`: response is sent for bad commands or server errors e.g. `data: { message: "something went wrong and it's not your python code" }`
 
 #### Example usage:
-- Connect to websocket on /exec: `websocat ws://localhost:8500/exec`
+- Connect to websocket on /exec: `websocat ws://localhost:8028/exec`
 - Input start command: `{"type":"start","data":{"sourceScript":"print('hi')"}}`
 - Recieve response on websocket: `{"type":"stdout","data":"hi\n"}`
