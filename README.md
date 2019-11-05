@@ -6,10 +6,6 @@ The primary use case of this is to remotely run user's code (python3) on the
 pi-top. A websocket api is provided to start and stop python programs and
 access their stdin/out/err streams.
 
-![exeggcute](https://cdn.bulbagarden.net/upload/thumb/a/af/102Exeggcute.png/250px-102Exeggcute.png) ![remote](http://aux.iconspalace.com/uploads/1362096024564616892.png) ![python](https://i.pinimg.com/originals/c3/8a/8e/c38a8ed8ae5148e1441045fea19cfd20.png)
-
-see also https://github.com/LLK/scratch-link
-
 ### Usage
 We are using Python 3.7 and managing dependencies with
 [pipenv](https://github.com/pypa/pipenv)
@@ -75,8 +71,13 @@ __It's important to end all input with a newline (`\n`).__
 - `stderr` response is sent when process prints to stderr e.g. `data: { output: "Traceback bleh bleh"}`
 <br>
 
-- `stop`: command is used to stop a running process early, has no data.
-- `stopped`: response is sent when a process finished and has the exit code in e.g. `data: {exitCode: 0}`
+- `stop` command is used to stop a running process early, has no data.
+- `stopped` response is sent when a process finished and has the exit code in e.g. `data: {exitCode: 0}`
 <br>
 
-- `error`: response is sent for bad commands or server errors e.g. `data: { message: "something went wrong and it's not your python code" }`
+- `error` response is sent for bad commands or server errors e.g. `data: { message: "something went wrong and it's not your python code" }`
+
+### Notes
+see also https://github.com/LLK/scratch-link
+
+![exeggcute](https://cdn.bulbagarden.net/upload/thumb/a/af/102Exeggcute.png/250px-102Exeggcute.png) ![remote](http://aux.iconspalace.com/uploads/1362096024564616892.png) ![python](https://i.pinimg.com/originals/c3/8a/8e/c38a8ed8ae5148e1441045fea19cfd20.png)
