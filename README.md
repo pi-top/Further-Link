@@ -26,11 +26,23 @@ curl http://[IP]:[PORT]/status # 200 OK
 ```
 
 ### Websocket API
+#### Example usage
+- Connect websocket on `/exec` (using [websocat](https://github.com/vi/websocat)):
+```
+websocat ws://localhost:8028/exec
+```
+- Send `start` command with script:
+```
+{"type":"start","data":{"sourceScript":"print('hi')"}}
+```
+- Recieve `stdout` response:
+```
+{"type":"stdout","data":"hi\n"}
+```
+
+#### Spec
 Each websocket client connected on `/exec` can manage a single python process
 at a time.
-```
-websocat ws://[IP]:[PORT]/exec
-```
 
 Messages sent between client and server must be in JSON with two top level
 properties: required string `type` and optional object `data`.
@@ -68,8 +80,3 @@ __It's important to end all input with a newline (`\n`).__
 <br>
 
 - `error`: response is sent for bad commands or server errors e.g. `data: { message: "something went wrong and it's not your python code" }`
-
-#### Example usage:
-- Connect to websocket on /exec: `websocat ws://localhost:8028/exec`
-- Input start command: `{"type":"start","data":{"sourceScript":"print('hi')"}}`
-- Recieve response on websocket: `{"type":"stdout","data":"hi\n"}`
