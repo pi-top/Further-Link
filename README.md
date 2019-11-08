@@ -27,13 +27,17 @@ curl http://[IP]:[PORT]/status # 200 OK
 ```
 websocat ws://localhost:8028/exec
 ```
-- Send `start` command with script:
+- Send `start` command with `sourceScript`:
 ```
-{"type":"start","data":{"sourceScript":"print('hi')"}}
+{ "type": "start", "data": { "sourceScript": "print('hi')" } }
 ```
 - Recieve `stdout` response:
 ```
-{"type":"stdout","data":"hi\n"}
+{ "type": "stdout", "data": { "output": "hi\n" } }
+```
+- Recieve `stopped` response:
+```
+{ "type": "stopped", "data": { "exitCode": 0 } }
 ```
 
 #### Spec
