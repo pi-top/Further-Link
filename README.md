@@ -77,6 +77,16 @@ __It's important to end all input with a newline (`\n`).__
 
 - `error` response is sent for bad commands or server errors e.g. `data: { message: "something went wrong and it's not your python code" }`
 
+### Ideas and TODOS
+- Implement `sourcePath`
+- Special output formats eg image, video, graph
+- Detaching, reattaching to long running programs
+- Device status endpoints eg battery
+- Connecction security codes displayed on OLED
+- Device registration to remote server to provide easier connection
+- Linking to user accounts, project workspaces & syncing
+- ~~Over the internet access with reverse proxy~~
+
 ### Notes
 see also https://github.com/LLK/scratch-link
 
