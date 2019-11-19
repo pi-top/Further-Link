@@ -9,7 +9,7 @@ Homepage: https://pi-top.com
 Package: pt-further-link
 Architecture: armhf
 Depends: ${misc:Depends}, ${python3:Depends},
- python3-flask, python-flask-sockets
+ python3-flask, python3-gevent
 Description: pt-further-link
  project further server to execute python programs
  remotely.
