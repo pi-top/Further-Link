@@ -14,10 +14,12 @@ server.start()
 websocket_client = websocket.WebSocket()
 websocket_client.connect('ws://localhost:8028/exec')
 
+
 def test_status():
     r = http_client.get('/status')
     assert '200 OK' == r.status
     assert 'OK' == r.data.decode('utf-8')
+
 
 def test_bad_message():
     start_cmd = create_message('start')
@@ -27,9 +29,10 @@ def test_bad_message():
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
+
 def test_run_code():
     code = 'from datetime import datetime\nprint(datetime.now().strftime("%A"))'
-    start_cmd = create_message('start', { 'sourceScript': code })
+    start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
 
     m_type, m_data = parse_message(websocket_client.recv())
@@ -44,9 +47,10 @@ def test_run_code():
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 0}
 
+
 def test_stop_early():
     code = "while True: pass"
-    start_cmd = create_message('start', { 'sourceScript': code })
+    start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
 
     m_type, m_data = parse_message(websocket_client.recv())
@@ -60,9 +64,10 @@ def test_stop_early():
     assert m_type == 'stopped'
     assert m_data == {'exitCode': -9}
 
+
 def test_bad_code():
     code = "i'm not valid python"
-    start_cmd = create_message('start', { 'sourceScript': code })
+    start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
 
     m_type, m_data = parse_message(websocket_client.recv())
@@ -70,7 +75,7 @@ def test_bad_code():
 
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'stderr'
-    assert m_data['output'].startswith('  File');
+    assert m_data['output'].startswith('  File')
 
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'stderr'
@@ -87,6 +92,7 @@ def test_bad_code():
     m_type, m_data = parse_message(websocket_client.recv())
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 1}
+
 
 def test_input():
     code = """s = input()
@@ -121,12 +127,13 @@ while "BYE" != s:
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 0}
 
+
 def test_two_clients():
     websocket_client2 = websocket.WebSocket()
     websocket_client2.connect("ws://localhost:8028/exec")
 
     code = "while True: pass"
-    start_cmd = create_message('start', { 'sourceScript': code })
+    start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
 
     m_type, m_data = parse_message(websocket_client.recv())
@@ -151,6 +158,7 @@ def test_two_clients():
     assert m_type == 'stopped'
     assert m_data == {'exitCode': -9}
 
+
 def test_out_of_order_commands():
     # send input
     user_input = create_message('stdin', {'input': 'hello\n'})
@@ -172,7 +180,7 @@ def test_out_of_order_commands():
 
     # send start
     code = "while True: pass"
-    start_cmd = create_message('start', { 'sourceScript': code })
+    start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
 
     # started
@@ -180,7 +188,7 @@ def test_out_of_order_commands():
     assert m_type == 'started'
 
     # send start
-    start_cmd = create_message('start', { 'sourceScript': code })
+    start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
 
     # bad message
@@ -206,9 +214,10 @@ def test_out_of_order_commands():
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
+
 def test_discard_old_input():
     code = 'print("hello world")'
-    start_cmd = create_message('start', { 'sourceScript': code })
+    start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
 
     m_type, m_data = parse_message(websocket_client.recv())
@@ -226,7 +235,7 @@ def test_discard_old_input():
     assert m_data == {'exitCode': 0}
 
     code = 'print(input())'
-    start_cmd = create_message('start', { 'sourceScript': code })
+    start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
 
     m_type, m_data = parse_message(websocket_client.recv())

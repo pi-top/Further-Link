@@ -7,14 +7,16 @@ from .process_handler import ProcessHandler
 app = Flask(__name__)
 sockets = Sockets(app)
 
+
 @app.route('/status')
 def ok():
     return 'OK'
 
+
 @sockets.route('/exec')
 def api(socket):
     process_handler = ProcessHandler(socket)
-    bad_message_message = create_message('error', { 'message': 'Bad message' })
+    bad_message_message = create_message('error', {'message': 'Bad message'})
 
     while True:
         try:
@@ -22,7 +24,7 @@ def api(socket):
             message = socket.receive()
             if (socket.closed):
                 process_handler.clean_up()
-                break;
+                break
 
             m_type, m_data = parse_message(message)
 
@@ -34,15 +36,15 @@ def api(socket):
         if (m_type == 'start'
             and not process_handler.is_running()
             and 'sourceScript' in m_data
-            and isinstance(m_data.get('sourceScript'), str)):
-                process_handler.start(m_data['sourceScript'])
-                socket.send(create_message('started'))
+                and isinstance(m_data.get('sourceScript'), str)):
+            process_handler.start(m_data['sourceScript'])
+            socket.send(create_message('started'))
 
         elif (m_type == 'stdin'
-            and process_handler.is_running()
-            and 'input' in m_data
-            and isinstance(m_data.get('input'), str)):
-                process_handler.send_input(m_data['input'])
+              and process_handler.is_running()
+              and 'input' in m_data
+              and isinstance(m_data.get('input'), str)):
+            process_handler.send_input(m_data['input'])
 
         elif (m_type == 'stop' and process_handler.is_running()):
             process_handler.stop()
