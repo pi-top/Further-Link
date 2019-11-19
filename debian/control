@@ -8,7 +8,8 @@ Homepage: https://pi-top.com
 
 Package: further-link
 Architecture: armhf
-Depends: ${misc:Depends}, ${python3:Depends}
+Depends: ${misc:Depends}, ${python3:Depends},
+python3-flask, python-flask-sockets
 Description: further-link 
  project further server to execute python programs
  remotely.
