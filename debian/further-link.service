@@ -3,7 +3,7 @@ Description=Further link server service
 After=network.target
 [Service]
 Type=simple
-ExecStart=/usr/lib/python3 -B /usr/lib/furtherlink/pt-further-link-server.py
+ExecStart=/usr/lib/python3 -B /usr/lib/pt-furtherlink/pt-further-link-server.py
 
 [Install]
 WantedBy=multi-user.target
