@@ -10,6 +10,6 @@ Package: pt-further-link
 Architecture: armhf
 Depends: ${misc:Depends}, ${python3:Depends},
 python3-flask, python-flask-sockets
-Description: pt-further-link 
+Description: pt-further-link
  project further server to execute python programs
  remotely.

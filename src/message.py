@@ -1,13 +1,15 @@
 import json
 
+
 def create_message(type, data=None):
     return json.dumps({
         'type': type,
         'data': data
     })
 
+
 def parse_message(message):
-    m = json.loads(message);
+    m = json.loads(message)
     m_type = m.get('type')
     m_data = m.get('data')
 
