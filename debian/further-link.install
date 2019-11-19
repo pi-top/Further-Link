@@ -1,2 +1,2 @@
-further-link-server                     /usr/bin/
-src/                                    /usr/lib/further-link/
+further-link-server.py                /usr/bin/furtherlink/
+src/                                  /usr/lib/furtherlink/

@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import os
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
