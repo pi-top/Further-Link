@@ -6,6 +6,7 @@ from functools import partial
 
 from .message import create_message
 
+
 class ProcessHandler:
     def __init__(self, socket):
         self.socket = socket
@@ -31,9 +32,11 @@ class ProcessHandler:
             self.process.kill()
 
     def clean_up(self):
-        try: os.remove(self.get_filename())
-        except: pass
-        self.stop();
+        try:
+            os.remove(self.get_filename())
+        except:
+            pass
+        self.stop()
 
     def get_filename(self):
         return '/tmp/' + str(id(self.socket)) + '.py'

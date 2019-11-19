@@ -1,0 +1,9 @@
+[Unit]
+Description=Further link server service
+After=network.target
+[Service]
+Type=simple
+ExecStart=/usr/lib/python3 -B /usr/lib/furtherlink/further-link-server.py
+
+[Install]
+WantedBy=multi-user.target
