@@ -1,4 +1,4 @@
-# further-link
+# pt-further-link
 This project is intended to run on a pi-top[4], to allow connecting to the
 revice from [Further](https://further.pi-top.com).
 
