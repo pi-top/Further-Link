@@ -3,17 +3,26 @@ import threading
 import os
 from time import sleep
 from functools import partial
+import socket
 
 from .message import create_message
 
 
 class ProcessHandler:
-    def __init__(self, socket):
-        self.socket = socket
+    def __init__(self, websocket):
+        self.socket = websocket
 
     def start(self, script):
         filename = self.get_filename()
         open(filename, 'w+').write(script)
+
+        ipc_filename = self.get_ipc_filename()
+        if os.path.exists(ipc_filename):
+            os.remove(ipc_filename)
+        self.ipc = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.ipc.bind(ipc_filename)
+        threading.Thread(target=self.handle_ipc, daemon=True).start()
+
         command = 'python3 -u ' + filename
         self.process = subprocess.Popen(command, shell=True,
                                         stdin=subprocess.PIPE,
@@ -34,12 +43,19 @@ class ProcessHandler:
     def clean_up(self):
         try:
             os.remove(self.get_filename())
+            os.remove(self.get_ipc_filename())
         except:
             pass
         self.stop()
 
+    def get_id(self):
+        return str(id(self.socket))
+
     def get_filename(self):
-        return '/tmp/' + str(id(self.socket)) + '.py'
+        return '/tmp/' + self.get_id() + '.py'
+
+    def get_ipc_filename(self):
+        return '/tmp/' + self.get_id() + '.sock'
 
     def is_running(self):
         return hasattr(self, 'process') and self.process.poll() is None
@@ -69,3 +85,23 @@ class ProcessHandler:
 
             if not self.is_running():
                 break
+
+    def handle_ipc(self):
+        self.ipc.listen(1)
+        while True:
+            try:
+                conn, addr = self.ipc.accept()
+                frame = ''
+                while True:
+                    data = conn.recv(1024)
+                    if data:
+                        tokens = data.decode("utf-8").strip().split()
+                        if tokens[0] == 'furtherVideo':
+                            if len(frame) > 0:
+                                self.socket.send(create_message('video', {
+                                    'frame': frame
+                                }))
+                                frame = ''
+                        frame += tokens[0]
+            finally:
+                conn.close()
