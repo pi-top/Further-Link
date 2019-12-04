@@ -1,6 +1,6 @@
 import cv2
 from camera import PMACamera
-from further import send_image
+from further_link import send_image
 from signal import pause
 
 cam = PMACamera()

@@ -4,26 +4,34 @@ import os
 from time import sleep
 from functools import partial
 import socket
+from shutil import copy
 
 from .message import create_message
 
+ipc_channel_names = ['video']
+lib_file = os.path.dirname(os.path.realpath(__file__)) + '/further_link.py'
+work_dir = '/tmp'
 
 class ProcessHandler:
     def __init__(self, websocket):
         self.socket = websocket
+        copy(lib_file, work_dir)
 
     def start(self, script):
-        filename = self.get_filename()
-        open(filename, 'w+').write(script)
+        main_filename = self.get_main_filename()
+        open(main_filename, 'w+').write(script)
 
-        ipc_filename = self.get_ipc_filename()
-        if os.path.exists(ipc_filename):
-            os.remove(ipc_filename)
-        self.ipc = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.ipc.bind(ipc_filename)
-        threading.Thread(target=self.handle_ipc, daemon=True).start()
+        self.ipc_channels = {}
+        for name in ipc_channel_names:
+            ipc_filename = self.get_ipc_filename(name)
+            if os.path.exists(ipc_filename):
+                os.remove(ipc_filename)
+            self.ipc_channels[name] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.ipc_channels[name].bind(ipc_filename)
+            handle_ipc = partial(self.handle_ipc, channel=name)
+            threading.Thread(target=handle_ipc, daemon=True).start()
 
-        command = 'python3 -u ' + filename
+        command = 'python3 -u ' + main_filename
         self.process = subprocess.Popen(command, shell=True,
                                         stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
@@ -43,7 +51,11 @@ class ProcessHandler:
     def clean_up(self):
         try:
             os.remove(self.get_filename())
-            os.remove(self.get_ipc_filename())
+            for name in ipc_channel_names:
+                try:
+                    os.remove(self.get_ipc_filename(name))
+                except:
+                    pass
         except:
             pass
         self.stop()
@@ -51,11 +63,11 @@ class ProcessHandler:
     def get_id(self):
         return str(id(self.socket))
 
-    def get_filename(self):
-        return '/tmp/' + self.get_id() + '.py'
+    def get_main_filename(self):
+        return work_dir + '/' + self.get_id() + '.py'
 
-    def get_ipc_filename(self):
-        return '/tmp/' + self.get_id() + '.sock'
+    def get_ipc_filename(self, channel):
+        return work_dir + '/' + self.get_id() + '.' + channel + '.sock'
 
     def is_running(self):
         return hasattr(self, 'process') and self.process.poll() is None
@@ -86,22 +98,22 @@ class ProcessHandler:
             if not self.is_running():
                 break
 
-    def handle_ipc(self):
-        self.ipc.listen(1)
+    def handle_ipc(self, channel):
+        self.ipc_channels[channel].listen(1)
         while True:
             try:
-                conn, addr = self.ipc.accept()
-                frame = ''
+                conn, addr = self.ipc_channels[channel].accept()
+                message = ''
                 while True:
                     data = conn.recv(1024)
                     if data:
                         tokens = data.decode("utf-8").strip().split()
-                        if tokens[0] == 'furtherVideo':
-                            if len(frame) > 0:
-                                self.socket.send(create_message('video', {
-                                    'frame': frame
+                        if tokens[0] == channel:
+                            if len(message) > 0:
+                                self.socket.send(create_message(channel, {
+                                    'message': message
                                 }))
-                                frame = ''
-                        frame += tokens[0]
+                                message = ''
+                        message += tokens[0]
             finally:
                 conn.close()
