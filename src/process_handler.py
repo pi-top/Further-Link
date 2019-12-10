@@ -1,5 +1,5 @@
 import subprocess
-import threading
+from threading import Thread
 import os
 from time import sleep
 from functools import partial
@@ -14,8 +14,17 @@ work_dir = '/tmp'
 
 class ProcessHandler:
     def __init__(self, websocket):
-        self.socket = websocket
+        self.websocket = websocket
+        self.id = str(id(self.websocket))
+        # TODO use thread handler
+        self.threads = []
+
         copy(lib_file, work_dir)
+
+    def __del__(self):
+        for thread in self.threads:
+            thread.join()
+
 
     def start(self, script):
         main_filename = self.get_main_filename()
@@ -28,8 +37,9 @@ class ProcessHandler:
                 os.remove(ipc_filename)
             self.ipc_channels[name] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.ipc_channels[name].bind(ipc_filename)
+
             handle_ipc = partial(self.handle_ipc, channel=name)
-            threading.Thread(target=handle_ipc, daemon=True).start()
+            self.threads.append(Thread(target=handle_ipc, daemon=True).start())
 
         command = 'python3 -u ' + main_filename
         self.process = subprocess.Popen(command, shell=True,
@@ -40,9 +50,9 @@ class ProcessHandler:
         handle_stdout = partial(self.handle_output, stream='stdout')
         handle_stderr = partial(self.handle_output, stream='stderr')
 
-        threading.Thread(target=handle_stdout, daemon=True).start()
-        threading.Thread(target=handle_stderr, daemon=True).start()
-        threading.Thread(target=self.handle_stopped, daemon=True).start()
+        self.threads.append(Thread(target=handle_stdout, daemon=True).start())
+        self.threads.append(Thread(target=handle_stderr, daemon=True).start())
+        self.threads.append(Thread(target=self.handle_stopped, daemon=True).start())
 
     def stop(self):
         if self.is_running():
@@ -60,14 +70,11 @@ class ProcessHandler:
             pass
         self.stop()
 
-    def get_id(self):
-        return str(id(self.socket))
-
     def get_main_filename(self):
-        return work_dir + '/' + self.get_id() + '.py'
+        return work_dir + '/' + self.id + '.py'
 
     def get_ipc_filename(self, channel):
-        return work_dir + '/' + self.get_id() + '.' + channel + '.sock'
+        return work_dir + '/' + self.id + '.' + channel + '.sock'
 
     def is_running(self):
         return hasattr(self, 'process') and self.process.poll() is None
@@ -80,7 +87,7 @@ class ProcessHandler:
         while True:
             sleep(0.1)
             if not self.is_running():
-                self.socket.send(create_message('stopped', {
+                self.websocket.send(create_message('stopped', {
                     'exitCode': self.process.returncode
                 }))
                 self.clean_up()
@@ -91,7 +98,7 @@ class ProcessHandler:
             output = line.decode(encoding='utf-8')
 
             if output != '':
-                self.socket.send(create_message(stream, {
+                self.websocket.send(create_message(stream, {
                     'output': output
                 }))
 
@@ -110,10 +117,12 @@ class ProcessHandler:
                         tokens = data.decode("utf-8").strip().split()
                         if tokens[0] == channel:
                             if len(message) > 0:
-                                self.socket.send(create_message(channel, {
+                                self.websocket.send(create_message(channel, {
                                     'message': message
                                 }))
                                 message = ''
-                        message += tokens[0]
+                            message += tokens[1]
+                        else:
+                            message += tokens[0]
             finally:
                 conn.close()
