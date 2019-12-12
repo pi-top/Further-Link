@@ -1,10 +1,11 @@
 from flask import Flask
 from flask_sockets import Sockets
-
+from flask_cors import CORS
 from .message import parse_message, create_message
 from .process_handler import ProcessHandler
 
 app = Flask(__name__)
+CORS(app)
 sockets = Sockets(app)
 
 
