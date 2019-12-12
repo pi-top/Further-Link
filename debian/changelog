@@ -1,3 +1,9 @@
+pt-further-link (1.0.2-1) buster; urgency=medium
+
+  * Add CORS headers to responses.
+
+ -- James Smith <j.smith@pi-top.com>  Thu, 12 Dec 2019 14:52:00 +0000
+
 pt-further-link (1.0.0-1) buster; urgency=low
 
   * Initial release.
