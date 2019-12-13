@@ -92,7 +92,7 @@ class ProcessHandler:
                 break
 
     def handle_output(self, stream):
-        for line in iter(getattr(self.process, stream).readline, 'b'):
+        for line in iter(getattr(self.process, stream).readline, b''):
             output = line.decode(encoding='utf-8')
 
             if output != '':
