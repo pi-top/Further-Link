@@ -18,7 +18,6 @@ node ('master') {
     stage ('Test') {
         checkSymLinks()
         shellcheck()
-        # TODO run tests - check other builds & shared lib
         try {
             lintian()
         } catch (e) {
