@@ -106,6 +106,8 @@ class ProcessHandler:
                 break
 
     def handle_ipc(self, channel):
+        # this thread may never end if recv never stops blocking
+        # TODO use non blocking or timeout
         self.ipc_channels[channel].listen(1)
         while True:
             try:
