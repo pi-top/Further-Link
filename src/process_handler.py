@@ -22,9 +22,7 @@ class ProcessHandler:
         copy(lib_file, work_dir)
 
     def __del__(self):
-        for thread in self.threads:
-            thread.join()
-
+        self.stop()
 
     def start(self, script):
         main_filename = self.get_main_filename()
@@ -57,6 +55,7 @@ class ProcessHandler:
     def stop(self):
         if self.is_running():
             self.process.kill()
+        self.clean_up()
 
     def clean_up(self):
         try:
@@ -68,7 +67,6 @@ class ProcessHandler:
                     pass
         except:
             pass
-        self.stop()
 
     def get_main_filename(self):
         return work_dir + '/' + self.id + '.py'
@@ -126,5 +124,9 @@ class ProcessHandler:
                             message += tokens[1]
                         else:
                             message += tokens[0]
+                    if not self.is_running():
+                        break
+                if not self.is_running():
+                    break
             finally:
                 conn.close()
