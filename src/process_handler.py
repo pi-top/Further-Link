@@ -12,6 +12,7 @@ ipc_channel_names = ['video']
 lib_file = os.path.dirname(os.path.realpath(__file__)) + '/further_link.py'
 work_dir = '/tmp'
 
+
 class ProcessHandler:
     def __init__(self, websocket):
         self.websocket = websocket

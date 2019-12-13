@@ -17,6 +17,7 @@ try:
 except:
     print('Warning: Module further_link cannot be used in this context')
 
+
 def send_image(frame):
     try:
         _, buffer = imencode('.jpg', frame)

@@ -7,9 +7,11 @@ from .process_handler import ProcessHandler
 app = Flask(__name__)
 sockets = Sockets(app)
 
+
 @app.route('/status')
 def ok():
     return 'OK'
+
 
 @sockets.route('/exec')
 def api(socket):
