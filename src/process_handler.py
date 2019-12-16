@@ -4,22 +4,17 @@ import os
 from time import sleep
 from functools import partial
 import socket
-from shutil import copy
 
 from .message import create_message
 
 ipc_channel_names = ['video']
-lib_file = os.path.dirname(os.path.realpath(__file__)) + '/further_link.py'
-work_dir = '/tmp'
 
 
 class ProcessHandler:
-    def __init__(self, websocket):
+    def __init__(self, websocket, work_dir="/tmp"):
         self.websocket = websocket
         self.id = str(id(self.websocket))
         self.threads = []
-
-        copy(lib_file, work_dir)
 
     def __del__(self):
         self.stop()

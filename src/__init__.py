@@ -1,12 +1,22 @@
+import os
 from flask import Flask
 from flask_sockets import Sockets
 from flask_cors import CORS
+from shutil import copy
+
 from .message import parse_message, create_message
 from .process_handler import ProcessHandler
 
 app = Flask(__name__)
 CORS(app)
 sockets = Sockets(app)
+
+work_dir = '/tmp'
+lib = os.path.dirname(os.path.realpath(__file__)) + '/lib'
+for file_name in os.listdir(lib):
+    file = os.path.join(lib, file_name)
+    if os.path.isfile(os.path.join(lib, file)):
+        copy(file, work_dir)
 
 
 @app.route('/status')
@@ -16,7 +26,7 @@ def ok():
 
 @sockets.route('/exec')
 def api(socket):
-    process_handler = ProcessHandler(socket)
+    process_handler = ProcessHandler(socket, work_dir=work_dir)
     bad_message_message = create_message('error', {'message': 'Bad message'})
 
     while True:
