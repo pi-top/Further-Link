@@ -17,7 +17,6 @@ class ProcessHandler:
     def __init__(self, websocket):
         self.websocket = websocket
         self.id = str(id(self.websocket))
-        # TODO use thread handler
         self.threads = []
 
         copy(lib_file, work_dir)

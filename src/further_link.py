@@ -23,7 +23,6 @@ def send_image(frame):
         _, buffer = imencode('.jpg', frame)
         encoded = b64encode(buffer)
         message = b'video ' + encoded
-        # TODO consider using lock with this
         ipc_channels['video'].send(message)
     except:
         pass
