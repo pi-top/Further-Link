@@ -13,6 +13,7 @@ ipc_channel_names = ['video']
 class ProcessHandler:
     def __init__(self, websocket, work_dir="/tmp"):
         self.websocket = websocket
+        self.work_dir = work_dir
         self.id = str(id(self.websocket))
         self.threads = []
 
@@ -64,10 +65,10 @@ class ProcessHandler:
             pass
 
     def get_main_filename(self):
-        return work_dir + '/' + self.id + '.py'
+        return self.work_dir + '/' + self.id + '.py'
 
     def get_ipc_filename(self, channel):
-        return work_dir + '/' + self.id + '.' + channel + '.sock'
+        return self.work_dir + '/' + self.id + '.' + channel + '.sock'
 
     def is_running(self):
         return hasattr(self, 'process') and self.process.poll() is None
