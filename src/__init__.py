@@ -28,12 +28,14 @@ def ok():
 def api(socket):
     process_handler = ProcessHandler(socket, work_dir=work_dir)
     bad_message_message = create_message('error', {'message': 'Bad message'})
+    print('New connection', id(socket))
 
     while True:
         try:
             # calling receive is necessary before checking if closed
             message = socket.receive()
             if (socket.closed):
+                print('Closed connection', id(socket))
                 process_handler.stop()
                 break
 
