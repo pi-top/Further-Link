@@ -31,6 +31,7 @@ class ProcessHandler:
                 os.remove(ipc_filename)
             self.ipc_channels[name] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.ipc_channels[name].bind(ipc_filename)
+            self.ipc_channels[name].setblocking(0)
 
             handle_ipc = partial(self.handle_ipc, channel=name)
             self.threads.append(Thread(target=handle_ipc, daemon=True).start())
@@ -100,29 +101,34 @@ class ProcessHandler:
                 break
 
     def handle_ipc(self, channel):
-        # this thread may never end if recv never stops blocking
-        # TODO use non blocking or timeout
         self.ipc_channels[channel].listen(1)
         while True:
+            if not self.is_running():
+                break
             try:
                 conn, addr = self.ipc_channels[channel].accept()
                 message = ''
                 while True:
-                    data = conn.recv(1024)
-                    if data:
-                        tokens = data.decode("utf-8").strip().split()
-                        if tokens[0] == channel:
-                            if len(message) > 0:
-                                self.websocket.send(create_message(channel, {
-                                    'message': message
-                                }))
-                                message = ''
-                            message += tokens[1]
-                        else:
-                            message += tokens[0]
                     if not self.is_running():
                         break
-                if not self.is_running():
-                    break
+                    try:
+                        data = conn.recv(1024)
+                        if data:
+                            tokens = data.decode("utf-8").strip().split()
+                            if tokens[0] == channel:
+                                if len(message) > 0:
+                                    self.websocket.send(create_message(channel, {
+                                        'message': message
+                                    }))
+                                    message = ''
+                                message += tokens[1]
+                            else:
+                                message += tokens[0]
+                    except:
+                        sleep(0.001)
+                        continue
+            except:
+                sleep(0.1)
+                continue
             finally:
                 conn.close()
