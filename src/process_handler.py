@@ -56,7 +56,7 @@ class ProcessHandler:
 
     def clean_up(self):
         try:
-            os.remove(self.get_filename())
+            os.remove(self.get_main_filename())
             for name in ipc_channel_names:
                 try:
                     os.remove(self.get_ipc_filename(name))
