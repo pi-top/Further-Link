@@ -1,3 +1,9 @@
+pt-further-link (1.1.0-1) buster; urgency=medium
+
+  * Enabled ssl with self-signed certificate
+
+ -- Angus Whitehead <angus@pi-top.com>  Mon, 16 Dec 2019 13:00:11 GMT +0000
+
 pt-further-link (1.0.2-1) buster; urgency=medium
 
   * Add CORS headers to responses.

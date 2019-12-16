@@ -1,2 +1,3 @@
-pt-further-link-server.py             /usr/lib/pt-furtherlink/
-src/                                  /usr/lib/pt-furtherlink/
+start.sh                              /usr/lib/pt-further-link/
+pt-further-link-server.py             /usr/lib/pt-further-link/
+src/                                  /usr/lib/pt-further-link/
