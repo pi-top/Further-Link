@@ -24,7 +24,7 @@ def api(socket):
             # calling receive is necessary before checking if closed
             message = socket.receive()
             if (socket.closed):
-                process_handler.clean_up()
+                process_handler.stop()
                 break
 
             m_type, m_data = parse_message(message)
