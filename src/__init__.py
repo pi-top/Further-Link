@@ -30,15 +30,9 @@ def api(socket):
     bad_message_message = create_message('error', {'message': 'Bad message'})
     print('New connection', id(socket))
 
-    while True:
+    while not socket.closed:
         try:
-            # calling receive is necessary before checking if closed
             message = socket.receive()
-            if (socket.closed):
-                print('Closed connection', id(socket))
-                process_handler.stop()
-                break
-
             m_type, m_data = parse_message(message)
 
         except Exception as e:
@@ -64,3 +58,6 @@ def api(socket):
 
         else:
             socket.send(bad_message_message)
+
+    print('Closed connection', id(socket))
+    process_handler.stop()
