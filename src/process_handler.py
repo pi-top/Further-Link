@@ -21,6 +21,7 @@ class ProcessHandler:
         self.stop()
 
     def start(self, script):
+        print('Starting', self.id)
         main_filename = self.get_main_filename()
         open(main_filename, 'w+').write(script)
 
@@ -64,6 +65,7 @@ class ProcessHandler:
                     pass
         except:
             pass
+        print('Stopped', self.id)
 
     def get_main_filename(self):
         return self.work_dir + '/' + self.id + '.py'
