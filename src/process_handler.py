@@ -15,7 +15,6 @@ class ProcessHandler:
         self.websocket = websocket
         self.work_dir = work_dir
         self.id = str(id(self.websocket))
-        self.threads = []
 
     def __del__(self):
         self.stop()
@@ -41,14 +40,14 @@ class ProcessHandler:
             self.ipc_channels[name].setblocking(0)
 
             handle_ipc = partial(self.handle_ipc, channel=name)
-            self.threads.append(Thread(target=handle_ipc, daemon=True).start())
+            Thread(target=handle_ipc, daemon=True).start()
 
         handle_stdout = partial(self.handle_output, stream='stdout')
         handle_stderr = partial(self.handle_output, stream='stderr')
 
-        self.threads.append(Thread(target=handle_stdout, daemon=True).start())
-        self.threads.append(Thread(target=handle_stderr, daemon=True).start())
-        self.threads.append(Thread(target=self.handle_stopped, daemon=True).start())
+        Thread(target=handle_stdout, daemon=True).start()
+        Thread(target=handle_stderr, daemon=True).start()
+        Thread(target=self.handle_stopped, daemon=True).start()
 
     def stop(self):
         if self.is_running():
