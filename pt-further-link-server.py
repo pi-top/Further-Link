@@ -1,8 +1,11 @@
+from gevent import monkey
+monkey.patch_all()  # noqa
+
 import os
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
-
 from src import app
+
 
 dir = os.path.dirname(os.path.realpath(__file__))
 
