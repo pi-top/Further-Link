@@ -24,6 +24,12 @@ class ProcessHandler:
         main_filename = self.get_main_filename()
         open(main_filename, 'w+').write(script)
 
+        command = 'python3 -u ' + main_filename
+        self.process = subprocess.Popen(command, shell=True,
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+
         self.ipc_channels = {}
         for name in ipc_channel_names:
             ipc_filename = self.get_ipc_filename(name)
@@ -35,12 +41,6 @@ class ProcessHandler:
 
             handle_ipc = partial(self.handle_ipc, channel=name)
             self.threads.append(Thread(target=handle_ipc, daemon=True).start())
-
-        command = 'python3 -u ' + main_filename
-        self.process = subprocess.Popen(command, shell=True,
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
 
         handle_stdout = partial(self.handle_output, stream='stdout')
         handle_stderr = partial(self.handle_output, stream='stderr')
@@ -112,7 +112,7 @@ class ProcessHandler:
                     if not self.is_running():
                         break
                     try:
-                        data = conn.recv(1024)
+                        data = conn.recv(4096)
                         if data:
                             tokens = data.decode("utf-8").strip().split()
                             if tokens[0] == channel:
@@ -127,8 +127,7 @@ class ProcessHandler:
                     except:
                         sleep(0.001)
                         continue
+                conn.close()
             except:
                 sleep(0.1)
                 continue
-            finally:
-                conn.close()
