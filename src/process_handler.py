@@ -64,7 +64,6 @@ class ProcessHandler:
                     pass
         except:
             pass
-        print('Stopped', self.id)
 
     def get_main_filename(self):
         return self.work_dir + '/' + self.id + '.py'
@@ -83,10 +82,14 @@ class ProcessHandler:
         while True:
             sleep(0.1)
             if not self.is_running():
-                self.websocket.send(create_message('stopped', {
-                    'exitCode': self.process.returncode
-                }))
+                try:
+                    self.websocket.send(create_message('stopped', {
+                        'exitCode': self.process.returncode
+                    }))
+                except:
+                    pass
                 self.clean_up()
+                print('Stopped', self.id)
                 break
 
     def handle_output(self, stream):
