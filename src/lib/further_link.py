@@ -24,6 +24,12 @@ def send_image(frame):
         _, buffer = imencode('.jpg', frame)
         encoded = b64encode(buffer)
         message = b'video ' + encoded
-        ipc_channels['video'].send(message)
+
+        total_sent = 0
+        while total_sent < len(message):
+            sent = ipc_channels['video'].send(message[total_sent:])
+            if sent == 0:
+                raise RuntimeError("socket connection broken")
+            total_sent = total_sent + sent
     except:
         pass
