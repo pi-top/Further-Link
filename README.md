@@ -15,8 +15,8 @@ pipenv sync
 python3 server.py
 ```
 
-The default port, __8028__, can be changed by setting FURTHER_LINK_PORT env
-variable.
+The default server port, __8028__, can be changed by setting FURTHER_LINK_PORT env variable.
+The default working directory where temporary files are created, /tmp , can be changed by setting FURTHER_LINK_WORK_DIR env variable.
 ```
 curl http://[IP]:[PORT]/status # 200 OK
 ```
