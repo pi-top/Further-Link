@@ -2,17 +2,25 @@ import pytest
 import threading
 import asyncio
 import websocket
+import ssl
 from datetime import datetime
 
-from run import run, app
+from server import run, app
 from src.message import create_message, parse_message
 
 http_client = app.test_client()
 
 server = threading.Thread(target=run, daemon=True)
 server.start()
-websocket_client = websocket.WebSocket()
-websocket_client.connect('ws://localhost:8028/exec')
+
+
+def new_websocket_client():
+    client = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
+    client.connect('wss://localhost:8028/exec')
+    return client
+
+
+websocket_client = new_websocket_client()
 
 
 def test_status():
@@ -129,8 +137,7 @@ while "BYE" != s:
 
 
 def test_two_clients():
-    websocket_client2 = websocket.WebSocket()
-    websocket_client2.connect("ws://localhost:8028/exec")
+    websocket_client2 = new_websocket_client()
 
     code = "while True: pass"
     start_cmd = create_message('start', {'sourceScript': code})
