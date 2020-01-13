@@ -20,9 +20,6 @@ def new_websocket_client():
     return client
 
 
-websocket_client = new_websocket_client()
-
-
 def test_status():
     r = http_client.get('/status')
     assert '200 OK' == r.status
@@ -30,6 +27,8 @@ def test_status():
 
 
 def test_bad_message():
+    websocket_client = new_websocket_client()
+
     start_cmd = create_message('start')
     websocket_client.send(start_cmd)
 
@@ -39,6 +38,8 @@ def test_bad_message():
 
 
 def test_run_code():
+    websocket_client = new_websocket_client()
+
     code = 'from datetime import datetime\nprint(datetime.now().strftime("%A"))'
     start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
@@ -57,6 +58,8 @@ def test_run_code():
 
 
 def test_stop_early():
+    websocket_client = new_websocket_client()
+
     code = "while True: pass"
     start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
@@ -74,6 +77,8 @@ def test_stop_early():
 
 
 def test_bad_code():
+    websocket_client = new_websocket_client()
+
     code = "i'm not valid python"
     start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
@@ -103,6 +108,8 @@ def test_bad_code():
 
 
 def test_input():
+    websocket_client = new_websocket_client()
+
     code = """s = input()
 while "BYE" != s:
     print(["HUH?! SPEAK UP, SONNY!","NO, NOT SINCE 1930"][s.isupper()])
@@ -137,6 +144,7 @@ while "BYE" != s:
 
 
 def test_two_clients():
+    websocket_client = new_websocket_client()
     websocket_client2 = new_websocket_client()
 
     code = "while True: pass"
@@ -167,6 +175,8 @@ def test_two_clients():
 
 
 def test_out_of_order_commands():
+    websocket_client = new_websocket_client()
+
     # send input
     user_input = create_message('stdin', {'input': 'hello\n'})
     websocket_client.send(user_input)
@@ -223,6 +233,8 @@ def test_out_of_order_commands():
 
 
 def test_discard_old_input():
+    websocket_client = new_websocket_client()
+
     code = 'print("hello world")'
     start_cmd = create_message('start', {'sourceScript': code})
     websocket_client.send(start_cmd)
