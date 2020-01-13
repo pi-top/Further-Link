@@ -1,3 +1,13 @@
+pt-further-link (1.2.0-1) buster; urgency=medium
+
+  * Added env var FURTHER_LINK_WORK_DIR to override temp file location
+  * Added IPC system for handling alternative output types
+  * Improved server performace & fixed potential thread memory leak
+  * Refactored stopping & cleanup to handle edge cases
+  * Added basic events logging
+
+ -- Angus Whitehead <angus@pi-top.com>  Mon, 13 Jan 2019 17:19:23 GMT +0000
+
 pt-further-link (1.1.0-1) buster; urgency=medium
 
   * Enabled ssl with self-signed certificate
