@@ -12,7 +12,7 @@ We are using Python 3.7 and managing dependencies with
 ```
 pipenv shell
 pipenv sync
-python3 run.py
+python3 server.py
 ```
 
 The default port, __8028__, can be changed by setting FURTHER_LINK_PORT env
