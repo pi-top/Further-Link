@@ -22,7 +22,7 @@ node ('master') {
         sh """
             cd pt-further-link
             pipenv sync --dev
-            FURTHER_LINK_WORK_DIR=$(pwd) pipenv run pytest test.py
+            FURTHER_LINK_WORK_DIR=\$(pwd) pipenv run pytest test.py
         """
 
         script {
