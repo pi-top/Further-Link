@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 sockets = Sockets(app)
 
-work_dir = int(os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp"))
+work_dir = os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp")
 lib = os.path.dirname(os.path.realpath(__file__)) + '/lib'
 for file_name in os.listdir(lib):
     file = os.path.join(lib, file_name)
