@@ -17,11 +17,20 @@ node ('master') {
 
     stage ('Test') {
         checkSymLinks()
-        shellcheck()
-        try {
-            lintian()
-        } catch (e) {
-            currentBuild.result = 'UNSTABLE'
+        // shellcheck()
+
+        sh """
+            cd pt-further-link
+            pipenv sync --dev
+            FURTHER_LINK_WORK_DIR=$(pwd) pipenv run pytest test.py
+        """
+
+        script {
+            try {
+                lintian()
+            } catch (e) {
+                currentBuild.result = 'UNSTABLE'
+            }
         }
     }
 
