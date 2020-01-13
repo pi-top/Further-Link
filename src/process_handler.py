@@ -23,8 +23,11 @@ class ProcessHandler:
 
     def start(self, script):
         print('Starting', self.id)
+
         main_filename = self.get_main_filename()
-        open(main_filename, 'w+').write(script)
+        f = open(main_filename, 'w+')
+        f.write(script)
+        f.close()
 
         command = 'python3 -u ' + main_filename
         self.process = subprocess.Popen(command, shell=True,
