@@ -8,7 +8,7 @@ import socket
 from .message import create_message
 
 ipc_channel_names = [
-    # 'video'
+    'video'
 ]
 
 
