@@ -17,15 +17,19 @@ python3 server.py
 
 The default server port, __8028__, can be changed by setting FURTHER_LINK_PORT env variable.
 The default working directory where temporary files are created, /tmp , can be changed by setting FURTHER_LINK_WORK_DIR env variable.
+
+To allow connecting to a local server with valid ssl, this server uses a ssl
+cert for *.further-link.pi-top.com, and we create dns records to point that
+hostname to local ip addresses. So if you are running this on localhost:
 ```
-curl http://[IP]:[PORT]/status # 200 OK
+curl https://127-0-0-1.further-link.pi-top.com:8028/status
 ```
 
 ### Websocket API
 #### Example usage
 - Connect websocket on `/exec` (using [websocat](https://github.com/vi/websocat)):
 ```
-websocat ws://localhost:8028/exec
+websocat wss://127-0-0-1.further-link.pi-top.com:8028/exec
 ```
 - Send `start` command with `sourceScript`:
 ```
