@@ -4,12 +4,20 @@ import os
 from time import sleep
 from functools import partial
 import socket
+import pwd
 
 from .message import create_message
 
 ipc_channel_names = [
     # 'video'
 ]
+
+
+def get_cmd_prefix():
+    for p in pwd.getpwall():
+        if p[0] == 'pi':
+            return 'sudo -u pi '
+    return ''
 
 
 class ProcessHandler:
@@ -29,7 +37,7 @@ class ProcessHandler:
         f.write(script)
         f.close()
 
-        command = 'python3 -u ' + main_filename
+        command = get_cmd_prefix() + 'python3 -u ' + main_filename
         self.process = subprocess.Popen(command, shell=True,
                                         stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
