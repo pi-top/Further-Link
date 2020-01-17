@@ -12,8 +12,8 @@ node ('master') {
     }
 
     stage ('Build') {
-        withCredentials([usernameColonPassword(credentialsId: 'further-link-key', variable: 'key')]) {
-          sh 'python3 -c "import codecs; print(codecs.getencoder('rot-13')('$key')[0])" > data'
+        withCredentials([string(credentialsId: 'further-link-key', variable: 'key')]) {
+          sh 'python3 -c "import codecs; print(codecs.getencoder(\'rot-13\')(\'$key\')[0])" > pt-further-link/data'
         }
         buildGenericPkg()
     }
