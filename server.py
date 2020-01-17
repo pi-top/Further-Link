@@ -11,14 +11,17 @@ from src import app
 
 dir = os.path.dirname(os.path.realpath(__file__))
 
+cert = dir + '/cert.pem'
+key = dir + '/key.pem'
+
 
 def p():
-    with open('data', 'r') as f:
+    with open(dir + '/data', 'r') as f:
         return codecs.getencoder('rot-13')(f.read()[:-1])[0]
 
 
 context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-context.load_cert_chain(certfile='cert.pem', keyfile='key.pem', password=p)
+context.load_cert_chain(certfile=cert, keyfile=key, password=p)
 
 
 def run():
