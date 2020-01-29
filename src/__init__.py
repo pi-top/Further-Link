@@ -1,4 +1,5 @@
 import os
+import asyncio
 from flask import Flask
 from flask_sockets import Sockets
 from flask_cors import CORS
@@ -10,6 +11,10 @@ from .process_handler import ProcessHandler
 app = Flask(__name__)
 CORS(app)
 sockets = Sockets(app)
+
+# asyncio.set_event_loop(None)
+loop = asyncio.get_event_loop()
+asyncio.get_child_watcher().attach_loop(loop)
 
 work_dir = os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp")
 lib = os.path.dirname(os.path.realpath(__file__)) + '/lib'
@@ -41,11 +46,12 @@ def api(socket):
             continue
 
         if (m_type == 'start'
-            and not process_handler.is_running()
-            and 'sourceScript' in m_data
+                and not process_handler.is_running()
+                and 'sourceScript' in m_data
                 and isinstance(m_data.get('sourceScript'), str)):
-            process_handler.start(m_data['sourceScript'])
-            socket.send(create_message('started'))
+            # TODO should pass the callbacks for handling output, ipc messages, stopped
+            # TODO broken as this blocks the websocket handler
+            asyncio.run(process_handler.start(m_data['sourceScript']))
 
         elif (m_type == 'stdin'
               and process_handler.is_running()
