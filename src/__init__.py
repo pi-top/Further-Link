@@ -1,20 +1,10 @@
 import os
 import asyncio
-from flask import Flask
-from flask_sockets import Sockets
-from flask_cors import CORS
 from shutil import copy
+import websockets
 
-from .message import parse_message, create_message
-from .process_handler import ProcessHandler
-
-app = Flask(__name__)
-CORS(app)
-sockets = Sockets(app)
-
-# asyncio.set_event_loop(None)
-loop = asyncio.get_event_loop()
-asyncio.get_child_watcher().attach_loop(loop)
+from message import parse_message, create_message
+from process_handler import ProcessHandler
 
 work_dir = os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp")
 lib = os.path.dirname(os.path.realpath(__file__)) + '/lib'
@@ -24,46 +14,80 @@ for file_name in os.listdir(lib):
         copy(file, work_dir)
 
 
-@app.route('/status')
-def ok():
-    return 'OK'
-
-
-@sockets.route('/exec')
-def api(socket):
+async def api(socket, path):
     process_handler = ProcessHandler(socket, work_dir=work_dir)
     bad_message_message = create_message('error', {'message': 'Bad message'})
     print('New connection', id(socket))
 
-    while not socket.closed:
+    async def consu(socket):
         try:
-            message = socket.receive()
-            m_type, m_data = parse_message(message)
+            async for message in socket:
+                try:
+                    m_type, m_data = parse_message(message)
 
-        except Exception as e:
-            if isinstance(message, str):
-                socket.send(bad_message_message)
-            continue
+                except Exception as e:
+                    if isinstance(message, str):
+                        await socket.send(bad_message_message)
+                    continue
 
-        if (m_type == 'start'
-                and not process_handler.is_running()
-                and 'sourceScript' in m_data
-                and isinstance(m_data.get('sourceScript'), str)):
-            # TODO should pass the callbacks for handling output, ipc messages, stopped
-            # TODO broken as this blocks the websocket handler
-            asyncio.run(process_handler.start(m_data['sourceScript']))
+                if (m_type == 'start'
+                        and not process_handler.is_running()
+                        and 'sourceScript' in m_data
+                        and isinstance(m_data.get('sourceScript'), str)):
+                    # TODO should pass the callbacks for handling output, ipc messages, stopped
+                    # actually maybe better to assign them from here
+                    await process_handler.start(m_data['sourceScript'])
 
-        elif (m_type == 'stdin'
-              and process_handler.is_running()
-              and 'input' in m_data
-              and isinstance(m_data.get('input'), str)):
-            process_handler.send_input(m_data['input'])
+                elif (m_type == 'stdin'
+                      and process_handler.is_running()
+                      and 'input' in m_data
+                      and isinstance(m_data.get('input'), str)):
+                    await process_handler.send_input(m_data['input'])
 
-        elif (m_type == 'stop' and process_handler.is_running()):
+                elif (m_type == 'stop' and process_handler.is_running()):
+                    process_handler.stop()
+
+                else:
+                    await socket.send(bad_message_message)
+        finally:
+            print('Closed connection', id(socket))
             process_handler.stop()
 
-        else:
-            socket.send(bad_message_message)
+    async def cons(socket):
+        try:
+            async for message in socket:
+                await socket.send(message)
+        except Exception as e:
+            print(e)
 
-    print('Closed connection', id(socket))
-    process_handler.stop()
+    async def prod(socket):
+        i = 0
+        while True:
+            await asyncio.sleep(10)
+            i += 1
+            await socket.send('producer ' + str(i))
+
+    await consu(socket)
+    # consumer_task = asyncio.ensure_future(consu(socket))
+    # producer_task = asyncio.ensure_future(
+    #     prod(socket)
+    # )
+    # done, pending = await asyncio.wait(
+    #     [consumer_task, producer_task],
+    #     return_when=asyncio.FIRST_COMPLETED,
+    # )
+    # for task in pending:
+    #     task.cancel()
+
+
+def run(loop):
+    asyncio.set_event_loop(loop)
+    asyncio.get_child_watcher().attach_loop(loop)
+    start_server = websockets.serve(api, "localhost", 8028)
+    loop.run_until_complete(start_server)
+
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    run(loop)
+    loop.run_forever()

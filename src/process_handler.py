@@ -6,11 +6,7 @@ from functools import partial
 import socket
 import aiofiles
 
-from .message import create_message
-
-ipc_channel_names = [
-    # 'video'
-]
+from message import create_message
 
 
 class ProcessHandler:
@@ -36,38 +32,28 @@ class ProcessHandler:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
 
-        self.websocket.send(create_message('started'))
+        await self.websocket.send(create_message('started'))
 
-        # self.ipc_channels = {}
-        # for name in ipc_channel_names:
-        #     ipc_filename = self._get_ipc_filename(name)
-        #     if os.path.exists(ipc_filename):
-        #         os.remove(ipc_filename)
-        #     self.ipc_channels[name] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        #     self.ipc_channels[name].bind(ipc_filename)
-        #     self.ipc_channels[name].setblocking(0)
+        asyncio.create_task(self.communicate())
 
-        #     handle_ipc = partial(self.handle_ipc, channel=name)
-        #     Thread(target=handle_ipc, daemon=True).start()
-
+    async def communicate(self):
         await asyncio.wait([
-            self._handle_output('stdout'),
-            self._handle_output('stderr')
+            asyncio.create_task(self._handle_output('stdout')),
+            asyncio.create_task(self._handle_output('stderr'))
         ])
 
         exitCode = await self.process.wait()
         self.process = None
 
-        self.websocket.send(create_message('stopped', {
+        await self.websocket.send(create_message('stopped', {
             'exitCode': exitCode
         }))
         await self._clean_up()
         print('Stopped', self.id)
 
-    def send_input(self, content):
-        print(content)
+    async def send_input(self, content):
         self.process.stdin.write(content.encode('utf-8'))
-        self.process.stdin.flush()
+        await self.process.stdin.drain()
 
     def stop(self):
         if self.is_running():
@@ -99,7 +85,7 @@ class ProcessHandler:
             line = await stream.readline()
             output = line.decode(encoding='utf-8')
             if line:
-                self.websocket.send(create_message(stream_name, {
+                await self.websocket.send(create_message(stream_name, {
                     'output': output
                 }))
             else:
