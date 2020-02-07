@@ -6,7 +6,7 @@ from functools import partial
 import socket
 import aiofiles
 
-from message import create_message
+from .message import create_message
 
 
 class ProcessHandler:

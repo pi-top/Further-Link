@@ -3,8 +3,8 @@ import asyncio
 from shutil import copy
 import websockets
 
-from message import parse_message, create_message
-from process_handler import ProcessHandler
+from .message import parse_message, create_message
+from .process_handler import ProcessHandler
 
 work_dir = os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp")
 lib = os.path.dirname(os.path.realpath(__file__)) + '/lib'
@@ -14,7 +14,7 @@ for file_name in os.listdir(lib):
         copy(file, work_dir)
 
 
-async def api(socket, path):
+async def app(socket, path):
     process_handler = ProcessHandler(socket, work_dir=work_dir)
     bad_message_message = create_message('error', {'message': 'Bad message'})
     print('New connection', id(socket))
@@ -78,16 +78,3 @@ async def api(socket, path):
     # )
     # for task in pending:
     #     task.cancel()
-
-
-def run(loop):
-    asyncio.set_event_loop(loop)
-    asyncio.get_child_watcher().attach_loop(loop)
-    start_server = websockets.serve(api, "localhost", 8028)
-    loop.run_until_complete(start_server)
-
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    run(loop)
-    loop.run_forever()
