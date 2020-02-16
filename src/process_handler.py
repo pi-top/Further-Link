@@ -15,11 +15,12 @@ class ProcessHandler:
         self.stop()
 
     async def start(self, script):
-        print('Starting', self.id)
+        if self.is_running() or not isinstance(script, str):
+            raise RuntimeError("Invalid Operation")
 
         main_filename = self._get_main_filename()
-        async with aiofiles.open(main_filename, 'w+') as f:
-            await f.write(script)
+        async with aiofiles.open(main_filename, 'w+') as file:
+            await file.write(script)
 
         command = 'python3 -u ' + main_filename
         self.process = await asyncio.create_subprocess_shell(
@@ -28,40 +29,55 @@ class ProcessHandler:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
 
-        await self.on_start()
+        asyncio.create_task(self._communicate())
 
-        asyncio.create_task(self.communicate())
+        if self.on_start:
+            await self.on_start()
 
-    async def communicate(self):
+    def is_running(self):
+        return hasattr(self, 'process') and self.process is not None
+
+    def stop(self):
+        if not self.is_running():
+            raise RuntimeError("Invalid Operation")
+        self.process.terminate()
+
+    async def send_input(self, content):
+        if not self.is_running() or not isinstance(content, str):
+            raise RuntimeError("Invalid Operation")
+
+        self.process.stdin.write(content.encode('utf-8'))
+        await self.process.stdin.drain()
+
+    def _get_main_filename(self):
+        return self.work_dir + '/' + self.id + '.py'
+
+    def _get_ipc_filename(self, channel):
+        return self.work_dir + '/' + self.id + '.' + channel + '.sock'
+
+    async def _communicate(self):
         await asyncio.wait([
             asyncio.create_task(self._handle_output('stdout')),
             asyncio.create_task(self._handle_output('stderr'))
         ])
 
-        exitCode = await self.process.wait()
-
-    # done, pending = await asyncio.wait(
-    #     [consumer_task, producer_task],
-    #     return_when=asyncio.FIRST_COMPLETED,
-    # )
-    # for task in pending:
-    #     task.cancel()
+        exit_code = await self.process.wait()
         self.process = None
-
-        await self.on_stop(exitCode)
         await self._clean_up()
-        print('Stopped', self.id)
 
-    async def send_input(self, content):
-        self.process.stdin.write(content.encode('utf-8'))
-        await self.process.stdin.drain()
+        if self.on_stop:
+            await self.on_stop(exit_code)
 
-    def stop(self):
-        if self.is_running():
-            self.process.terminate()
-
-    def is_running(self):
-        return hasattr(self, 'process') and self.process is not None
+    async def _handle_output(self, stream_name):
+        stream = getattr(self.process, stream_name)
+        while True:
+            line = await stream.readline()
+            output = line.decode(encoding='utf-8')
+            if line:
+                if self.on_output:
+                    await self.on_output(stream_name, output)
+            else:
+                break
 
     async def _clean_up(self):
         try:
@@ -73,22 +89,6 @@ class ProcessHandler:
                     pass
         except:
             pass
-
-    def _get_main_filename(self):
-        return self.work_dir + '/' + self.id + '.py'
-
-    def _get_ipc_filename(self, channel):
-        return self.work_dir + '/' + self.id + '.' + channel + '.sock'
-
-    async def _handle_output(self, stream_name):
-        stream = getattr(self.process, stream_name)
-        while True:
-            line = await stream.readline()
-            output = line.decode(encoding='utf-8')
-            if line:
-                await self.on_output(stream_name, output)
-            else:
-                break
 
     # def handle_ipc(self, channel):
     #     self.ipc_channels[channel].listen(1)

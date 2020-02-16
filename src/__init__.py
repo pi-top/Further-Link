@@ -16,19 +16,18 @@ for file_name in os.listdir(lib):
 
 async def handle_message(message, process_handler):
     m_type, m_data = parse_message(message)
+
     if (m_type == 'start'
-            and not process_handler.is_running()
             and 'sourceScript' in m_data
             and isinstance(m_data.get('sourceScript'), str)):
         await process_handler.start(m_data['sourceScript'])
 
     elif (m_type == 'stdin'
-          and process_handler.is_running()
           and 'input' in m_data
           and isinstance(m_data.get('input'), str)):
         await process_handler.send_input(m_data['input'])
 
-    elif (m_type == 'stop' and process_handler.is_running()):
+    elif (m_type == 'stop'):
         process_handler.stop()
 
     else:
@@ -38,9 +37,11 @@ async def handle_message(message, process_handler):
 async def app(socket, path):
     async def on_start():
         await socket.send(create_message('started'))
+        print('Started', process_handler.id)
 
     async def on_stop(exitCode):
         await socket.send(create_message('stopped', {'exitCode': exitCode}))
+        print('Stopped', process_handler.id)
 
     async def on_output(channel, output):
         await socket.send(create_message(channel, {'output': output}))
