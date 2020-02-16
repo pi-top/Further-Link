@@ -20,8 +20,6 @@ async def handle_message(message, process_handler):
             and not process_handler.is_running()
             and 'sourceScript' in m_data
             and isinstance(m_data.get('sourceScript'), str)):
-        # TODO should pass the callbacks for handling output, ipc messages, stopped
-        # actually maybe better to assign them from here
         await process_handler.start(m_data['sourceScript'])
 
     elif (m_type == 'stdin'
@@ -38,9 +36,23 @@ async def handle_message(message, process_handler):
 
 
 async def app(socket, path):
-    process_handler = ProcessHandler(socket, work_dir=work_dir)
+    async def on_start():
+        await socket.send(create_message('started'))
+
+    async def on_stop(exitCode):
+        await socket.send(create_message('stopped', {'exitCode': exitCode}))
+
+    async def on_output(channel, output):
+        await socket.send(create_message(channel, {'output': output}))
+
+    process_handler = ProcessHandler(
+        on_start=on_start,
+        on_stop=on_stop,
+        on_output=on_output,
+        work_dir=work_dir
+    )
     bad_message_message = create_message('error', {'message': 'Bad message'})
-    print('New connection', id(socket))
+    print('New connection', process_handler.id)
 
     try:
         async for message in socket:

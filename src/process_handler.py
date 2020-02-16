@@ -1,14 +1,15 @@
 import asyncio
 import aiofiles
 
-from .message import create_message
-
 
 class ProcessHandler:
-    def __init__(self, websocket, work_dir="/tmp"):
-        self.websocket = websocket
+    def __init__(self, on_start, on_stop, on_output, work_dir="/tmp"):
+        self.on_start = on_start
+        self.on_stop = on_stop
+        self.on_output = on_output
         self.work_dir = work_dir
-        self.id = str(id(self.websocket))
+
+        self.id = str(id(self))
 
     def __del__(self):
         self.stop()
@@ -27,7 +28,7 @@ class ProcessHandler:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
 
-        await self.websocket.send(create_message('started'))
+        await self.on_start()
 
         asyncio.create_task(self.communicate())
 
@@ -47,9 +48,7 @@ class ProcessHandler:
     #     task.cancel()
         self.process = None
 
-        await self.websocket.send(create_message('stopped', {
-            'exitCode': exitCode
-        }))
+        await self.on_stop(exitCode)
         await self._clean_up()
         print('Stopped', self.id)
 
@@ -87,9 +86,7 @@ class ProcessHandler:
             line = await stream.readline()
             output = line.decode(encoding='utf-8')
             if line:
-                await self.websocket.send(create_message(stream_name, {
-                    'output': output
-                }))
+                await self.on_output(stream_name, output)
             else:
                 break
 
