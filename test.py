@@ -11,7 +11,7 @@ from src.message import create_message, parse_message
 
 
 @pytest.fixture(scope='session', autouse=True)
-def db_conn():
+def start_server():
     command = ['python3', 'server.py']
     proc = subprocess.Popen(command)
     sleep(1)

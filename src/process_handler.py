@@ -1,9 +1,4 @@
 import asyncio
-from threading import Thread
-import os
-from time import sleep
-from functools import partial
-import socket
 import aiofiles
 
 from .message import create_message
@@ -43,6 +38,13 @@ class ProcessHandler:
         ])
 
         exitCode = await self.process.wait()
+
+    # done, pending = await asyncio.wait(
+    #     [consumer_task, producer_task],
+    #     return_when=asyncio.FIRST_COMPLETED,
+    # )
+    # for task in pending:
+    #     task.cancel()
         self.process = None
 
         await self.websocket.send(create_message('stopped', {
