@@ -19,7 +19,7 @@ def start_server():
     proc.terminate()
 
 
-uri = 'ws://localhost:8028/'
+uri = 'wss://127-0-0-1.further-link.pi-top.com:8028/'
 sslopts = {"cert_reqs": ssl.CERT_NONE}
 
 
