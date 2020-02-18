@@ -9,7 +9,11 @@ def create_message(type, data=None):
 
 
 def parse_message(message):
-    m = json.loads(message)
+    try:
+        m = json.loads(message)
+    except json.decoder.JSONDecodeError:
+        raise BadMessage()
+
     m_type = m.get('type')
     m_data = m.get('data')
 
@@ -17,3 +21,7 @@ def parse_message(message):
     m_data = m_data if isinstance(m_data, dict) else {}
 
     return m_type, m_data
+
+
+class BadMessage(Exception):
+    pass

@@ -2,6 +2,10 @@ import asyncio
 import aiofiles
 
 
+class InvalidOperation(Exception):
+    pass
+
+
 class ProcessHandler:
     def __init__(self, on_start, on_stop, on_output, work_dir="/tmp"):
         self.on_start = on_start
@@ -12,11 +16,12 @@ class ProcessHandler:
         self.id = str(id(self))
 
     def __del__(self):
-        self.stop()
+        if self.is_running():
+            self.stop()
 
     async def start(self, script):
         if self.is_running() or not isinstance(script, str):
-            raise RuntimeError("Invalid Operation")
+            raise InvalidOperation()
 
         main_filename = self._get_main_filename()
         async with aiofiles.open(main_filename, 'w+') as file:
@@ -39,12 +44,12 @@ class ProcessHandler:
 
     def stop(self):
         if not self.is_running():
-            raise RuntimeError("Invalid Operation")
+            raise InvalidOperation()
         self.process.terminate()
 
     async def send_input(self, content):
         if not self.is_running() or not isinstance(content, str):
-            raise RuntimeError("Invalid Operation")
+            raise InvalidOperation()
 
         self.process.stdin.write(content.encode('utf-8'))
         await self.process.stdin.drain()
