@@ -43,24 +43,15 @@ async def exep(request):
     await socket.prepare(request)
 
     async def on_start():
-        try:
-            await socket.send_str(create_message('started'))
-        except Exception as e:
-            print(e)
+        await socket.send_str(create_message('started'))
         print('Started', process_handler.id)
 
     async def on_stop(exit_code):
-        try:
-            await socket.send_str(create_message('stopped', {'exitCode': exit_code}))
-        except Exception as e:
-            print(e)
+        await socket.send_str(create_message('stopped', {'exitCode': exit_code}))
         print('Stopped', process_handler.id)
 
     async def on_output(channel, output):
-        try:
-            await socket.send_str(create_message(channel, {'output': output}))
-        except Exception as e:
-            print(e)
+        await socket.send_str(create_message(channel, {'output': output}))
 
     process_handler = ProcessHandler(
         on_start=on_start,
@@ -72,23 +63,19 @@ async def exep(request):
 
     try:
         async for message in socket:
-            print('Message', message)
             try:
                 await handle_message(message.data, process_handler)
             except (BadMessage, InvalidOperation):
                 await socket.send_str(
                     create_message('error', {'message': 'Bad message'})
                 )
-            print('Handled')
     except asyncio.CancelledError:
-        print(f"the websocket({socket}) cancelled")
-    except Exception as e:
-        print('e', e)
+        pass
     finally:
-        print('f')
         await socket.close()
 
     print('Closed connection', process_handler.id)
     if process_handler.is_running():
         process_handler.stop()
+
     return socket
