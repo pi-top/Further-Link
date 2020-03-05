@@ -9,7 +9,7 @@ from src import exep, status
 
 
 def ssl_context():
-    if not os.environ.get('FURTHER_LINK_NOSSL') is None:
+    if os.environ.get('FURTHER_LINK_NOSSL') is not None:
         return
     dir = os.path.dirname(os.path.realpath(__file__))
     cert = dir + '/cert.pem'

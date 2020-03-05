@@ -1,25 +1,24 @@
 import os
-import pytest
-import asyncio
-import aiohttp
 import subprocess
-from datetime import datetime
 from time import sleep
+from datetime import datetime
 
-from server import run
+import pytest
+import aiohttp
+
 from src.message import create_message, parse_message
 
-base_uri = 'ws://0.0.0.0:8028'
-ws_uri = base_uri + '/exec'
-status_uri = base_uri + '/status'
+BASE_URI = 'ws://0.0.0.0:8028'
+WS_URI = BASE_URI + '/exec'
+STATUS_URI = BASE_URI + '/status'
 
-env = os.environ.copy()
-env["FURTHER_LINK_NOSSL"] = "true"
+ENV = os.environ.copy()
+ENV["FURTHER_LINK_NOSSL"] = "true"
 @pytest.fixture(scope='session', autouse=True)
 def start_server():
     command = ['python3', 'server.py']
     proc = subprocess.Popen(command,
-                            env=env,
+                            env=ENV,
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
     sleep(1)
@@ -30,16 +29,16 @@ def start_server():
 @pytest.fixture()
 async def ws_client():
     async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(ws_uri) as ws_client:
-            yield(ws_client)
+        async with session.ws_connect(WS_URI) as client:
+            yield client
 
 
 @pytest.mark.asyncio
 async def test_status():
     async with aiohttp.ClientSession() as session:
-        async with session.get(status_uri) as response:
-            assert 200 == response.status
-            assert 'OK' == await response.text()
+        async with session.get(STATUS_URI) as response:
+            assert response.status == 200
+            assert await response.text() == 'OK'
 
 
 @pytest.mark.asyncio
@@ -161,7 +160,7 @@ while "BYE" != s:
 @pytest.mark.asyncio
 async def test_two_clients(ws_client):
     async with aiohttp.ClientSession() as session2:
-        async with session2.ws_connect(ws_uri) as ws_client2:
+        async with session2.ws_connect(WS_URI) as ws_client2:
             code = "while True: pass"
             start_cmd = create_message('start', {'sourceScript': code})
             await ws_client.send_str(start_cmd)

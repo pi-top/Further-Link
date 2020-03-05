@@ -6,15 +6,15 @@ from aiohttp import web, WSMsgType
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation
 
-work_dir = os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp")
-lib = os.path.dirname(os.path.realpath(__file__)) + '/lib'
-for file_name in os.listdir(lib):
-    file = os.path.join(lib, file_name)
-    if os.path.isfile(os.path.join(lib, file)):
-        copy(file, work_dir)
+WORK_DIR = os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp")
+LIB = os.path.dirname(os.path.realpath(__file__)) + '/lib'
+for file_name in os.listdir(LIB):
+    file = os.path.join(LIB, file_name)
+    if os.path.isfile(os.path.join(LIB, file)):
+        copy(file, WORK_DIR)
 
 
-async def status(request):
+async def status(_):
     return web.Response(text='OK')
 
 
@@ -31,7 +31,7 @@ async def handle_message(message, process_handler):
           and isinstance(m_data.get('input'), str)):
         await process_handler.send_input(m_data['input'])
 
-    elif (m_type == 'stop'):
+    elif m_type == 'stop':
         process_handler.stop()
 
     else:
@@ -66,7 +66,7 @@ async def exep(request):
         on_start=on_start,
         on_stop=on_stop,
         on_output=on_output,
-        work_dir=work_dir
+        work_dir=WORK_DIR
     )
     print('New connection', process_handler.id)
 
