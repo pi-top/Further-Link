@@ -1,5 +1,11 @@
 import asyncio
+import socket
+
 import aiofiles
+
+IPC_CHANNELS = [
+    'video'
+]
 
 
 class InvalidOperation(Exception):
@@ -8,14 +14,13 @@ class InvalidOperation(Exception):
 
 class ProcessHandler:
     def __init__(self, on_start, on_stop, on_output, work_dir="/tmp"):
-        # loop = asyncio.get_event_loop()
-        # asyncio.get_child_watcher().attach_loop(loop)
         self.on_start = on_start
         self.on_stop = on_stop
         self.on_output = on_output
         self.work_dir = work_dir
 
         self.id = str(id(self))
+        self.process = None
 
     def __del__(self):
         if self.is_running():
@@ -24,6 +29,21 @@ class ProcessHandler:
     async def start(self, script):
         if self.is_running() or not isinstance(script, str):
             raise InvalidOperation()
+
+        self.ipc_channels = {}
+        for name in IPC_CHANNELS:
+            ipc_filename = self._get_ipc_filename(name)
+            # self.ipc_channels[name] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            # self.ipc_channels[name].bind(ipc_filename)
+            # self.ipc_channels[name].setblocking(0)
+            # self.ipc_channels[name].listen(1)
+            handle_ipc = partial(self.handle_ipc, channel=name)
+            await asyncio.start_unix_server(handle_ipc, path=)
+
+
+https: // docs.python.org/3/library/asyncio-stream.html  # asyncio.start_unix_server
+https: // github.com/pi-top/pt-further-link-deb/blob/master/src/process_handler.py
+https: // stackoverflow.com/questions/48506460/python-simple-socket-client-server-using-asyncio
 
         main_filename = self._get_main_filename()
         async with aiofiles.open(main_filename, 'w+') as file:
@@ -63,6 +83,9 @@ class ProcessHandler:
         return self.work_dir + '/' + self.id + '.' + channel + '.sock'
 
     async def _communicate(self):
+        for name in self.ipc_channels:
+            asyncio.create_task(self._handle_ipc(name)),
+
         await asyncio.wait([
             asyncio.create_task(self._handle_output('stdout')),
             asyncio.create_task(self._handle_output('stderr'))
@@ -98,6 +121,9 @@ class ProcessHandler:
             pass
 
     async def _handle_ipc(self, channel):
+        # listen
+        # accept
+        # recv
         stream = getattr(self.process, stream_name)
         while True:
             line = await stream.readline()
