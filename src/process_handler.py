@@ -8,6 +8,8 @@ class InvalidOperation(Exception):
 
 class ProcessHandler:
     def __init__(self, on_start, on_stop, on_output, work_dir="/tmp"):
+        # loop = asyncio.get_event_loop()
+        # asyncio.get_child_watcher().attach_loop(loop)
         self.on_start = on_start
         self.on_stop = on_stop
         self.on_output = on_output
@@ -94,6 +96,17 @@ class ProcessHandler:
                     pass
         except:
             pass
+
+    async def _handle_ipc(self, channel):
+        stream = getattr(self.process, stream_name)
+        while True:
+            line = await stream.readline()
+            output = line.decode(encoding='utf-8')
+            if line:
+                if self.on_output:
+                    await self.on_output(stream_name, output)
+            else:
+                break
 
     # def handle_ipc(self, channel):
     #     self.ipc_channels[channel].listen(1)

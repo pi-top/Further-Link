@@ -1,13 +1,16 @@
 import os
 import asyncio
-import websockets
+from aiohttp import web
+import aiohttp_cors
 import ssl
 import codecs
 
-from src import app
+from src import exep, status
 
 
 def ssl_context():
+    if not os.environ.get('FURTHER_LINK_NOSSL') is None:
+        return
     dir = os.path.dirname(os.path.realpath(__file__))
     cert = dir + '/cert.pem'
     key = dir + '/key.pem'
@@ -21,15 +24,25 @@ def ssl_context():
     return context
 
 
-def run(loop):
+def run():
     port = int(os.environ.get('FURTHER_LINK_PORT', 8028))
-    asyncio.set_event_loop(loop)
-    asyncio.get_child_watcher().attach_loop(loop)
-    start_server = websockets.serve(app, '', port, ssl=ssl_context())
-    loop.run_until_complete(start_server)
+
+    app = web.Application()
+    cors = aiohttp_cors.setup(app, defaults={
+        "*": aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
+    })
+    status_resource = cors.add(app.router.add_resource('/status'))
+    cors.add(status_resource.add_route('GET', status))
+
+    exec_resource = cors.add(app.router.add_resource('/exec'))
+    cors.add(exec_resource.add_route('GET', exep))
+
+    web.run_app(app, port=port, ssl_context=ssl_context())
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    run(loop)
-    loop.run_forever()
+    run()

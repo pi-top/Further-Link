@@ -13,8 +13,9 @@ Flask = "==1.0.3"
 Flask-Sockets = "==0.2.1"
 flask-cors = "*"
 aiofiles = "*"
-websockets = "*"
 pytest-asyncio = "*"
+aiohttp = "*"
+aiohttp-cors = "*"
 
 [requires]
 python_version = "3.7"

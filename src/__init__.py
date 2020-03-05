@@ -1,7 +1,7 @@
 import os
 import asyncio
 from shutil import copy
-import websockets
+from aiohttp import web, WSMsgType
 
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation
@@ -12,6 +12,10 @@ for file_name in os.listdir(lib):
     file = os.path.join(lib, file_name)
     if os.path.isfile(os.path.join(lib, file)):
         copy(file, work_dir)
+
+
+async def status(request):
+    return web.Response(text='OK')
 
 
 async def handle_message(message, process_handler):
@@ -34,29 +38,29 @@ async def handle_message(message, process_handler):
         raise BadMessage()
 
 
-async def app(socket, path):
-    if path != '/exec':
-        return
+async def exep(request):
+    socket = web.WebSocketResponse()
+    await socket.prepare(request)
 
     async def on_start():
         try:
-            await socket.send(create_message('started'))
-        except websockets.exceptions.ConnectionClosedError:
-            pass
+            await socket.send_str(create_message('started'))
+        except Exception as e:
+            print(e)
         print('Started', process_handler.id)
 
     async def on_stop(exit_code):
         try:
-            await socket.send(create_message('stopped', {'exitCode': exit_code}))
-        except websockets.exceptions.ConnectionClosedError:
-            pass
+            await socket.send_str(create_message('stopped', {'exitCode': exit_code}))
+        except Exception as e:
+            print(e)
         print('Stopped', process_handler.id)
 
     async def on_output(channel, output):
         try:
-            await socket.send(create_message(channel, {'output': output}))
-        except websockets.exceptions.ConnectionClosedError:
-            pass
+            await socket.send_str(create_message(channel, {'output': output}))
+        except Exception as e:
+            print(e)
 
     process_handler = ProcessHandler(
         on_start=on_start,
@@ -68,14 +72,23 @@ async def app(socket, path):
 
     try:
         async for message in socket:
+            print('Message', message)
             try:
-                await handle_message(message, process_handler)
+                await handle_message(message.data, process_handler)
             except (BadMessage, InvalidOperation):
-                await socket.send(
+                await socket.send_str(
                     create_message('error', {'message': 'Bad message'})
                 )
-    except websockets.exceptions.ConnectionClosedError:
-        print('Closed connection', id(socket))
+            print('Handled')
+    except asyncio.CancelledError:
+        print(f"the websocket({socket}) cancelled")
+    except Exception as e:
+        print('e', e)
     finally:
-        if process_handler.is_running():
-            process_handler.stop()
+        print('f')
+        await socket.close()
+
+    print('Closed connection', process_handler.id)
+    if process_handler.is_running():
+        process_handler.stop()
+    return socket
