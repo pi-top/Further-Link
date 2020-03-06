@@ -1,3 +1,11 @@
+pt-further-link (2.0.0-1) buster; urgency=medium
+
+  * Use asyncio over threads to improve development and performance
+  * Rename exec endpoint to run-py
+  * Use same output data object for extra IO system as stdout and stderr
+
+ -- Angus Whitehead <angus@pi-top.com>  Fri, 03 Mar 2020 15:04:08 GMT +0000
+
 pt-further-link (1.2.0-1) buster; urgency=medium
 
   * Added env var FURTHER_LINK_WORK_DIR to override temp file location
