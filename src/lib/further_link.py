@@ -1,8 +1,8 @@
 import socket
-from warnings import warn
 import json
-from cv2 import imencode
 from base64 import b64encode
+
+from cv2 import imencode
 
 import __main__
 
