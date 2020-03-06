@@ -39,7 +39,7 @@ async def handle_message(message, process_handler):
         raise BadMessage()
 
 
-async def exep(request):
+async def run_py(request):
     socket = web.WebSocketResponse()
     await socket.prepare(request)
 

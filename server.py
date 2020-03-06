@@ -5,7 +5,7 @@ import codecs
 from aiohttp import web
 import aiohttp_cors
 
-from src import status, exep
+from src import status, run_py
 
 
 def ssl_context():
@@ -38,8 +38,8 @@ def run():
     status_resource = cors.add(app.router.add_resource('/status'))
     cors.add(status_resource.add_route('GET', status))
 
-    exec_resource = cors.add(app.router.add_resource('/exec'))
-    cors.add(exec_resource.add_route('GET', exep))
+    exec_resource = cors.add(app.router.add_resource('/run-py'))
+    cors.add(exec_resource.add_route('GET', run_py))
 
     web.run_app(app, port=port, ssl_context=ssl_context())
 

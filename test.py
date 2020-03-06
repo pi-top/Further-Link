@@ -9,7 +9,7 @@ import aiohttp
 from src.message import create_message, parse_message
 
 BASE_URI = 'ws://0.0.0.0:8028'
-WS_URI = BASE_URI + '/exec'
+WS_URI = BASE_URI + '/run-py'
 STATUS_URI = BASE_URI + '/status'
 
 ENV = os.environ.copy()
