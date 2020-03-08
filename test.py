@@ -39,15 +39,11 @@ async def test_status():
 @pytest.mark.asyncio
 async def test_bad_message(ws_client):
     start_cmd = create_message('start')
-    print('1')
     await ws_client.send_str(start_cmd)
-    print('2')
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
-    print('3')
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
-    print('4')
 
 
 @pytest.mark.asyncio
@@ -82,7 +78,6 @@ async def test_stop_early(ws_client):
     await ws_client.send_str(stop_cmd)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
-    print(m_data)
     assert m_type == 'stopped'
     assert m_data == {'exitCode': -15}
 
