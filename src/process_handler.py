@@ -90,10 +90,11 @@ class ProcessHandler:
     async def _handle_output(self, stream_name):
         stream = getattr(self.process, stream_name)
         while True:
-            line = await stream.read(4096)
-            if line == b'':
+            data = await stream.read(4096)
+            if data == b'':
                 break
-            output = line.decode(encoding='utf-8')
+
+            output = data.decode(encoding='utf-8')
             if self.on_output:
                 await self.on_output(stream_name, output)
 
@@ -101,9 +102,6 @@ class ProcessHandler:
         async def handle_connection(reader, _):
             message = ''
             while True:
-                if not self.is_running():
-                    break
-
                 data = await reader.read(4096)
                 if data == b'':
                     break
