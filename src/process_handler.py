@@ -91,12 +91,11 @@ class ProcessHandler:
         stream = getattr(self.process, stream_name)
         while True:
             line = await stream.read(4096)
-            output = line.decode(encoding='utf-8')
-            if line:
-                if self.on_output:
-                    await self.on_output(stream_name, output)
-            else:
+            if line == b'':
                 break
+            output = line.decode(encoding='utf-8')
+            if self.on_output:
+                await self.on_output(stream_name, output)
 
     async def _handle_ipc(self, channel):
         async def handle_connection(reader, _):
