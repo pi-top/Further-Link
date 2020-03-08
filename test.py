@@ -98,19 +98,11 @@ async def test_bad_code(ws_client):
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stderr'
-    assert m_data['output'].startswith('  File')
-
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stderr'
-    assert m_data == {'output': '    i\'m not valid python\n'}
-
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stderr'
-    assert m_data == {'output': '                       ^\n'}
-
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stderr'
-    assert m_data == {'output': 'SyntaxError: EOL while scanning string literal\n'}
+    lines = m_data['output'].split('\n')
+    assert lines[0].startswith('  File')
+    assert lines[1] == '    i\'m not valid python'
+    assert lines[2] == '                       ^'
+    assert lines[3] == 'SyntaxError: EOL while scanning string literal'
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'

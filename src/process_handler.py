@@ -90,7 +90,7 @@ class ProcessHandler:
     async def _handle_output(self, stream_name):
         stream = getattr(self.process, stream_name)
         while True:
-            line = await stream.readline()
+            line = await stream.read(4096)
             output = line.decode(encoding='utf-8')
             if line:
                 if self.on_output:
