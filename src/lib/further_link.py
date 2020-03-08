@@ -29,7 +29,7 @@ def send_image(frame):
         while total_sent < len(message):
             sent = ipc_channels['video'].send(message[total_sent:])
             if sent == 0:
-                raise RuntimeError("socket connection broken")
+                raise RuntimeError('socket connection broken')
             total_sent = total_sent + sent
     except:
         pass

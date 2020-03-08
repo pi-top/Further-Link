@@ -7,7 +7,7 @@ from aiohttp import web, WSMsgType
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation
 
-WORK_DIR = os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp")
+WORK_DIR = os.environ.get('FURTHER_LINK_WORK_DIR', '/tmp')
 LIB = os.path.dirname(os.path.realpath(__file__)) + '/lib'
 for file_name in os.listdir(LIB):
     file = os.path.join(LIB, file_name)

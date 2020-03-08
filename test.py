@@ -71,7 +71,7 @@ async def test_run_code(ws_client):
 
 @pytest.mark.asyncio
 async def test_stop_early(ws_client):
-    code = "while True: pass"
+    code = 'while True: pass'
     start_cmd = create_message('start', {'sourceScript': code})
     await ws_client.send_str(start_cmd)
 
@@ -89,7 +89,7 @@ async def test_stop_early(ws_client):
 
 @pytest.mark.asyncio
 async def test_bad_code(ws_client):
-    code = "i'm not valid python"
+    code = 'i\'m not valid python'
     start_cmd = create_message('start', {'sourceScript': code})
     await ws_client.send_str(start_cmd)
 
@@ -156,7 +156,7 @@ while "BYE" != s:
 async def test_two_clients(ws_client):
     async with aiohttp.ClientSession() as session2:
         async with session2.ws_connect(WS_URI) as ws_client2:
-            code = "while True: pass"
+            code = 'while True: pass'
             start_cmd = create_message('start', {'sourceScript': code})
             await ws_client.send_str(start_cmd)
 
@@ -204,7 +204,7 @@ async def test_out_of_order_commands(ws_client):
     assert m_data == {'message': 'Bad message'}
 
     # send start
-    code = "while True: pass"
+    code = 'while True: pass'
     start_cmd = create_message('start', {'sourceScript': code})
     await ws_client.send_str(start_cmd)
 

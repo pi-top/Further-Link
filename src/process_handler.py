@@ -13,7 +13,7 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, on_start, on_stop, on_output, work_dir="/tmp"):
+    def __init__(self, on_start, on_stop, on_output, work_dir='/tmp'):
         self.on_start = on_start
         self.on_stop = on_stop
         self.on_output = on_output
@@ -109,7 +109,7 @@ class ProcessHandler:
                 if data == b'':
                     break
 
-                tokens = data.decode("utf-8").strip().split()
+                tokens = data.decode('utf-8').strip().split()
                 if tokens[0] == channel:
                     if len(message) > 0:
                         if self.on_output:

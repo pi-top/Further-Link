@@ -31,10 +31,10 @@ def ssl_context():
 def create_app():
     app = web.Application()
     cors = aiohttp_cors.setup(app, defaults={
-        "*": aiohttp_cors.ResourceOptions(
+        '*': aiohttp_cors.ResourceOptions(
             allow_credentials=True,
-            expose_headers="*",
-            allow_headers="*",
+            expose_headers='*',
+            allow_headers='*',
         )
     })
     status_resource = cors.add(app.router.add_resource('/status'))
