@@ -1,29 +1,24 @@
 import os
-import subprocess
-from time import sleep
 from datetime import datetime
 
 import pytest
 import aiohttp
 
+from server import run_async
 from src.message import create_message, parse_message
 
 BASE_URI = 'ws://0.0.0.0:8028'
 WS_URI = BASE_URI + '/run-py'
 STATUS_URI = BASE_URI + '/status'
 
-ENV = os.environ.copy()
-ENV["FURTHER_LINK_NOSSL"] = "true"
-@pytest.fixture(scope='session', autouse=True)
-def start_server():
-    command = ['python3', 'server.py']
-    proc = subprocess.Popen(command,
-                            env=ENV,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.STDOUT)
-    sleep(1)
+
+@pytest.fixture(autouse=True)
+async def start_server():
+    os.environ['FURTHER_LINK_PORT'] = '8028'
+    os.environ['FURTHER_LINK_NOSSL'] = 'true'
+    runner = await run_async()
     yield
-    proc.terminate()
+    await runner.cleanup()
 
 
 @pytest.fixture()

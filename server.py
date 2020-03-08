@@ -8,6 +8,10 @@ import aiohttp_cors
 from src import status, run_py
 
 
+def port():
+    return int(os.environ.get('FURTHER_LINK_PORT', 8028))
+
+
 def ssl_context():
     if os.environ.get('FURTHER_LINK_NOSSL') is not None:
         return None
@@ -24,9 +28,7 @@ def ssl_context():
     return context
 
 
-def run():
-    port = int(os.environ.get('FURTHER_LINK_PORT', 8028))
-
+def create_app():
     app = web.Application()
     cors = aiohttp_cors.setup(app, defaults={
         "*": aiohttp_cors.ResourceOptions(
@@ -41,7 +43,19 @@ def run():
     exec_resource = cors.add(app.router.add_resource('/run-py'))
     cors.add(exec_resource.add_route('GET', run_py))
 
-    web.run_app(app, port=port, ssl_context=ssl_context())
+    return app
+
+
+async def run_async():
+    runner = web.AppRunner(create_app())
+    await runner.setup()
+    site = web.TCPSite(runner, port=port(), ssl_context=ssl_context())
+    await site.start()
+    return runner
+
+
+def run():
+    return web.run_app(create_app(), port=port(), ssl_context=ssl_context())
 
 
 if __name__ == '__main__':
