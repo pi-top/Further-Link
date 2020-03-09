@@ -1,5 +1,7 @@
 import asyncio
 import pwd
+import os
+import signal
 
 import aiofiles
 
@@ -9,6 +11,7 @@ IPC_CHANNELS = [
 
 
 def get_cmd_prefix():
+    # run as pi user if available
     for user in pwd.getpwall():
         if user[0] == 'pi':
             return 'sudo -u pi '
@@ -46,7 +49,8 @@ class ProcessHandler:
             *command.split(),
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE)
+            stderr=asyncio.subprocess.PIPE,
+            preexec_fn=os.setsid)  # make a process group for this and children
 
         asyncio.create_task(self._communicate())
 
@@ -59,7 +63,8 @@ class ProcessHandler:
     def stop(self):
         if not self.is_running():
             raise InvalidOperation()
-        self.process.terminate()
+        # send TERM to process group in case we have child processes
+        os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
 
     async def send_input(self, content):
         if not self.is_running() or not isinstance(content, str):
