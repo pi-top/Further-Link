@@ -35,8 +35,8 @@ class ProcessHandler:
             await file.write(script)
 
         command = 'python3 -u ' + main_filename
-        self.process = await asyncio.create_subprocess_shell(
-            command,
+        self.process = await asyncio.create_subprocess_exec(
+            *command.split(),
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
