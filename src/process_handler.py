@@ -1,11 +1,18 @@
 import asyncio
-import socket
+import pwd
 
 import aiofiles
 
 IPC_CHANNELS = [
     'video'
 ]
+
+
+def get_cmd_prefix():
+    for user in pwd.getpwall():
+        if user[0] == 'pi':
+            return 'sudo -u pi '
+    return ''
 
 
 class InvalidOperation(Exception):
@@ -34,7 +41,7 @@ class ProcessHandler:
         async with aiofiles.open(main_filename, 'w+') as file:
             await file.write(script)
 
-        command = 'python3 -u ' + main_filename
+        command = get_cmd_prefix() + 'python3 -u ' + main_filename
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
             stdin=asyncio.subprocess.PIPE,
