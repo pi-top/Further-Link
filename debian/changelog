@@ -1,9 +1,10 @@
 pt-further-link (2.0.0-1) buster; urgency=medium
 
-  * Handle output by bytes rather than by line
-  * Use asyncio over threads to improve development and performance
   * Rename exec endpoint to run-py
   * Use same output data object for extra IO system as stdout and stderr
+  * Execute python as pi user if available
+  * Handle output by bytes rather than by line
+  * Use asyncio over threads to improve development and performance
 
  -- Angus Whitehead <angus@pi-top.com>  Fri, 03 Mar 2020 15:04:08 +0000
 
