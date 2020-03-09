@@ -68,18 +68,26 @@ class ProcessHandler:
         return self.work_dir + '/' + self.id + '.' + channel + '.sock'
 
     async def _communicate(self):
-        io_tasks = [
+        output_tasks = [
             asyncio.create_task(self._handle_output('stdout')),
-            asyncio.create_task(self._handle_output('stderr'))
+            asyncio.create_task(self._handle_output('stderr')),
         ]
 
+        ipc_tasks = []
         for name in IPC_CHANNELS:
-            io_tasks.append(asyncio.create_task(
+            ipc_tasks.append(asyncio.create_task(
                 self._handle_ipc(name)
             ))
 
-        await asyncio.wait(io_tasks)
+        # allow the output tasks to finish & flush
+        await asyncio.wait(output_tasks)
 
+        # stop ongoing ipc servers
+        for task in ipc_tasks:
+            task.cancel()
+        await asyncio.wait(ipc_tasks)
+
+        # process should be done now but await it to get exit code
         exit_code = await self.process.wait()
         self.process = None
         await self._clean_up()
