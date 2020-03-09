@@ -1,63 +1,82 @@
 import os
-from flask import Flask
-from flask_sockets import Sockets
-from flask_cors import CORS
+import asyncio
+
 from shutil import copy
+from aiohttp import web, WSMsgType
 
-from .message import parse_message, create_message
-from .process_handler import ProcessHandler
+from .message import parse_message, create_message, BadMessage
+from .process_handler import ProcessHandler, InvalidOperation
 
-app = Flask(__name__)
-CORS(app)
-sockets = Sockets(app)
-
-work_dir = os.environ.get("FURTHER_LINK_WORK_DIR", "/tmp")
-lib = os.path.dirname(os.path.realpath(__file__)) + '/lib'
-for file_name in os.listdir(lib):
-    file = os.path.join(lib, file_name)
-    if os.path.isfile(os.path.join(lib, file)):
-        copy(file, work_dir)
+WORK_DIR = os.environ.get('FURTHER_LINK_WORK_DIR', '/tmp')
+LIB = os.path.dirname(os.path.realpath(__file__)) + '/lib'
+for file_name in os.listdir(LIB):
+    file = os.path.join(LIB, file_name)
+    if os.path.isfile(os.path.join(LIB, file)):
+        copy(file, WORK_DIR)
 
 
-@app.route('/status')
-def ok():
-    return 'OK'
+async def status(_):
+    return web.Response(text='OK')
 
 
-@sockets.route('/exec')
-def api(socket):
-    process_handler = ProcessHandler(socket, work_dir=work_dir)
-    bad_message_message = create_message('error', {'message': 'Bad message'})
-    print('New connection', id(socket))
+async def handle_message(message, process_handler):
+    m_type, m_data = parse_message(message)
 
-    while not socket.closed:
-        try:
-            message = socket.receive()
-            m_type, m_data = parse_message(message)
-
-        except Exception as e:
-            if isinstance(message, str):
-                socket.send(bad_message_message)
-            continue
-
-        if (m_type == 'start'
-            and not process_handler.is_running()
+    if (m_type == 'start'
             and 'sourceScript' in m_data
-                and isinstance(m_data.get('sourceScript'), str)):
-            process_handler.start(m_data['sourceScript'])
-            socket.send(create_message('started'))
+            and isinstance(m_data.get('sourceScript'), str)):
+        await process_handler.start(m_data['sourceScript'])
 
-        elif (m_type == 'stdin'
-              and process_handler.is_running()
-              and 'input' in m_data
-              and isinstance(m_data.get('input'), str)):
-            process_handler.send_input(m_data['input'])
+    elif (m_type == 'stdin'
+          and 'input' in m_data
+          and isinstance(m_data.get('input'), str)):
+        await process_handler.send_input(m_data['input'])
 
-        elif (m_type == 'stop' and process_handler.is_running()):
-            process_handler.stop()
+    elif m_type == 'stop':
+        process_handler.stop()
 
-        else:
-            socket.send(bad_message_message)
+    else:
+        raise BadMessage()
 
-    print('Closed connection', id(socket))
-    process_handler.stop()
+
+async def run_py(request):
+    socket = web.WebSocketResponse()
+    await socket.prepare(request)
+
+    async def on_start():
+        await socket.send_str(create_message('started'))
+        print('Started', process_handler.id)
+
+    async def on_stop(exit_code):
+        await socket.send_str(create_message('stopped', {'exitCode': exit_code}))
+        print('Stopped', process_handler.id)
+
+    async def on_output(channel, output):
+        await socket.send_str(create_message(channel, {'output': output}))
+
+    process_handler = ProcessHandler(
+        on_start=on_start,
+        on_stop=on_stop,
+        on_output=on_output,
+        work_dir=WORK_DIR
+    )
+    print('New connection', process_handler.id)
+
+    try:
+        async for message in socket:
+            try:
+                await handle_message(message.data, process_handler)
+            except (BadMessage, InvalidOperation):
+                await socket.send_str(
+                    create_message('error', {'message': 'Bad message'})
+                )
+    except asyncio.CancelledError:
+        pass
+    finally:
+        await socket.close()
+
+    print('Closed connection', process_handler.id)
+    if process_handler.is_running():
+        process_handler.stop()
+
+    return socket

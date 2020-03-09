@@ -1,272 +1,266 @@
-import pytest
-import threading
-import asyncio
-import websocket
-import ssl
+import os
 from datetime import datetime
 
-from server import run, app
+import pytest
+import aiohttp
+
+from server import run_async
 from src.message import create_message, parse_message
 
-http_client = app.test_client()
-
-server = threading.Thread(target=run, daemon=True)
-server.start()
-
-
-def new_websocket_client():
-    client = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
-    client.connect('wss://localhost:8028/exec')
-    return client
+BASE_URI = 'ws://0.0.0.0:8028'
+WS_URI = BASE_URI + '/run-py'
+STATUS_URI = BASE_URI + '/status'
 
 
-def test_status():
-    r = http_client.get('/status')
-    assert '200 OK' == r.status
-    assert 'OK' == r.data.decode('utf-8')
+@pytest.fixture(autouse=True)
+async def start_server():
+    os.environ['FURTHER_LINK_PORT'] = '8028'
+    os.environ['FURTHER_LINK_NOSSL'] = 'true'
+    runner = await run_async()
+    yield
+    await runner.cleanup()
 
 
-def test_bad_message():
-    websocket_client = new_websocket_client()
+@pytest.fixture()
+async def ws_client():
+    async with aiohttp.ClientSession() as session:
+        async with session.ws_connect(WS_URI) as client:
+            yield client
 
+
+@pytest.mark.asyncio
+async def test_status():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(STATUS_URI) as response:
+            assert response.status == 200
+            assert await response.text() == 'OK'
+
+
+@pytest.mark.asyncio
+async def test_bad_message(ws_client):
     start_cmd = create_message('start')
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
 
-def test_run_code():
-    websocket_client = new_websocket_client()
-
+@pytest.mark.asyncio
+async def test_run_code(ws_client):
     code = 'from datetime import datetime\nprint(datetime.now().strftime("%A"))'
     start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     day = datetime.now().strftime('%A')
     assert m_type == 'stdout'
     assert m_data == {'output': day + '\n'}
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 0}
 
 
-def test_stop_early():
-    websocket_client = new_websocket_client()
-
-    code = "while True: pass"
+@pytest.mark.asyncio
+async def test_stop_early(ws_client):
+    code = 'while True: pass'
     start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
     stop_cmd = create_message('stop')
-    websocket_client.send(stop_cmd)
+    await ws_client.send_str(stop_cmd)
 
-    m_type, m_data = parse_message(websocket_client.recv())
-    print(m_data)
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
-    assert m_data == {'exitCode': -9}
+    assert m_data == {'exitCode': -15}
 
 
-def test_bad_code():
-    websocket_client = new_websocket_client()
-
-    code = "i'm not valid python"
+@pytest.mark.asyncio
+async def test_bad_code(ws_client):
+    code = 'i\'m not valid python'
     start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stderr'
-    assert m_data['output'].startswith('  File')
+    lines = m_data['output'].split('\n')
+    assert lines[0].startswith('  File')
+    assert lines[1] == '    i\'m not valid python'
+    assert lines[2] == '                       ^'
+    assert lines[3] == 'SyntaxError: EOL while scanning string literal'
 
-    m_type, m_data = parse_message(websocket_client.recv())
-    assert m_type == 'stderr'
-    assert m_data == {'output': '    i\'m not valid python\n'}
-
-    m_type, m_data = parse_message(websocket_client.recv())
-    assert m_type == 'stderr'
-    assert m_data == {'output': '                       ^\n'}
-
-    m_type, m_data = parse_message(websocket_client.recv())
-    assert m_type == 'stderr'
-    assert m_data == {'output': 'SyntaxError: EOL while scanning string literal\n'}
-
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 1}
 
 
-def test_input():
-    websocket_client = new_websocket_client()
-
+@pytest.mark.asyncio
+async def test_input(ws_client):
     code = """s = input()
 while "BYE" != s:
     print(["HUH?! SPEAK UP, SONNY!","NO, NOT SINCE 1930"][s.isupper()])
     s = input()"""
 
     start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
     user_input = create_message('stdin', {'input': 'hello\n'})
-    websocket_client.send(user_input)
+    await ws_client.send_str(user_input)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
     assert m_data == {'output': 'HUH?! SPEAK UP, SONNY!\n'}
 
     user_input = create_message('stdin', {'input': 'HEY GRANDMA\n'})
-    websocket_client.send(user_input)
+    await ws_client.send_str(user_input)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
     assert m_data == {'output': 'NO, NOT SINCE 1930\n'}
 
     user_input = create_message('stdin', {'input': 'BYE\n'})
-    websocket_client.send(user_input)
+    await ws_client.send_str(user_input)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 0}
 
 
-def test_two_clients():
-    websocket_client = new_websocket_client()
-    websocket_client2 = new_websocket_client()
+@pytest.mark.asyncio
+async def test_two_clients(ws_client):
+    async with aiohttp.ClientSession() as session2:
+        async with session2.ws_connect(WS_URI) as ws_client2:
+            code = 'while True: pass'
+            start_cmd = create_message('start', {'sourceScript': code})
+            await ws_client.send_str(start_cmd)
 
-    code = "while True: pass"
-    start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+            m_type, m_data = parse_message((await ws_client.receive()).data)
+            assert m_type == 'started'
 
-    m_type, m_data = parse_message(websocket_client.recv())
-    assert m_type == 'started'
+            await ws_client2.send_str(start_cmd)
 
-    websocket_client2.send(start_cmd)
+            m_type, m_data = parse_message((await ws_client2.receive()).data)
+            assert m_type == 'started'
 
-    m_type, m_data = parse_message(websocket_client2.recv())
-    assert m_type == 'started'
+            stop_cmd = create_message('stop')
+            await ws_client.send_str(stop_cmd)
 
-    stop_cmd = create_message('stop')
-    websocket_client.send(stop_cmd)
+            m_type, m_data = parse_message((await ws_client.receive()).data)
+            assert m_type == 'stopped'
+            assert m_data == {'exitCode': -15}
 
-    m_type, m_data = parse_message(websocket_client.recv())
-    assert m_type == 'stopped'
-    assert m_data == {'exitCode': -9}
+            stop_cmd = create_message('stop')
+            await ws_client2.send_str(stop_cmd)
 
-    stop_cmd = create_message('stop')
-    websocket_client2.send(stop_cmd)
-
-    m_type, m_data = parse_message(websocket_client2.recv())
-    assert m_type == 'stopped'
-    assert m_data == {'exitCode': -9}
+            m_type, m_data = parse_message((await ws_client2.receive()).data)
+            assert m_type == 'stopped'
+            assert m_data == {'exitCode': -15}
 
 
-def test_out_of_order_commands():
-    websocket_client = new_websocket_client()
-
+@pytest.mark.asyncio
+async def test_out_of_order_commands(ws_client):
     # send input
     user_input = create_message('stdin', {'input': 'hello\n'})
-    websocket_client.send(user_input)
+    await ws_client.send_str(user_input)
 
     # bad message
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
     # send stop
     stop_cmd = create_message('stop')
-    websocket_client.send(stop_cmd)
+    await ws_client.send_str(stop_cmd)
 
     # bad message
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
     # send start
-    code = "while True: pass"
+    code = 'while True: pass'
     start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
     # started
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
     # send start
     start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
     # bad message
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
     # send stop
     stop_cmd = create_message('stop')
-    websocket_client.send(stop_cmd)
+    await ws_client.send_str(stop_cmd)
 
     # stopped
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
-    assert m_data == {'exitCode': -9}
+    assert m_data == {'exitCode': -15}
 
     # send stop
     stop_cmd = create_message('stop')
-    websocket_client.send(stop_cmd)
+    await ws_client.send_str(stop_cmd)
 
     # bad message
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'error'
     assert m_data == {'message': 'Bad message'}
 
 
-def test_discard_old_input():
-    websocket_client = new_websocket_client()
-
+@pytest.mark.asyncio
+async def test_discard_old_input(ws_client):
     code = 'print("hello world")'
     start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
     unterminated_input = create_message('stdin', {'input': 'unterminated input'})
-    websocket_client.send(unterminated_input)
+    await ws_client.send_str(unterminated_input)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
     assert m_data == {'output': 'hello world\n'}
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 0}
 
     code = 'print(input())'
     start_cmd = create_message('start', {'sourceScript': code})
-    websocket_client.send(start_cmd)
+    await ws_client.send_str(start_cmd)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
     user_input = create_message('stdin', {'input': 'hello\n'})
-    websocket_client.send(user_input)
+    await ws_client.send_str(user_input)
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
     assert m_data == {'output': 'hello\n'}
 
-    m_type, m_data = parse_message(websocket_client.recv())
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 0}

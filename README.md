@@ -4,9 +4,11 @@ revice from [Further](https://further.pi-top.com).
 
 The primary use case of this is to remotely run user's code (python3) on the
 pi-top. A websocket api is provided to start and stop python programs and
-access their stdin/out/err streams.
+access their stdin/stdout/stderr streams. There is also a system to add
+additional IO streams such as video output, see examples/cam.py for how to use
+that.
 
-### Usage
+### Development usage
 We are using Python 3.7 and managing dependencies with
 [pipenv](https://github.com/pypa/pipenv)
 ```
@@ -27,9 +29,9 @@ curl https://127-0-0-1.further-link.pi-top.com:8028/status
 
 ### Websocket API
 #### Example usage
-- Connect websocket on `/exec` (using [websocat](https://github.com/vi/websocat)):
+- Connect websocket on `/run-py` (using [websocat](https://github.com/vi/websocat)):
 ```
-websocat wss://127-0-0-1.further-link.pi-top.com:8028/exec
+websocat wss://127-0-0-1.further-link.pi-top.com:8028/run-py
 ```
 - Send `start` command with `sourceScript`:
 ```
@@ -45,7 +47,7 @@ websocat wss://127-0-0-1.further-link.pi-top.com:8028/exec
 ```
 
 #### Spec
-Each websocket client connected on `/exec` can manage a single python process
+Each websocket client connected on `/run-py` can manage a single python process
 at a time.
 
 Messages sent between client and server must be in JSON with two top level
@@ -87,10 +89,11 @@ __It's important to end all input with a newline (`\n`).__
 
 ### Ideas and TODOS
 - Implement `sourcePath`
-- Special output formats eg image, video, graph
-- Detaching, reattaching to long running programs
+- Connection security codes displayed on OLED
 - Device status endpoints eg battery
-- Connecction security codes displayed on OLED
+- More io extensions eg chart plotting, ui events
+- Detaching, reattaching to long running programs
+- Queueing system to enable safe hardware sharing
 - Device registration to remote server to provide easier connection
 - Linking to user accounts, project workspaces & syncing
 - ~~Over the internet access with reverse proxy~~
