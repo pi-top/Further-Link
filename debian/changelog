@@ -1,3 +1,9 @@
+pt-further-link (2.0.0-2) buster; urgency=medium
+
+  * Start and enable Further Link service on install
+
+ -- Mike Roberts <mike@pi-top.com>  Thu, 02 Apr 2020 14:59:33 +0100
+
 pt-further-link (2.0.0-1) buster; urgency=medium
 
   * Rename exec endpoint to run-py
