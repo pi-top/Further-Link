@@ -1,8 +1,16 @@
 import asyncio
-import pwd
 import os
+import pwd
 import signal
 from shlex import split
+
+
+def get_cmd_prefix():
+    # run as pi user if available
+    for user in pwd.getpwall():
+        if user[0] == 'pi':
+            return 'sudo -u pi '
+    return ''
 
 
 class InvalidOperation(Exception):
@@ -26,8 +34,9 @@ class ProcessHandler:
         if self.is_running() or not isinstance(command, str):
             raise InvalidOperation()
 
-        self.process = await asyncio.create_subprocess_exec(
-            *split(command),
+        cmd = get_cmd_prefix() + command
+        self.process = await asyncio.create_subprocess_shell(
+            cmd,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,

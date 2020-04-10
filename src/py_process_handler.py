@@ -1,5 +1,4 @@
 import asyncio
-import pwd
 import os
 import signal
 
@@ -10,14 +9,6 @@ from .process_handler import ProcessHandler, InvalidOperation
 IPC_CHANNELS = [
     'video'
 ]
-
-
-def get_cmd_prefix():
-    # run as pi user if available
-    for user in pwd.getpwall():
-        if user[0] == 'pi':
-            return 'sudo -u pi '
-    return ''
 
 
 class PyProcessHandler(ProcessHandler):
@@ -33,7 +24,7 @@ class PyProcessHandler(ProcessHandler):
         async with aiofiles.open(main_filename, 'w+') as file:
             await file.write(script)
 
-        command = get_cmd_prefix() + 'python3 -u ' + main_filename
+        command = 'python3 -u ' + main_filename
         await super().start(command)
 
     def _get_main_filename(self):
