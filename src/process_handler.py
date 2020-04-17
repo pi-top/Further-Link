@@ -132,9 +132,9 @@ class ProcessHandler:
                         if self.on_output:
                             await self.on_output(channel, message)
                         message = ''
-                    message += tokens[1]
+                    message += ' '.join(tokens[1:])
                 else:
-                    message += tokens[0]
+                    message += ' '.join(tokens[1:])
 
         ipc_filename = self._get_ipc_filename(channel)
         await asyncio.start_unix_server(handle_connection, path=ipc_filename)
