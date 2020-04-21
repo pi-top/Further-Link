@@ -44,6 +44,8 @@ class ProcessHandler:
         async with aiofiles.open(main_filename, 'w+') as file:
             await file.write(script)
 
+        asyncio.create_task(self._ipc_communicate())
+
         command = get_cmd_prefix() + 'python3 -u ' + main_filename
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
@@ -52,7 +54,7 @@ class ProcessHandler:
             stderr=asyncio.subprocess.PIPE,
             preexec_fn=os.setsid)  # make a process group for this and children
 
-        asyncio.create_task(self._communicate())
+        asyncio.create_task(self._process_communicate())
 
         if self.on_start:
             await self.on_start()
@@ -79,25 +81,26 @@ class ProcessHandler:
     def _get_ipc_filename(self, channel):
         return self.work_dir + '/' + self.id + '.' + channel + '.sock'
 
-    async def _communicate(self):
+    async def _ipc_communicate(self):
+        self.ipc_tasks = []
+        for name in IPC_CHANNELS:
+            self.ipc_tasks.append(asyncio.create_task(
+                self._handle_ipc(name)
+            ))
+
+    async def _process_communicate(self):
         output_tasks = [
             asyncio.create_task(self._handle_output('stdout')),
             asyncio.create_task(self._handle_output('stderr')),
         ]
 
-        ipc_tasks = []
-        for name in IPC_CHANNELS:
-            ipc_tasks.append(asyncio.create_task(
-                self._handle_ipc(name)
-            ))
-
         # allow the output tasks to finish & flush
         await asyncio.wait(output_tasks)
 
         # stop ongoing ipc servers
-        for task in ipc_tasks:
+        for task in self.ipc_tasks:
             task.cancel()
-        await asyncio.wait(ipc_tasks)
+        await asyncio.wait(self.ipc_tasks)
 
         # process should be done now but await it to get exit code
         exit_code = await self.process.wait()
