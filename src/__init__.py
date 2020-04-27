@@ -31,6 +31,9 @@ async def handle_message(message, process_handler):
           and 'input' in m_data
           and isinstance(m_data.get('input'), str)):
         await process_handler.send_input(m_data['input'])
+    
+    elif (m_type == 'ping'):
+        await process_handler.ping()
 
     elif m_type == 'stop':
         process_handler.stop()
@@ -50,6 +53,10 @@ async def run_py(request):
     async def on_stop(exit_code):
         await socket.send_str(create_message('stopped', {'exitCode': exit_code}))
         print('Stopped', process_handler.id)
+    
+    async def on_ping():
+        await socket.send_str(create_message('pinged'))
+        print('Pinged', process_handler.id)
 
     async def on_output(channel, output):
         await socket.send_str(create_message(channel, {'output': output}))
@@ -58,6 +65,7 @@ async def run_py(request):
         on_start=on_start,
         on_stop=on_stop,
         on_output=on_output,
+        on_ping=on_ping,
         work_dir=WORK_DIR
     )
     print('New connection', process_handler.id)

@@ -23,11 +23,12 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, on_start, on_stop, on_output, work_dir='/tmp'):
+    def __init__(self, on_start, on_stop, on_output, on_ping, work_dir='/tmp'):
         self.on_start = on_start
         self.on_stop = on_stop
         self.on_output = on_output
         self.work_dir = work_dir
+        self.on_ping = on_ping
 
         self.id = str(id(self))
         self.process = None
@@ -59,6 +60,10 @@ class ProcessHandler:
 
     def is_running(self):
         return hasattr(self, 'process') and self.process is not None
+    
+    async def ping(self):
+        if self.on_ping:
+            await self.on_ping()
 
     def stop(self):
         if not self.is_running():
