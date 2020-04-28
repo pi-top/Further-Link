@@ -34,7 +34,6 @@ async def handle_message(message, process_handler, socket):
     
     elif (m_type == 'ping'):
         await socket.send_str(create_message('pong'))
-        print('pong', process_handler.id)
 
     elif m_type == 'stop':
         process_handler.stop()
