@@ -19,7 +19,7 @@ async def status(_):
     return web.Response(text='OK')
 
 
-async def handle_message(message, process_handler):
+async def handle_message(message, process_handler, socket):
     m_type, m_data = parse_message(message)
 
     if (m_type == 'start'
@@ -33,7 +33,8 @@ async def handle_message(message, process_handler):
         await process_handler.send_input(m_data['input'])
     
     elif (m_type == 'ping'):
-        await process_handler.ping()
+        await socket.send_str(create_message('pong'))
+        print('pong', process_handler.id)
 
     elif m_type == 'stop':
         process_handler.stop()
@@ -53,10 +54,6 @@ async def run_py(request):
     async def on_stop(exit_code):
         await socket.send_str(create_message('stopped', {'exitCode': exit_code}))
         print('Stopped', process_handler.id)
-    
-    async def on_ping():
-        await socket.send_str(create_message('pinged'))
-        print('Pinged', process_handler.id)
 
     async def on_output(channel, output):
         await socket.send_str(create_message(channel, {'output': output}))
@@ -65,7 +62,6 @@ async def run_py(request):
         on_start=on_start,
         on_stop=on_stop,
         on_output=on_output,
-        on_ping=on_ping,
         work_dir=WORK_DIR
     )
     print('New connection', process_handler.id)
@@ -73,7 +69,7 @@ async def run_py(request):
     try:
         async for message in socket:
             try:
-                await handle_message(message.data, process_handler)
+                await handle_message(message.data, process_handler, socket)
             except (BadMessage, InvalidOperation):
                 await socket.send_str(
                     create_message('error', {'message': 'Bad message'})
