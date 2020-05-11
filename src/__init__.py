@@ -19,7 +19,7 @@ async def status(_):
     return web.Response(text='OK')
 
 
-async def handle_message(message, process_handler):
+async def handle_message(message, process_handler, socket):
     m_type, m_data = parse_message(message)
 
     if (m_type == 'start'
@@ -31,6 +31,9 @@ async def handle_message(message, process_handler):
           and 'input' in m_data
           and isinstance(m_data.get('input'), str)):
         await process_handler.send_input(m_data['input'])
+
+    elif (m_type == 'ping'):
+        await socket.send_str(create_message('pong'))
 
     elif m_type == 'stop':
         process_handler.stop()
@@ -65,7 +68,7 @@ async def run_py(request):
     try:
         async for message in socket:
             try:
-                await handle_message(message.data, process_handler)
+                await handle_message(message.data, process_handler, socket)
             except (BadMessage, InvalidOperation):
                 await socket.send_str(
                     create_message('error', {'message': 'Bad message'})
