@@ -31,7 +31,7 @@ async def handle_message(message, process_handler, socket):
           and 'input' in m_data
           and isinstance(m_data.get('input'), str)):
         await process_handler.send_input(m_data['input'])
-    
+
     elif (m_type == 'ping'):
         await socket.send_str(create_message('pong'))
 
