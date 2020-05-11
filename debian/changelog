@@ -1,3 +1,9 @@
+pt-further-link (2.1.0-2) buster; urgency=medium
+
+  * Added ping pong socket message
+
+  -- Yogender Kumar <yogender@pi-top.com>  Thu, 27 Apr 2020 15:25:00 +0530
+
 pt-further-link (2.0.0-2) buster; urgency=medium
 
   * Start and enable Further Link service on install
