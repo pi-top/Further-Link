@@ -143,11 +143,13 @@ class ProcessHandler:
         await asyncio.start_unix_server(handle_connection, path=ipc_filename)
 
     async def _clean_up(self):
+        # aiofiles.os.remove not released to debian buster
+        # os.remove should not block significantly, just fires a single syscall
         try:
-            await aiofiles.os.remove(self._get_main_filename())
+            os.remove(self._get_main_filename())
             for name in ipc_channel_names:
                 try:
-                    await aiofiles.os.remove(self._get_ipc_filename(name))
+                    os.remove(self._get_ipc_filename(name))
                 except:
                     pass
         except:
