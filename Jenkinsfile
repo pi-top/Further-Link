@@ -36,9 +36,6 @@ pipeline {
 
     stage ('Test') {
       steps {
-        checkSymLinks()
-        // shellcheck()
-
         sh """
         cd pt-further-link
         pipenv sync --dev
