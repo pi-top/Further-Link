@@ -44,7 +44,11 @@ pipeline {
 
         script {
           try {
-            lintian()
+            lintian(
+              packageName: env.PKG_NAME,
+              useChangeFile: true,
+              throwError: false
+            )
           } catch (e) {
             currentBuild.result = 'UNSTABLE'
           }
