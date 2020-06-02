@@ -141,6 +141,7 @@ class ProcessHandler:
 
         ipc_filename = self._get_ipc_filename(channel)
         await asyncio.start_unix_server(handle_connection, path=ipc_filename)
+        os.chmod(ipc_filename, 0o666)  # ensure pi user can use this too
 
     async def _clean_up(self):
         # aiofiles.os.remove not released to debian buster
