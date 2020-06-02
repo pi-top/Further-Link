@@ -1,3 +1,10 @@
+pt-further-link (2.1.2-1) buster; urgency=medium
+
+  * Improve video ipc system startup and message handling
+  * Fix temp file cleanup
+
+ -- Angus Whitehead <angus@pi-top.com>  Tue, 02 Jun 2020 16:42:08 +0100
+
 pt-further-link (2.1.1-1) buster; urgency=medium
 
   * Updated ssl cert and key

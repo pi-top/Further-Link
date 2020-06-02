@@ -44,6 +44,8 @@ class ProcessHandler:
         async with aiofiles.open(main_filename, 'w+') as file:
             await file.write(script)
 
+        asyncio.create_task(self._ipc_communicate())
+
         command = get_cmd_prefix() + 'python3 -u ' + main_filename
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
@@ -52,7 +54,7 @@ class ProcessHandler:
             stderr=asyncio.subprocess.PIPE,
             preexec_fn=os.setsid)  # make a process group for this and children
 
-        asyncio.create_task(self._communicate())
+        asyncio.create_task(self._process_communicate())
 
         if self.on_start:
             await self.on_start()
@@ -79,25 +81,26 @@ class ProcessHandler:
     def _get_ipc_filename(self, channel):
         return self.work_dir + '/' + self.id + '.' + channel + '.sock'
 
-    async def _communicate(self):
+    async def _ipc_communicate(self):
+        self.ipc_tasks = []
+        for name in IPC_CHANNELS:
+            self.ipc_tasks.append(asyncio.create_task(
+                self._handle_ipc(name)
+            ))
+
+    async def _process_communicate(self):
         output_tasks = [
             asyncio.create_task(self._handle_output('stdout')),
             asyncio.create_task(self._handle_output('stderr')),
         ]
 
-        ipc_tasks = []
-        for name in IPC_CHANNELS:
-            ipc_tasks.append(asyncio.create_task(
-                self._handle_ipc(name)
-            ))
-
         # allow the output tasks to finish & flush
         await asyncio.wait(output_tasks)
 
         # stop ongoing ipc servers
-        for task in ipc_tasks:
+        for task in self.ipc_tasks:
             task.cancel()
-        await asyncio.wait(ipc_tasks)
+        await asyncio.wait(self.ipc_tasks)
 
         # process should be done now but await it to get exit code
         exit_code = await self.process.wait()
@@ -132,19 +135,22 @@ class ProcessHandler:
                         if self.on_output:
                             await self.on_output(channel, message)
                         message = ''
-                    message += tokens[1]
+                    message += ' '.join(tokens[1:])
                 else:
-                    message += tokens[0]
+                    message += ' '.join(tokens[1:])
 
         ipc_filename = self._get_ipc_filename(channel)
         await asyncio.start_unix_server(handle_connection, path=ipc_filename)
+        os.chmod(ipc_filename, 0o666)  # ensure pi user can use this too
 
     async def _clean_up(self):
+        # aiofiles.os.remove not released to debian buster
+        # os.remove should not block significantly, just fires a single syscall
         try:
-            await aiofiles.os.remove(self._get_main_filename())
-            for name in ipc_channel_names:
+            os.remove(self._get_main_filename())
+            for name in IPC_CHANNELS:
                 try:
-                    await aiofiles.os.remove(self._get_ipc_filename(name))
+                    os.remove(self._get_ipc_filename(name))
                 except:
                     pass
         except:
