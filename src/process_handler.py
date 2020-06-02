@@ -148,7 +148,7 @@ class ProcessHandler:
         # os.remove should not block significantly, just fires a single syscall
         try:
             os.remove(self._get_main_filename())
-            for name in ipc_channel_names:
+            for name in IPC_CHANNELS:
                 try:
                     os.remove(self._get_ipc_filename(name))
                 except:
