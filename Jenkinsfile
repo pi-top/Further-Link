@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage ('Checkout') {
       steps {
-        checkoutRecursive()
+        checkoutRecursive(env.PKG_NAME)
       }
     }
 
