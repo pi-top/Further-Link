@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage ('Checkout') {
       steps {
-        checkoutSubmodule()
+        checkoutRecursive()
       }
     }
 
