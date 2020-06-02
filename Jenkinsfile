@@ -7,9 +7,11 @@ pipeline {
   stages {
     stage ('Checkout') {
       steps {
-        env.REPO_NAME = env.JOB_NAME.split('/')[1]
-        env.PKG_NAME  = env.REPO_NAME.substring(0, env.REPO_NAME.length() - 4)
-        checkoutRecursive(env.PKG_NAME)
+        script {
+          env.REPO_NAME = env.JOB_NAME.split('/')[1]
+          env.PKG_NAME  = env.REPO_NAME.substring(0, env.REPO_NAME.length() - 4)
+          checkoutRecursive(env.PKG_NAME)
+        }
       }
     }
 
