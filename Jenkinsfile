@@ -7,16 +7,18 @@ pipeline {
   stages {
     stage ('Checkout') {
       steps {
-        checkoutSubmodule()
+        script {
+          env.REPO_NAME = env.JOB_NAME.split('/')[1]
+          env.PKG_NAME  = env.REPO_NAME.substring(0, env.REPO_NAME.length() - 4)
+          checkoutRecursive(env.PKG_NAME)
+        }
       }
     }
 
     stage ('Pre-commit Checks') {
       steps {
         script {
-          REPO_NAME = env.JOB_NAME.split('/')[1]
-          PKG_NAME  = REPO_NAME.substring(0, REPO_NAME.length() - 4)
-          dir(PKG_NAME) {
+          dir(env.PKG_NAME) {
             preCommit()
           }
         }
@@ -34,9 +36,6 @@ pipeline {
 
     stage ('Test') {
       steps {
-        checkSymLinks()
-        // shellcheck()
-
         sh """
         cd pt-further-link
         pipenv sync --dev
@@ -45,7 +44,11 @@ pipeline {
 
         script {
           try {
-            lintian()
+            lintian(
+              packageName: env.PKG_NAME,
+              useChangeFile: true,
+              throwError: false
+            )
           } catch (e) {
             currentBuild.result = 'UNSTABLE'
           }
