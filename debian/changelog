@@ -1,3 +1,9 @@
+pt-further-link (2.1.2-2) buster; urgency=medium
+
+  * Fix Lintian warnings and errors
+
+ -- Mike Roberts <mike@pi-top.com>  Wed, 03 Jun 2020 09:38:30 +0100
+
 pt-further-link (2.1.2-1) buster; urgency=medium
 
   * Improve video ipc system startup and message handling
