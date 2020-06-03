@@ -2,14 +2,14 @@ Source: pt-further-link
 Section: python
 Priority: optional
 Maintainer: pi-top <deb-maintainers@pi-top.com>
-Build-Depends: debhelper (>= 7)
-Standards-Version: 3.8.4
+Build-Depends: debhelper (>= 7), dh-python, dh-systemd (>= 1.5)
+Standards-Version: 3.9.8
 Homepage: https://pi-top.com
 
 Package: pt-further-link
 Architecture: armhf
 Depends: ${misc:Depends}, ${python3:Depends},
  python3-aiofiles, python3-aiohttp, python3-aiohttp-cors
-Description: pt-further-link
- project further server to execute python programs
- remotely.
+Description: pi-top Further Link
+ Connect to further.pi-top.com in a browser, allowing Python
+ projects to be executed remotely.
