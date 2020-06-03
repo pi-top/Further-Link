@@ -1,6 +1,8 @@
 [Unit]
-Description=Further link server service
+Description=pi-top Further Link
+Documentation=https://knowledgebase.pi-top.com/knowledge
 After=network.target
+
 [Service]
 Type=simple
 ExecStart=/usr/bin/python3 -B /usr/lib/pt-further-link/server.py
