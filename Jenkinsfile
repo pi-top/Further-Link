@@ -5,7 +5,7 @@ buildOSPackage(
     pythonComponents: [
       [
         "SRC": "src",
-        "TEST": ""
+        "TEST": "."
       ]
     ]
   ]
