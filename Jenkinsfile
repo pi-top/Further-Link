@@ -1,3 +1,12 @@
-@Library("devops-jenkins-shared-library@master") _
+@Library("devops-jenkins-shared-library@feature/supportPyTest") _
 
-buildOSPackage()
+buildOSPackage(
+  [
+    pythonComponents: [
+      [
+        "SRC": "src",
+        "TEST": ""
+      ]
+    ]
+  ]
+)
