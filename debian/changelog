@@ -1,3 +1,9 @@
+pt-further-link (2.1.2-3) buster; urgency=medium
+
+  * Update long description control file
+
+ -- Mike Roberts <mike@pi-top.com>  Tue, 09 Jun 2020 10:10:41 +0100
+
 pt-further-link (2.1.2-2) buster; urgency=medium
 
   * Fix Lintian warnings and errors
