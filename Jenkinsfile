@@ -1,3 +1,12 @@
 @Library("devops-jenkins-shared-library@master") _
 
-buildOSPackage()
+buildOSPackage(
+  [
+    pythonComponents: [
+      [
+        "SRC": "src",
+        "TEST": ""
+      ]
+    ]
+  ]
+)
