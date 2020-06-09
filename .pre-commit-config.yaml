@@ -27,11 +27,7 @@ repos:
     - id: autopep8
       name: autopep8-default
       args: ["-i", "--ignore=E226,E24,W50,W690", "--max-line-length=150"]
-      exclude: .*/tests/.*
-
--   repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v1.5.3
-    hooks:
+      exclude: .*test_.*py$
     - id: autopep8
       name: autopep8-including-unit-tests
       args: ["-i", "--ignore=E226,E24,W50,W690,E402", "--max-line-length=150"]
