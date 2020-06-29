@@ -47,9 +47,28 @@ async def test_bad_message(ws_client):
 
 
 @pytest.mark.asyncio
-async def test_run_code(ws_client):
+async def test_run_code_script(ws_client):
     code = 'from datetime import datetime\nprint(datetime.now().strftime("%A"))'
     start_cmd = create_message('start', {'sourceScript': code})
+    await ws_client.send_str(start_cmd)
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'started'
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    day = datetime.now().strftime('%A')
+    assert m_type == 'stdout'
+    assert m_data == {'output': day + '\n'}
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
+
+
+@pytest.mark.asyncio
+async def test_run_code_path(ws_client):
+    working_dir = os.getcwd()
+    start_cmd = create_message('start', {'sourcePath': "{}/test/test_code.py".format(working_dir) })
     await ws_client.send_str(start_cmd)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)

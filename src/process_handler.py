@@ -36,13 +36,22 @@ class ProcessHandler:
         if self.is_running():
             self.stop()
 
-    async def start(self, script):
-        if self.is_running() or not isinstance(script, str):
+    async def start(self, script=None, path=None):
+        if self.is_running():
             raise InvalidOperation()
 
-        main_filename = self._get_main_filename()
-        async with aiofiles.open(main_filename, 'w+') as file:
-            await file.write(script)
+        if isinstance(script, str):
+            main_filename = self._get_main_filename()
+
+            async with aiofiles.open(main_filename, 'w+') as file:
+                await file.write(script)
+
+        elif isinstance(path, str):
+            main_filename = path
+
+        else:
+            raise InvalidOperation()
+
 
         asyncio.create_task(self._ipc_communicate())
 

@@ -25,7 +25,12 @@ async def handle_message(message, process_handler, socket):
     if (m_type == 'start'
             and 'sourceScript' in m_data
             and isinstance(m_data.get('sourceScript'), str)):
-        await process_handler.start(m_data['sourceScript'])
+        await process_handler.start(script=m_data['sourceScript'])
+
+    elif (m_type == 'start'
+            and 'sourcePath' in m_data
+            and isinstance(m_data.get('sourcePath'), str)):
+        await process_handler.start(path=m_data['sourcePath'])
 
     elif (m_type == 'stdin'
           and 'input' in m_data
