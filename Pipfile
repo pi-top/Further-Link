@@ -7,6 +7,8 @@ verify_ssl = true
 pytest = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
+filetype = "*"
+aresponses = "*"
 
 [packages]
 aiofiles = "*"

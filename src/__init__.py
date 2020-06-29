@@ -1,11 +1,13 @@
 import os
 import asyncio
 
-from shutil import copy
-from aiohttp import web, WSMsgType
+from shutil import copy, rmtree
+from aiohttp import web, WSMsgType, ClientSession
+import aiofiles
 
-from .message import parse_message, create_message, BadMessage
+from .message import parse_message, create_message, BadMessage, BadUpload
 from .process_handler import ProcessHandler, InvalidOperation
+from .upload import upload, directory_is_valid
 
 # TODO:- Make lib available for import
 
@@ -25,6 +27,12 @@ async def handle_message(message, process_handler, socket):
             and 'sourcePath' in m_data
             and isinstance(m_data.get('sourcePath'), str)):
         await process_handler.start(path=m_data['sourcePath'])
+
+    elif (m_type == 'upload'
+            and 'directory' in m_data
+            and directory_is_valid(m_data.get('directory'))):
+        await upload(m_data.get('directory'))
+        await socket.send_str(create_message('uploaded'))
 
     elif (m_type == 'stdin'
           and 'input' in m_data
@@ -67,10 +75,17 @@ async def run_py(request):
         async for message in socket:
             try:
                 await handle_message(message.data, process_handler, socket)
+
+            except BadUpload:
+                await socket.send_str(
+                    create_message('error', {'message': 'Bad upload'})
+                )
+
             except (BadMessage, InvalidOperation):
                 await socket.send_str(
                     create_message('error', {'message': 'Bad message'})
                 )
+
     except asyncio.CancelledError:
         pass
     finally:
