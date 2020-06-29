@@ -23,11 +23,12 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, on_start, on_stop, on_output, work_dir='/tmp'):
+    def __init__(self, on_start, on_stop, on_output):
         self.on_start = on_start
         self.on_stop = on_stop
         self.on_output = on_output
-        self.work_dir = work_dir
+        self.temp_dir = os.environ.get('FURTHER_LINK_TEMP_DIR', '/tmp')
+        self.work_dir = os.environ.get('FURTHER_LINK_WORK_DIR', '~/.further')
 
         self.id = str(id(self))
         self.process = None
@@ -41,13 +42,17 @@ class ProcessHandler:
             raise InvalidOperation()
 
         if isinstance(script, str):
-            main_filename = self._get_main_filename()
+            entrypoint = self._get_script_filename()
 
-            async with aiofiles.open(main_filename, 'w+') as file:
+            async with aiofiles.open(entrypoint, 'w+') as file:
                 await file.write(script)
 
         elif isinstance(path, str):
-            main_filename = path
+            first_char = path[0]
+            if first_char is '/':
+                entrypoint = path
+            else:
+                entrypoint = "{}/{}".format(self.work_dir, path)
 
         else:
             raise InvalidOperation()
@@ -55,7 +60,7 @@ class ProcessHandler:
 
         asyncio.create_task(self._ipc_communicate())
 
-        command = get_cmd_prefix() + 'python3 -u ' + main_filename
+        command = get_cmd_prefix() + 'python3 -u ' + entrypoint
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
             stdin=asyncio.subprocess.PIPE,
@@ -84,11 +89,11 @@ class ProcessHandler:
         self.process.stdin.write(content.encode('utf-8'))
         await self.process.stdin.drain()
 
-    def _get_main_filename(self):
-        return self.work_dir + '/' + self.id + '.py'
+    def _get_script_filename(self):
+        return self.temp_dir + '/' + self.id + '.py'
 
     def _get_ipc_filename(self, channel):
-        return self.work_dir + '/' + self.id + '.' + channel + '.sock'
+        return self.temp_dir + '/' + self.id + '.' + channel + '.sock'
 
     async def _ipc_communicate(self):
         self.ipc_tasks = []

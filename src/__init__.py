@@ -7,13 +7,7 @@ from aiohttp import web, WSMsgType
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation
 
-WORK_DIR = os.environ.get('FURTHER_LINK_WORK_DIR', '/tmp')
-LIB = os.path.dirname(os.path.realpath(__file__)) + '/lib'
-for file_name in os.listdir(LIB):
-    file = os.path.join(LIB, file_name)
-    if os.path.isfile(os.path.join(LIB, file)):
-        copy(file, WORK_DIR)
-
+# TODO:- Make lib available for import
 
 async def status(_):
     return web.Response(text='OK')
@@ -66,7 +60,6 @@ async def run_py(request):
         on_start=on_start,
         on_stop=on_stop,
         on_output=on_output,
-        work_dir=WORK_DIR
     )
     print('New connection', process_handler.id)
 

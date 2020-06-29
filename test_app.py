@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pytest
 import aiohttp
+from shutil import copy, rmtree
 
 from server import run_async
 from src.message import create_message, parse_message
@@ -10,14 +11,21 @@ from src.message import create_message, parse_message
 BASE_URI = 'ws://0.0.0.0:8028'
 WS_URI = BASE_URI + '/run-py'
 STATUS_URI = BASE_URI + '/status'
+WORKING_DIRECTORY = "{}/test/work_dir".format(os.getcwd())
+
+os.environ['FURTHER_LINK_PORT'] = '8028'
+os.environ['FURTHER_LINK_NOSSL'] = 'true'
+os.environ['FURTHER_LINK_WORK_DIR'] = WORKING_DIRECTORY
 
 
 @pytest.fixture(autouse=True)
 async def start_server():
-    os.environ['FURTHER_LINK_PORT'] = '8028'
-    os.environ['FURTHER_LINK_NOSSL'] = 'true'
+    os.makedirs(WORKING_DIRECTORY, exist_ok=True)
     runner = await run_async()
+
     yield
+
+    rmtree(WORKING_DIRECTORY)
     await runner.cleanup()
 
 
@@ -67,8 +75,30 @@ async def test_run_code_script(ws_client):
 
 @pytest.mark.asyncio
 async def test_run_code_path(ws_client):
-    working_dir = os.getcwd()
-    start_cmd = create_message('start', {'sourcePath': "{}/test/test_code.py".format(working_dir) })
+    copy('{}/test/test_code.py'.format(os.getcwd()),
+         WORKING_DIRECTORY)
+
+    start_cmd = create_message(
+        'start', {'sourcePath': "test_code.py"})
+    await ws_client.send_str(start_cmd)
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'started'
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    day = datetime.now().strftime('%A')
+    assert m_type == 'stdout'
+    assert m_data == {'output': day + '\n'}
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
+
+
+@pytest.mark.asyncio
+async def test_run_code_absolute_path(ws_client):
+    start_cmd = create_message(
+        'start', {'sourcePath': "{}/test/test_code.py".format(os.getcwd())})
     await ws_client.send_str(start_cmd)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
