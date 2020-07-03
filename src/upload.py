@@ -40,7 +40,7 @@ async def upload(directory):
         if '.' in directory_name:
             raise Exception('Forbidden directory name')
 
-        work_dir = os.environ.get('FURTHER_LINK_WORK_DIR', '~/.further')
+        work_dir = os.environ.get('FURTHER_LINK_WORK_DIR', os.path.join(os.environ.get('HOME'), '.further/projects'))
         directory_path = os.path.join(work_dir, directory_name)
 
         if os.path.exists(directory_path):
