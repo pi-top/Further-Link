@@ -1,3 +1,9 @@
+import os
+from . import BadUpload
+import aiofiles
+from aiohttp import ClientSession
+from shutil import rmtree
+
 file_types = ['url', 'text']
 
 def file_is_valid(file):
