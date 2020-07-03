@@ -289,7 +289,8 @@ async def test_discard_old_input(ws_client):
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
-    unterminated_input = create_message('stdin', {'input': 'unterminated input'})
+    unterminated_input = create_message(
+        'stdin', {'input': 'unterminated input'})
     await ws_client.send_str(unterminated_input)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
