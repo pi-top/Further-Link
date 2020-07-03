@@ -46,7 +46,7 @@ async def upload(directory):
         if os.path.exists(directory_path):
             rmtree(directory_path)
 
-        os.mkdir(directory_path)
+        os.makedirs(directory_path, exist_ok=True)
 
         for file_name, file_info in directory['files'].items():
             file_path = os.path.join(directory_path, file_name)
