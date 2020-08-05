@@ -259,7 +259,7 @@ async def test_discard_old_input(ws_client):
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
-    assert m_data == {'output': 'hello\n'}
+    assert m_data == {'output': 'hello'}
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
