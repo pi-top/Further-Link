@@ -28,7 +28,8 @@ class ProcessHandler:
         self.on_stop = on_stop
         self.on_output = on_output
         self.temp_dir = os.environ.get('FURTHER_LINK_TEMP_DIR', '/tmp')
-        self.work_dir = os.environ.get('FURTHER_LINK_WORK_DIR', os.path.join(os.environ.get('HOME'), '.further/projects'))
+        self.work_dir = os.environ.get(
+            'FURTHER_LINK_WORK_DIR', os.path.join(os.environ.get('HOME'), 'further'))
 
         self.id = str(id(self))
         self.process = None
@@ -56,7 +57,6 @@ class ProcessHandler:
 
         else:
             raise InvalidOperation()
-
 
         asyncio.create_task(self._ipc_communicate())
 
