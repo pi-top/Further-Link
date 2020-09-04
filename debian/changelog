@@ -1,3 +1,9 @@
+pt-further-link (2.1.3-1) buster; urgency=medium
+
+  * Fix clipped messages in extra comms channels eg video
+
+ -- Angus Whitehead <angus@pi-top.com>  Fri, 03 Sep 2020 18:38:13 +0200
+
 pt-further-link (2.1.2-3) buster; urgency=medium
 
   * Update long description control file
