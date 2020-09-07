@@ -329,20 +329,16 @@ async def test_upload(ws_client):
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'uploaded'
 
-    for file in directory["files"]:
-        content = file['content']
-        aliasName = content['aliasName']
-        bucketName = content['bucketName']
-        fileName = content['fileName']
-
+    for aliasName, file_info in directory["files"].items():
         alias_path = "{}/{}/{}".format(WORKING_DIRECTORY,
                                        directory["name"], aliasName)
 
         assert os.path.isfile(alias_path)
-
+        content = file_info["content"]
+        bucketName = content['bucketName']
+        fileName = content['fileName']
         file_path = "{}/{}/{}".format(WORKING_DIRECTORY,
                                       bucketName, fileName)
-
         assert os.path.isfile(file_path)
 
 

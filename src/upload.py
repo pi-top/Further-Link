@@ -21,8 +21,8 @@ def directory_is_valid(directory):
         'name' in directory and
         isinstance(directory['name'], str) and
         'files' in directory and
-        isinstance(directory['files'], list) and
-        all(file_is_valid(file) for file in directory['files'])
+        isinstance(directory['files'], object) and
+        all(file_is_valid(file) for file in directory['files'].values())
     )
 
 
@@ -33,9 +33,7 @@ def valid_url_content(content):
         'bucketName' in content and
         isinstance(content['bucketName'], str) and
         'fileName' in content and
-        isinstance(content['fileName'], str) and
-        'aliasName' in content and
-        isinstance(content['aliasName'], str)
+        isinstance(content['fileName'], str)
     )
 
 
@@ -50,22 +48,23 @@ async def download_file(url, file_path):
 
 async def upload(directory):
     try:
-        id = directory['name']
-        if '.' in id:
+        directory_name = directory['name']
+        if '.' in directory_name:
             raise Exception('Forbidden directory name')
 
         work_dir = os.environ.get('FURTHER_LINK_WORK_DIR', os.path.join(
             os.environ.get('HOME'), 'further'))
 
         # clear the sym links every time
-        sym_directory_path = os.path.join(work_dir, id)
+        sym_directory_path = os.path.join(work_dir, directory_name)
         if os.path.exists(sym_directory_path):
             rmtree(sym_directory_path)
         os.makedirs(sym_directory_path, exist_ok=True)
 
-        for file in directory['files']:
-            if file['type'] == 'url':
-                content = file['content']
+        for file_name, file_info in directory['files'].items():
+            if file_info['type'] == 'url':
+                content = file_info['content']
+
                 if not valid_url_content(content):
                     raise Exception('Invalid url content')
 
@@ -80,7 +79,7 @@ async def upload(directory):
                 if not os.path.exists(file_path):
                     await download_file(url, file_path)
 
-                aliasName = content['aliasName']
+                aliasName = file_name
                 symlink_path = os.path.join(sym_directory_path, aliasName)
                 os.symlink(file_path, symlink_path)
             # if file['type'] == 'text' etc

@@ -17,6 +17,7 @@ async def status(_):
 
 
 async def handle_message(message, process_handler, socket):
+
     m_type, m_data = parse_message(message)
 
     if (m_type == 'start'
