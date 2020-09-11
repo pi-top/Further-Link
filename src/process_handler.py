@@ -42,13 +42,22 @@ class ProcessHandler:
         if self.is_running():
             raise InvalidOperation()
 
-        if isinstance(script, str):
+        if isinstance(path, str) and isinstance(script, str):
+            if not os.path.exists(path):
+                os.makedirs(path, exist_ok=True)
+            entrypoint = self._get_script_filename(path)
+
+            async with aiofiles.open(entrypoint, 'w+') as file:
+                await file.write(script)
+
+        # old style script without directory leave as before
+        elif path == None and isinstance(script, str):
             entrypoint = self._get_script_filename()
 
             async with aiofiles.open(entrypoint, 'w+') as file:
                 await file.write(script)
 
-        elif isinstance(path, str):
+        elif script == None and isinstance(path, str):
             first_char = path[0]
             if first_char is '/':
                 entrypoint = path
@@ -89,8 +98,9 @@ class ProcessHandler:
         self.process.stdin.write(content.encode('utf-8'))
         await self.process.stdin.drain()
 
-    def _get_script_filename(self):
-        return self.temp_dir + '/' + self.id + '.py'
+    def _get_script_filename(self, path=None):
+        dir = path if isinstance(path, str) else self.temp_dir
+        return dir + '/' + self.id + '.py'
 
     def _get_ipc_filename(self, channel):
         return self.temp_dir + '/' + self.id + '.' + channel + '.sock'

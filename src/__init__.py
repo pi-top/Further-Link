@@ -7,7 +7,7 @@ import aiofiles
 
 from .message import parse_message, create_message, BadMessage, BadUpload
 from .process_handler import ProcessHandler, InvalidOperation
-from .upload import upload, directory_is_valid
+from .upload import upload, directory_is_valid, get_working_directory
 
 # TODO:- Make lib available for import
 
@@ -23,7 +23,11 @@ async def handle_message(message, process_handler, socket):
     if (m_type == 'start'
             and 'sourceScript' in m_data
             and isinstance(m_data.get('sourceScript'), str)):
-        await process_handler.start(script=m_data['sourceScript'])
+        path = os.path.join(
+            get_working_directory(), m_data['directoryName']
+        ) if ('directoryName' in m_data
+              and isinstance(m_data.get('directoryName'), str)) else None
+        await process_handler.start(script=m_data['sourceScript'], path=path)
 
     elif (m_type == 'start'
             and 'sourcePath' in m_data
