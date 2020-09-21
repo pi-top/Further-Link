@@ -2,7 +2,6 @@ import os
 import pytest
 import aiohttp
 import aiofiles
-import filetype
 import aresponses
 
 from server import run_async

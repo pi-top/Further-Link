@@ -7,13 +7,12 @@ verify_ssl = true
 pytest = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
-filetype = "*"
 aresponses = "*"
 
 [packages]
 aiofiles = "*"
 aiohttp = "*"
-aiohttp-cors = "*"
+aiohttp_cors = "*"
 
 [requires]
 python_version = "3.7"
