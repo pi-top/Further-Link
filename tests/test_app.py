@@ -9,18 +9,17 @@ from server import run_async
 from src.message import create_message, parse_message
 from shutil import copy, rmtree
 from datetime import datetime
-from test.data import directory
+from .test_data.upload import directory
 
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 BASE_URI = 'ws://0.0.0.0:8028'
 WS_URI = BASE_URI + '/run-py'
 STATUS_URI = BASE_URI + '/status'
-WORKING_DIRECTORY = "{}/test/work_dir".format(os.getcwd())
+WORKING_DIRECTORY = "{}/work_dir".format(DIR_PATH)
 
 os.environ['FURTHER_LINK_PORT'] = '8028'
 os.environ['FURTHER_LINK_NOSSL'] = 'true'
 os.environ['FURTHER_LINK_WORK_DIR'] = WORKING_DIRECTORY
-
-# TODO:- mock successful image requests in upload tests
 
 
 @pytest.fixture(autouse=True)
@@ -80,11 +79,11 @@ async def test_run_code_script(ws_client):
 
 @pytest.mark.asyncio
 async def test_run_code_path(ws_client):
-    copy('{}/test/test_code.py'.format(os.getcwd()),
+    copy('{}/test_data/print_date.py'.format(DIR_PATH),
          WORKING_DIRECTORY)
 
     start_cmd = create_message(
-        'start', {'sourcePath': "test_code.py"})
+        'start', {'sourcePath': "print_date.py"})
     await ws_client.send_str(start_cmd)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
@@ -92,6 +91,8 @@ async def test_run_code_path(ws_client):
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     day = datetime.now().strftime('%A')
+    print(m_type)
+    print(m_data)
     assert m_type == 'stdout'
     assert m_data == {'output': day + '\n'}
 
@@ -103,7 +104,7 @@ async def test_run_code_path(ws_client):
 @pytest.mark.asyncio
 async def test_run_code_absolute_path(ws_client):
     start_cmd = create_message(
-        'start', {'sourcePath': "{}/test/test_code.py".format(os.getcwd())})
+        'start', {'sourcePath': "{}/test_data/print_date.py".format(DIR_PATH)})
     await ws_client.send_str(start_cmd)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
@@ -381,7 +382,6 @@ async def test_upload_bad_file(ws_client, aresponses):
 
 @pytest.mark.asyncio
 async def test_upload_existing_directory(ws_client):
-    # name directory something that tries to escape from working dir
     existing_directory = directory.copy()
     existing_directory['name'] = 'existing_directory'
 
