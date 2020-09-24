@@ -24,6 +24,12 @@ directory = {
                 "bucketName": "placekitten",
                 "fileName": "kitty.jpeg"
             }
+        },
+        "some_lib.py": {
+            "type": "text",
+            "content": {
+                "text": "def call_some_lib():\n  return 'some lib called'\n",
+            }
         }
     }
 }

@@ -37,6 +37,13 @@ def valid_url_content(content):
     )
 
 
+def valid_text_content(content):
+    return (
+        'text' in content and
+        isinstance(content['text'], str)
+    )
+
+
 async def download_file(url, file_path):
     async with ClientSession() as session:
         async with session.get(url) as response:
@@ -58,14 +65,16 @@ async def upload(directory):
             raise Exception('Forbidden directory name')
 
         work_dir = get_working_directory()
+        directory_path = os.path.join(work_dir, directory_name)
 
-        # clear the sym links every time
-        sym_directory_path = os.path.join(work_dir, directory_name)
-        if os.path.exists(sym_directory_path):
-            rmtree(sym_directory_path)
-        os.makedirs(sym_directory_path, exist_ok=True)
+        # clear the upload directory every time
+        if os.path.exists(directory_path):
+            rmtree(directory_path)
+        os.makedirs(directory_path, exist_ok=True)
 
         for file_name, file_info in directory['files'].items():
+            file_path = os.path.join(directory_path, file_name)
+
             if file_info['type'] == 'url':
                 content = file_info['content']
 
@@ -76,16 +85,26 @@ async def upload(directory):
                 fileName = content['fileName']
                 url = content['url']
 
-                directory_path = os.path.join(work_dir, bucketName)
-                if not os.path.exists(directory_path):
-                    os.makedirs(directory_path)
-                file_path = os.path.join(directory_path, fileName)
-                if not os.path.exists(file_path):
-                    await download_file(url, file_path)
+                # url type files have a cache dir to prevent repeat download
+                cache_path = os.path.join(work_dir, bucketName)
+                if not os.path.exists(cache_path):
+                    os.makedirs(cache_path)
+                cache_file_path = os.path.join(cache_path, fileName)
+                # only download the file if it's not in the cache
+                if not os.path.exists(cache_file_path):
+                    await download_file(url, cache_file_path)
 
-                aliasName = file_name
-                symlink_path = os.path.join(sym_directory_path, aliasName)
-                os.symlink(file_path, symlink_path)
-            # if file['type'] == 'text' etc
+                # create a symlink pointing to the cached downloaded file
+                os.symlink(cache_file_path, file_path)
+
+            elif file_info['type'] == 'text':
+                content = file_info['content']
+
+                if not valid_text_content(content):
+                    raise Exception('Invalid text content')
+
+                async with aiofiles.open(file_path, 'w+') as file:
+                    await file.write(content['text'])
+
     except Exception as e:
         raise BadUpload(e)

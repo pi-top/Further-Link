@@ -1,5 +1,6 @@
 import pytest
 import os
+import aiofiles
 
 from tests import WORKING_DIRECTORY
 from src.message import create_message, parse_message
@@ -19,16 +20,23 @@ async def test_upload(ws_client):
                                        directory["name"], aliasName)
 
         assert os.path.isfile(alias_path)
-        content = file_info["content"]
-        bucketName = content['bucketName']
-        fileName = content['fileName']
-        file_path = "{}/{}/{}".format(WORKING_DIRECTORY,
-                                      bucketName, fileName)
-        assert os.path.isfile(file_path)
+
+        if file_info['type'] == 'url':
+            content = file_info['content']
+            bucketName = content['bucketName']
+            fileName = content['fileName']
+            file_path = "{}/{}/{}".format(WORKING_DIRECTORY,
+                                          bucketName, fileName)
+            assert os.path.isfile(file_path)
+
+        elif file_info['type'] == 'url':
+            async with aiofiles.open(file_path) as file:
+                content = await file.read()
+                assert content == file_info['content']['text']
 
 
 @pytest.mark.asyncio
-async def test_upload_import_directory(ws_client):
+async def test_upload_read_file(ws_client):
     upload_cmd = create_message('upload', {'directory': directory})
     await ws_client.send_str(upload_cmd)
 
@@ -51,11 +59,39 @@ with open(os.path.dirname(__file__) + '/cereal.csv', 'r') as f:
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
-    print(m_data)
     assert m_data["output"][788:796] == 'Cheerios'
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
-    print(m_data)
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
+
+
+@pytest.mark.asyncio
+async def test_upload_import_script(ws_client):
+    upload_cmd = create_message('upload', {'directory': directory})
+    await ws_client.send_str(upload_cmd)
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'uploaded'
+
+    code = """\
+from some_lib import call_some_lib
+print(call_some_lib())
+"""
+    start_cmd = create_message('start', {
+        'sourceScript': code,
+        'directoryName': directory["name"]
+    })
+    await ws_client.send_str(start_cmd)
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'started'
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stdout'
+    assert m_data == {'output': 'some lib called\n'}
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 0}
 
