@@ -27,28 +27,37 @@ async def test_upload(ws_client):
         assert os.path.isfile(file_path)
 
 
-# @pytest.mark.asyncio
-# async def test_upload_run_directory(ws_client):
-#     upload_cmd = create_message('upload', {'directory': directory})
-#     await ws_client.send_str(upload_cmd)
+@pytest.mark.asyncio
+async def test_upload_import_directory(ws_client):
+    upload_cmd = create_message('upload', {'directory': directory})
+    await ws_client.send_str(upload_cmd)
 
-#     m_type, m_data = parse_message((await ws_client.receive()).data)
-#     assert m_type == 'uploaded'
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'uploaded'
 
-#     start_cmd = create_message(
-#         'start', {'sourcePath': "{}/test.py".format(directory['name'])})
-#     await ws_client.send_str(start_cmd)
+    code = """\
+import os
+with open(os.path.dirname(__file__) + '/cereal.csv', 'r') as f:
+    print(f.read(1000))
+"""
+    start_cmd = create_message('start', {
+        'sourceScript': code,
+        'directoryName': directory["name"]
+    })
+    await ws_client.send_str(start_cmd)
 
-#     m_type, m_data = parse_message((await ws_client.receive()).data)
-#     assert m_type == 'started'
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'started'
 
-#     m_type, m_data = parse_message((await ws_client.receive()).data)
-#     assert m_type == 'stdout'
-#     assert m_data == {'output': 'lib called\n'}
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stdout'
+    print(m_data)
+    assert m_data["output"][788:796] == 'Cheerios'
 
-#     m_type, m_data = parse_message((await ws_client.receive()).data)
-#     assert m_type == 'stopped'
-#     assert m_data == {'exitCode': 0}
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    print(m_data)
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
 
 
 @pytest.mark.asyncio

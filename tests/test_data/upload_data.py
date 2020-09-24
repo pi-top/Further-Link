@@ -21,8 +21,8 @@ directory = {
             "type": "url",
             "content": {
                 "url": "https://placekitten.com/50/50",
-                "bucketName": "further-files",
-                "fileName": "81352c27-8e36-4372-b682-9d95be20bb97.jpeg"
+                "bucketName": "placekitten",
+                "fileName": "kitty.jpeg"
             }
         }
     }

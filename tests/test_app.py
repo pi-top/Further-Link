@@ -27,7 +27,10 @@ async def test_bad_message(ws_client):
 
 @pytest.mark.asyncio
 async def test_run_code_script(ws_client):
-    code = 'from datetime import datetime\nprint(datetime.now().strftime("%A"))'
+    code = """\
+from datetime import datetime
+print(datetime.now().strftime("%A"))
+"""
     start_cmd = create_message('start', {'sourceScript': code})
     await ws_client.send_str(start_cmd)
 
