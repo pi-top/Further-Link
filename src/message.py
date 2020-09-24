@@ -26,5 +26,6 @@ def parse_message(message):
 class BadMessage(Exception):
     pass
 
+
 class BadUpload(AssertionError):
     pass
