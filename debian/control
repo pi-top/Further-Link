@@ -10,7 +10,7 @@ Standards-Version: 3.9.8
 Homepage: https://pi-top.com
 
 Package: pt-further-link
-Architecture: armhf
+Architecture: all
 Depends: ${misc:Depends},
  ${python3:Depends},
  python3-aiofiles,
