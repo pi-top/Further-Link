@@ -5,6 +5,7 @@ import signal
 import pty
 import io
 from shlex import split
+import aiofiles
 
 
 def get_cmd_prefix():
@@ -37,14 +38,16 @@ class ProcessHandler:
             raise InvalidOperation()
 
         master, slave = pty.openpty()
-        self.pty_writer = io.open(master, 'wb', 0)
-        self.pty_reader = io.open(slave, 'rb', 0)
+        # TODO close these
+        # TODO why does it keep hanging and refusing to cloose
+        self.pty_writer = await aiofiles.open(master, 'w+b', 0)
+        self.pty_reader = await aiofiles.open(slave, 'w+b', 0)
         cmd = get_cmd_prefix() + command
         self.process = await asyncio.create_subprocess_shell(
             cmd,
             stdin=self.pty_reader,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stdout=self.pty_reader,
+            stderr=self.pty_reader,
             preexec_fn=os.setsid)  # make a process group for this and children
 
         asyncio.create_task(self._communicate())
@@ -65,12 +68,13 @@ class ProcessHandler:
         if not self.is_running() or not isinstance(content, str):
             raise InvalidOperation()
 
-        self.pty_writer.write(content.encode('utf-8'))
+        await self.pty_writer.write(content.encode('utf-8'))
 
     async def _communicate(self):
         output_tasks = [
-            asyncio.create_task(self._handle_output('stdout')),
-            asyncio.create_task(self._handle_output('stderr')),
+            # asyncio.create_task(self._handle_output('stdout')),
+            # asyncio.create_task(self._handle_output('stderr')),
+            asyncio.create_task(self._handle_output(self.pty_writer)),
         ]
 
         # allow the output tasks to finish & flush
@@ -83,8 +87,8 @@ class ProcessHandler:
         if self.on_stop:
             await self.on_stop(exit_code)
 
-    async def _handle_output(self, stream_name):
-        stream = getattr(self.process, stream_name)
+    async def _handle_output(self, stream):
+        # stream = getattr(self.process, stream_name)
         while True:
             data = await stream.read(4096)
             if data == b'':
@@ -92,4 +96,4 @@ class ProcessHandler:
 
             output = data.decode(encoding='utf-8')
             if self.on_output:
-                await self.on_output(stream_name, output)
+                await self.on_output('stdout', output)

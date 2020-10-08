@@ -35,8 +35,10 @@ class PyProcessHandler(ProcessHandler):
 
     async def _communicate(self):
         output_tasks = [
-            asyncio.create_task(self._handle_output('stdout')),
-            asyncio.create_task(self._handle_output('stderr')),
+            # asyncio.create_task(self._handle_output('stdout')),
+            # asyncio.create_task(self._handle_output('stderr')),
+            asyncio.create_task(self._handle_output(self.pty_writer)),
+
         ]
 
         ipc_tasks = []
