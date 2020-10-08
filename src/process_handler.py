@@ -2,6 +2,8 @@ import asyncio
 import os
 import pwd
 import signal
+import pty
+import io
 from shlex import split
 
 
@@ -34,10 +36,13 @@ class ProcessHandler:
         if self.is_running() or not isinstance(command, str):
             raise InvalidOperation()
 
+        master, slave = pty.openpty()
+        self.pty_writer = io.open(master, 'wb', 0)
+        self.pty_reader = io.open(slave, 'rb', 0)
         cmd = get_cmd_prefix() + command
         self.process = await asyncio.create_subprocess_shell(
             cmd,
-            stdin=asyncio.subprocess.PIPE,
+            stdin=self.pty_reader,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             preexec_fn=os.setsid)  # make a process group for this and children
@@ -60,8 +65,7 @@ class ProcessHandler:
         if not self.is_running() or not isinstance(content, str):
             raise InvalidOperation()
 
-        self.process.stdin.write(content.encode('utf-8'))
-        await self.process.stdin.drain()
+        self.pty_writer.write(content.encode('utf-8'))
 
     async def _communicate(self):
         output_tasks = [
