@@ -2,6 +2,7 @@ import asyncio
 import pwd
 import os
 import signal
+import pty
 
 import aiofiles
 
@@ -46,12 +47,17 @@ class ProcessHandler:
 
         asyncio.create_task(self._ipc_communicate())
 
+        # communicate through a pty for terminal 'cooked mode' behaviour
+        master, slave = pty.openpty()
+        self.pty_master = await aiofiles.open(master, 'w+b', 0)
+        self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
+
         command = get_cmd_prefix() + 'python3 -u ' + main_filename
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stdin=self.pty_slave,
+            stdout=self.pty_slave,
+            stderr=self.pty_slave,
             preexec_fn=os.setsid)  # make a process group for this and children
 
         asyncio.create_task(self._process_communicate())
@@ -72,8 +78,7 @@ class ProcessHandler:
         if not self.is_running() or not isinstance(content, str):
             raise InvalidOperation()
 
-        self.process.stdin.write(content.encode('utf-8'))
-        await self.process.stdin.drain()
+        await self.pty_master.write(content.encode('utf-8'))
 
     def _get_main_filename(self):
         return self.work_dir + '/' + self.id + '.py'
@@ -90,28 +95,27 @@ class ProcessHandler:
 
     async def _process_communicate(self):
         output_tasks = [
-            asyncio.create_task(self._handle_output('stdout')),
-            asyncio.create_task(self._handle_output('stderr')),
+            asyncio.create_task(self._handle_output(self.pty_master)),
         ]
 
-        # allow the output tasks to finish & flush
+        exit_code = await self.process.wait()
+
+        # stop ongoing io tasks
+        for task in output_tasks:
+            task.cancel()
         await asyncio.wait(output_tasks)
 
-        # stop ongoing ipc servers
         for task in self.ipc_tasks:
             task.cancel()
         await asyncio.wait(self.ipc_tasks)
 
-        # process should be done now but await it to get exit code
-        exit_code = await self.process.wait()
-        self.process = None
         await self._clean_up()
+        self.process = None
 
         if self.on_stop:
             await self.on_stop(exit_code)
 
-    async def _handle_output(self, stream_name):
-        stream = getattr(self.process, stream_name)
+    async def _handle_output(self, stream):
         while True:
             data = await stream.read(4096)
             if data == b'':
@@ -119,7 +123,7 @@ class ProcessHandler:
 
             output = data.decode(encoding='utf-8')
             if self.on_output:
-                await self.on_output(stream_name, output)
+                await self.on_output('stdout', output)
 
     async def _handle_ipc(self, channel):
         async def handle_connection(reader, _):
@@ -148,6 +152,12 @@ class ProcessHandler:
         # os.remove should not block significantly, just fires a single syscall
         try:
             os.remove(self._get_main_filename())
+
+            self.pty_master.close()
+            self.pty_slave.close()
+            os.remove(self.pty_master)
+            os.remove(self.pty_slave)
+
             for name in IPC_CHANNELS:
                 try:
                     os.remove(self._get_ipc_filename(name))
