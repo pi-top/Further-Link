@@ -42,30 +42,7 @@ class ProcessHandler:
         if self.is_running():
             raise InvalidOperation()
 
-        if isinstance(path, str) and isinstance(script, str):
-            if not os.path.exists(path):
-                os.makedirs(path, exist_ok=True)
-            entrypoint = self._get_script_filename(path)
-
-            async with aiofiles.open(entrypoint, 'w+') as file:
-                await file.write(script)
-
-        # old style script without directory leave as before
-        elif path == None and isinstance(script, str):
-            entrypoint = self._get_script_filename()
-
-            async with aiofiles.open(entrypoint, 'w+') as file:
-                await file.write(script)
-
-        elif script == None and isinstance(path, str):
-            first_char = path[0]
-            if first_char is '/':
-                entrypoint = path
-            else:
-                entrypoint = "{}/{}".format(self.work_dir, path)
-
-        else:
-            raise InvalidOperation()
+        entrypoint = await self._get_entrypoint(script, path)
 
         asyncio.create_task(self._ipc_communicate())
 
@@ -97,6 +74,36 @@ class ProcessHandler:
 
         self.process.stdin.write(content.encode('utf-8'))
         await self.process.stdin.drain()
+
+    async def _get_entrypoint(self, script, path):
+        # find/create path dir and write script to file
+        if isinstance(path, str) and isinstance(script, str):
+            if not os.path.exists(path):
+                os.makedirs(path, exist_ok=True)
+            entrypoint = self._get_script_filename(path)
+
+            async with aiofiles.open(entrypoint, 'w+') as file:
+                await file.write(script)
+
+        # old style, no directory path but create script
+        elif path is None and isinstance(script, str):
+            entrypoint = self._get_script_filename()
+
+            async with aiofiles.open(entrypoint, 'w+') as file:
+                await file.write(script)
+
+        # no script provided, entrypoint is path, may be relative to work_dir
+        elif script is None and isinstance(path, str):
+            first_char = path[0]
+            if first_char == '/':
+                entrypoint = path
+            else:
+                entrypoint = "{}/{}".format(self.work_dir, path)
+
+        else:
+            raise InvalidOperation()
+
+        return entrypoint
 
     def _get_script_filename(self, path=None):
         dir = path if isinstance(path, str) else self.temp_dir
