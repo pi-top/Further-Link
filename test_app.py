@@ -3,13 +3,16 @@ from datetime import datetime
 
 import pytest
 import aiohttp
+import json
 
 from server import run_async
+from src.version import __version__
 from src.message import create_message, parse_message
 
 BASE_URI = 'ws://0.0.0.0:8028'
 WS_URI = BASE_URI + '/run-py'
 STATUS_URI = BASE_URI + '/status'
+VERSION_URI = BASE_URI + '/version'
 
 
 @pytest.fixture(autouse=True)
@@ -34,6 +37,14 @@ async def test_status():
         async with session.get(STATUS_URI) as response:
             assert response.status == 200
             assert await response.text() == 'OK'
+
+
+@pytest.mark.asyncio
+async def test_version():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(VERSION_URI) as response:
+            assert response.status == 200
+            assert json.loads(await response.text()).get('version') == __version__
 
 
 @pytest.mark.asyncio
