@@ -20,19 +20,33 @@ async def handle_message(message, process_handler, socket):
 
     m_type, m_data = parse_message(message)
 
-    if (m_type == 'start'
-            and 'sourceScript' in m_data
-            and isinstance(m_data.get('sourceScript'), str)):
+    if (
+        m_type == 'start'
+        and 'sourceScript' in m_data
+        and isinstance(m_data.get('sourceScript'), str)
+    ):
         path = os.path.join(
             get_working_directory(), m_data['directoryName']
-        ) if ('directoryName' in m_data
-              and isinstance(m_data.get('directoryName'), str)) else None
-        await process_handler.start(script=m_data['sourceScript'], path=path)
+        ) if (
+            'directoryName' in m_data
+            and isinstance(m_data.get('directoryName'), str)
+        ) else None
+        user = m_data['user'] if (
+            'user' in m_data and isinstance(m_data.get('user'), str)
+        ) else None
+        await process_handler.start(
+            script=m_data['sourceScript'],
+            path=path,
+            user=user
+        )
 
     elif (m_type == 'start'
             and 'sourcePath' in m_data
             and isinstance(m_data.get('sourcePath'), str)):
-        await process_handler.start(path=m_data['sourcePath'])
+        user = m_data['user'] if (
+            'user' in m_data and isinstance(m_data.get('user'), str)
+        ) else None
+        await process_handler.start(path=m_data['sourcePath'], user=user)
 
     elif (m_type == 'upload'
             and 'directory' in m_data

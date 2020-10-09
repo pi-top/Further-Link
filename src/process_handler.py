@@ -1,21 +1,14 @@
 import asyncio
-import pwd
 import os
 import signal
 
 import aiofiles
 
+from .user_config import get_current_user, get_run_as_user_prefix
+
 IPC_CHANNELS = [
     'video'
 ]
-
-
-def get_cmd_prefix():
-    # run as pi user if available
-    for user in pwd.getpwall():
-        if user[0] == 'pi':
-            return 'sudo -u pi '
-    return ''
 
 
 class InvalidOperation(Exception):
@@ -38,7 +31,7 @@ class ProcessHandler:
         if self.is_running():
             self.stop()
 
-    async def start(self, script=None, path=None):
+    async def start(self, script=None, path=None, user='pi'):
         if self.is_running():
             raise InvalidOperation()
 
@@ -46,7 +39,12 @@ class ProcessHandler:
 
         asyncio.create_task(self._ipc_communicate())
 
-        command = get_cmd_prefix() + 'python3 -u ' + entrypoint
+        command = 'python3 -u ' + entrypoint
+        if user != get_current_user():
+            command_prefix = get_run_as_user_prefix(user)
+            if command_prefix is not None:
+                command = get_run_as_user_prefix(user) + command
+
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
             stdin=asyncio.subprocess.PIPE,

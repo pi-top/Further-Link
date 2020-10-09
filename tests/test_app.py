@@ -90,6 +90,24 @@ async def test_run_code_absolute_path(ws_client):
 
 
 @pytest.mark.asyncio
+async def test_run_as_user(ws_client):
+    code = 'import getpass\nprint(getpass.getuser())'
+    start_cmd = create_message('start', {'sourceScript': code, 'user': 'root'})
+    await ws_client.send_str(start_cmd)
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'started'
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stdout'
+    assert m_data == {'output': 'root\n'}
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
+
+
+@pytest.mark.asyncio
 async def test_stop_early(ws_client):
     code = 'while True: pass'
     start_cmd = create_message('start', {'sourceScript': code})
