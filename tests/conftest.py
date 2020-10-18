@@ -1,6 +1,7 @@
 import os
 import pytest
 import aiohttp
+import urllib.parse
 
 from shutil import rmtree
 
@@ -30,4 +31,12 @@ async def start_server():
 async def ws_client():
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(RUN_PY_URL) as client:
+            yield client
+
+
+@pytest.fixture()
+async def ws_client_query(query_params):
+    url = RUN_PY_URL + '?' + urllib.parse.urlencode(query_params)
+    async with aiohttp.ClientSession() as session:
+        async with session.ws_connect(url) as client:
             yield client

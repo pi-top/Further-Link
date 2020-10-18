@@ -16,7 +16,8 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, on_start, on_stop, on_output):
+    def __init__(self, on_start, on_stop, on_output, user=None):
+        self.user = 'pi' if user is None else user
         self.on_start = on_start
         self.on_stop = on_stop
         self.on_output = on_output
@@ -31,7 +32,7 @@ class ProcessHandler:
         if self.is_running():
             self.stop()
 
-    async def start(self, script=None, path=None, user='pi'):
+    async def start(self, script=None, path=None):
         if self.is_running():
             raise InvalidOperation()
 
@@ -40,10 +41,10 @@ class ProcessHandler:
         asyncio.create_task(self._ipc_communicate())
 
         command = 'python3 -u ' + entrypoint
-        if user != get_current_user():
-            command_prefix = get_run_as_user_prefix(user)
+        if self.user != get_current_user():
+            command_prefix = get_run_as_user_prefix(self.user)
             if command_prefix is not None:
-                command = get_run_as_user_prefix(user) + command
+                command = get_run_as_user_prefix(self.user) + command
 
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),

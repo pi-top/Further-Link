@@ -17,7 +17,6 @@ async def status(_):
 
 
 async def handle_message(message, process_handler, socket):
-
     m_type, m_data = parse_message(message)
 
     if (
@@ -31,22 +30,15 @@ async def handle_message(message, process_handler, socket):
             'directoryName' in m_data
             and isinstance(m_data.get('directoryName'), str)
         ) else None
-        user = m_data['user'] if (
-            'user' in m_data and isinstance(m_data.get('user'), str)
-        ) else None
         await process_handler.start(
             script=m_data['sourceScript'],
             path=path,
-            user=user
         )
 
     elif (m_type == 'start'
             and 'sourcePath' in m_data
             and isinstance(m_data.get('sourcePath'), str)):
-        user = m_data['user'] if (
-            'user' in m_data and isinstance(m_data.get('user'), str)
-        ) else None
-        await process_handler.start(path=m_data['sourcePath'], user=user)
+        await process_handler.start(path=m_data['sourcePath'])
 
     elif (m_type == 'upload'
             and 'directory' in m_data
@@ -70,6 +62,9 @@ async def handle_message(message, process_handler, socket):
 
 
 async def run_py(request):
+    query_params = request.query
+    user = query_params.get('user', None)
+
     socket = web.WebSocketResponse()
     await socket.prepare(request)
 
@@ -88,6 +83,7 @@ async def run_py(request):
         on_start=on_start,
         on_stop=on_stop,
         on_output=on_output,
+        user=user
     )
     print('New connection', process_handler.id)
 
