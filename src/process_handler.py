@@ -62,7 +62,10 @@ class ProcessHandler:
         if not self.is_running():
             raise InvalidOperation()
         # send TERM to process group in case we have child processes
-        os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+        try:
+            os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            pass
 
     async def send_input(self, content):
         if not self.is_running() or not isinstance(content, str):
