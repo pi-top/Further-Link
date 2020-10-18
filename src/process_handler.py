@@ -4,7 +4,8 @@ import signal
 
 import aiofiles
 
-from .user_config import get_current_user, user_exists
+from .user_config import default_user, get_current_user, user_exists, \
+    get_working_directory, get_temp_dir
 
 IPC_CHANNELS = [
     'video'
@@ -17,10 +18,9 @@ class InvalidOperation(Exception):
 
 class ProcessHandler:
     def __init__(self, user=None):
-        self.user = 'pi' if user is None else user
-        self.temp_dir = os.environ.get('FURTHER_LINK_TEMP_DIR', '/tmp')
-        self.work_dir = os.environ.get(
-            'FURTHER_LINK_WORK_DIR', os.path.join(os.environ.get('HOME'), 'further'))
+        self.user = default_user() if user is None else user
+        self.work_dir = get_working_directory(user)
+        self.temp_dir = get_temp_dir()
 
         self.id = str(id(self))
         self.process = None
