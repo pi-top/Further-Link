@@ -53,18 +53,12 @@ async def download_file(url, file_path):
                 await file.write(await response.read())
 
 
-def get_working_directory():
-    return os.environ.get('FURTHER_LINK_WORK_DIR', os.path.join(
-        os.environ.get('HOME'), 'further'))
-
-
-async def upload(directory):
+async def upload(directory, work_dir):
     try:
         directory_name = directory['name']
         if '.' in directory_name:
             raise Exception('Forbidden directory name')
 
-        work_dir = get_working_directory()
         directory_path = os.path.join(work_dir, directory_name)
 
         # clear the upload directory every time

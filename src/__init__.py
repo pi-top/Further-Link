@@ -1,13 +1,11 @@
 import os
 import asyncio
 
-from shutil import copy, rmtree
-from aiohttp import web, WSMsgType, ClientSession
-import aiofiles
+from aiohttp import web
 
 from .message import parse_message, create_message, BadMessage, BadUpload
 from .process_handler import ProcessHandler, InvalidOperation
-from .upload import upload, directory_is_valid, get_working_directory
+from .upload import upload, directory_is_valid
 
 # TODO:- Make lib available for import
 
@@ -25,7 +23,7 @@ async def handle_message(message, process_handler, socket):
         and isinstance(m_data.get('sourceScript'), str)
     ):
         path = os.path.join(
-            get_working_directory(), m_data['directoryName']
+            process_handler.work_dir, m_data['directoryName']
         ) if (
             'directoryName' in m_data
             and isinstance(m_data.get('directoryName'), str)
@@ -43,7 +41,7 @@ async def handle_message(message, process_handler, socket):
     elif (m_type == 'upload'
             and 'directory' in m_data
             and directory_is_valid(m_data.get('directory'))):
-        await upload(m_data.get('directory'))
+        await upload(m_data.get('directory'), process_handler.work_dir)
         await socket.send_str(create_message('uploaded'))
 
     elif (m_type == 'stdin'
@@ -73,7 +71,9 @@ async def run_py(request):
         print('Started', process_handler.id)
 
     async def on_stop(exit_code):
-        await socket.send_str(create_message('stopped', {'exitCode': exit_code}))
+        await socket.send_str(
+            create_message('stopped', {'exitCode': exit_code})
+        )
         print('Stopped', process_handler.id)
 
     async def on_output(channel, output):
