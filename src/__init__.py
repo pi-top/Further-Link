@@ -22,9 +22,7 @@ async def handle_message(message, process_handler, socket):
         and 'sourceScript' in m_data
         and isinstance(m_data.get('sourceScript'), str)
     ):
-        path = os.path.join(
-            process_handler.work_dir, m_data['directoryName']
-        ) if (
+        path = m_data.get('directoryName') if (
             'directoryName' in m_data
             and isinstance(m_data.get('directoryName'), str)
         ) else None

@@ -73,34 +73,28 @@ class ProcessHandler:
         await self.process.stdin.drain()
 
     async def _get_entrypoint(self, script, path):
-        # find/create path dir and write script to file
-        if isinstance(path, str) and isinstance(script, str):
+        if isinstance(path, str):
+            # path is absolute or relative to work_dir
+            first_char = path[0]
+            if first_char != '/':
+                path = os.path.join(self.work_dir, path)
+
+            # create path if it doesn't exist
             if not os.path.exists(path):
                 os.makedirs(path, exist_ok=True)
+
+        if isinstance(script, str):
+            # write script to file, at path if given, otherwise temp
             entrypoint = self._get_script_filename(path)
-
             async with aiofiles.open(entrypoint, 'w+') as file:
                 await file.write(script)
 
-        # old style, no directory path but create script
-        elif path is None and isinstance(script, str):
-            entrypoint = self._get_script_filename()
+            return entrypoint
 
-            async with aiofiles.open(entrypoint, 'w+') as file:
-                await file.write(script)
+        if path is not None:
+            return path
 
-        # no script provided, entrypoint is path, may be relative to work_dir
-        elif script is None and isinstance(path, str):
-            first_char = path[0]
-            if first_char == '/':
-                entrypoint = path
-            else:
-                entrypoint = "{}/{}".format(self.work_dir, path)
-
-        else:
-            raise InvalidOperation()
-
-        return entrypoint
+        raise InvalidOperation()
 
     def _get_script_filename(self, path=None):
         dir = path if isinstance(path, str) else self.temp_dir
