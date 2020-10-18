@@ -16,11 +16,8 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, on_start, on_stop, on_output, user=None):
+    def __init__(self, user=None):
         self.user = 'pi' if user is None else user
-        self.on_start = on_start
-        self.on_stop = on_stop
-        self.on_output = on_output
         self.temp_dir = os.environ.get('FURTHER_LINK_TEMP_DIR', '/tmp')
         self.work_dir = os.environ.get(
             'FURTHER_LINK_WORK_DIR', os.path.join(os.environ.get('HOME'), 'further'))

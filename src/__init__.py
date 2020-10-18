@@ -79,12 +79,10 @@ async def run_py(request):
     async def on_output(channel, output):
         await socket.send_str(create_message(channel, {'output': output}))
 
-    process_handler = ProcessHandler(
-        on_start=on_start,
-        on_stop=on_stop,
-        on_output=on_output,
-        user=user
-    )
+    process_handler = ProcessHandler(user=user)
+    process_handler.on_start = on_start
+    process_handler.on_stop = on_stop
+    process_handler.on_output = on_output
     print('New connection', process_handler.id)
 
     try:
