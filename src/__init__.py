@@ -1,4 +1,3 @@
-import os
 import asyncio
 
 from aiohttp import web
@@ -6,8 +5,6 @@ from aiohttp import web
 from .message import parse_message, create_message, BadMessage, BadUpload
 from .process_handler import ProcessHandler, InvalidOperation
 from .upload import upload, directory_is_valid
-
-# TODO:- Make lib available for import
 
 
 async def status(_):

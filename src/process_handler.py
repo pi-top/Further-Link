@@ -1,6 +1,7 @@
 import asyncio
 import os
 import signal
+import pathlib
 
 import aiofiles
 
@@ -41,11 +42,15 @@ class ProcessHandler:
         if self.user != get_current_user() and user_exists(self.user):
             command = f'sudo -u {self.user} {command}'
 
+        process_env = os.environ.copy()
+        process_env["PYTHONPATH"] = pathlib.Path(__file__).parent.absolute()
+
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env=process_env,
             preexec_fn=os.setsid)  # make a process group for this and children
 
         asyncio.create_task(self._process_communicate())

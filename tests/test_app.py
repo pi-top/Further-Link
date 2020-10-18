@@ -1,10 +1,12 @@
 import pytest
 import aiohttp
 
-from tests import TEST_PATH, WORKING_DIRECTORY, STATUS_URL, RUN_PY_URL
-from src.message import create_message, parse_message
 from shutil import copy
 from datetime import datetime
+
+from tests import TEST_PATH, WORKING_DIRECTORY, STATUS_URL, RUN_PY_URL
+from src.message import create_message, parse_message
+from src.version import __version__
 
 
 @pytest.mark.asyncio
@@ -304,6 +306,27 @@ async def test_discard_old_input(ws_client):
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
     assert m_data == {'output': 'hello\n'}
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
+
+
+@pytest.mark.asyncio
+async def test_use_lib(ws_client):
+    code = """\
+from further_link import __version__
+print(__version__)
+"""
+    start_cmd = create_message('start', {'sourceScript': code})
+    await ws_client.send_str(start_cmd)
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'started'
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stdout'
+    assert m_data == {'output': f'{__version__}\n'}
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
