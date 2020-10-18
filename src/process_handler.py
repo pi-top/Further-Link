@@ -4,7 +4,7 @@ import signal
 
 import aiofiles
 
-from .user_config import get_current_user, get_run_as_user_prefix
+from .user_config import get_current_user, user_exists
 
 IPC_CHANNELS = [
     'video'
@@ -38,10 +38,8 @@ class ProcessHandler:
         asyncio.create_task(self._ipc_communicate())
 
         command = 'python3 -u ' + entrypoint
-        if self.user != get_current_user():
-            command_prefix = get_run_as_user_prefix(self.user)
-            if command_prefix is not None:
-                command = get_run_as_user_prefix(self.user) + command
+        if self.user != get_current_user() and user_exists(self.user):
+            command = f'sudo -u {self.user} {command}'
 
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
