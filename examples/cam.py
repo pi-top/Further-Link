@@ -1,5 +1,5 @@
 import cv2
-from camera import PMACamera
+from ptpma import PMACamera
 from further_link import send_image
 from signal import pause
 

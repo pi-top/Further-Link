@@ -1,7 +1,9 @@
 import asyncio
+import json
 
 from aiohttp import web
 
+from .lib.further_link import __version__
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation
 from .upload import upload, directory_is_valid, BadUpload
@@ -9,6 +11,10 @@ from .upload import upload, directory_is_valid, BadUpload
 
 async def status(_):
     return web.Response(text='OK')
+
+
+async def version(_):
+    return web.Response(text=json.dumps({'version': __version__}))
 
 
 async def handle_message(message, process_handler, socket):

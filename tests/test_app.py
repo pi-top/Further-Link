@@ -1,10 +1,12 @@
 import pytest
 import aiohttp
-
-from shutil import copy
+import json
 from datetime import datetime
 
-from tests import TEST_PATH, WORKING_DIRECTORY, STATUS_URL, RUN_PY_URL
+from shutil import copy
+
+from tests import TEST_PATH, WORKING_DIRECTORY, STATUS_URL, VERSION_URL, \
+    RUN_PY_URL
 from src.message import create_message, parse_message
 from src.lib.further_link import __version__
 
@@ -15,6 +17,15 @@ async def test_status():
         async with session.get(STATUS_URL) as response:
             assert response.status == 200
             assert await response.text() == 'OK'
+
+
+@pytest.mark.asyncio
+async def test_version():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(VERSION_URL) as response:
+            assert response.status == 200
+            body = await response.text()
+            assert json.loads(body).get('version') == __version__
 
 
 @pytest.mark.asyncio
