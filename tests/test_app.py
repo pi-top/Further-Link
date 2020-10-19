@@ -94,6 +94,7 @@ async def test_run_code_absolute_path(ws_client):
 @pytest.mark.asyncio
 @pytest.mark.parametrize('query_params', [{'user': 'root'}])
 async def test_run_as_user(ws_client_query):
+    # This test assumes non-root user with nopasswd sudo access...
     code = 'import getpass\nprint(getpass.getuser())'
     start_cmd = create_message('start', {'sourceScript': code})
     await ws_client_query.send_str(start_cmd)
