@@ -27,7 +27,8 @@ async def test_upload(ws_client):
             content = file_info['content']
             bucket_name = content['bucketName']
             file_name = content['fileName']
-            bucket_cache_path = get_bucket_cache_path(WORKING_DIRECTORY, bucket_name)
+            bucket_cache_path = get_bucket_cache_path(
+                WORKING_DIRECTORY, bucket_name)
             file_path = os.path.join(bucket_cache_path, file_name)
             assert os.path.isfile(file_path)
 

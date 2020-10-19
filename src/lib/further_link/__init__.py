@@ -37,5 +37,5 @@ def send_image(frame):
             if sent == 0:
                 raise RuntimeError('socket connection broken')
             total_sent = total_sent + sent
-    except:
+    except Exception:
         pass
