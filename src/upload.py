@@ -56,20 +56,54 @@ async def download_file(url, file_path):
                 await file.write(await response.read())
 
 
-def get_cache_path(work_dir, bucket_name):
-    return os.path.join(work_dir, CACHE_DIR_NAME, bucket_name)
-
-
 def get_directory_path(work_dir, directory_name):
-    return os.path.join(work_dir, directory_name)
+    directory_path = os.path.join(work_dir, directory_name)
+
+    # directory_path should be subdir of work_dir
+    if not is_sub_directory(directory_path, work_dir):
+        raise Exception(f'Forbidden directory name {directory_name}')
+
+    return directory_path
+
+
+def get_alias_path(directory_path, alias_name):
+    alias_path = os.path.join(directory_path, alias_name)
+
+    # alias_path should be subdir of directory_path
+    if not is_sub_directory(alias_path, directory_path):
+        raise Exception(f'Forbidden alias name {alias_name}')
+
+    return alias_path
+
+
+def get_bucket_cache_path(work_dir, bucket_name):
+    cache_path = os.path.join(work_dir, CACHE_DIR_NAME)
+    bucket_cache_path = os.path.join(cache_path, bucket_name)
+
+    # bucket_cache_path should be subdir of cache_path
+    if not is_sub_directory(bucket_cache_path, cache_path):
+        raise Exception(f'Forbidden bucket name {bucket_name}')
+
+    return bucket_cache_path
+
+
+def get_cache_file_path(bucket_cache_path, file_name):
+    cache_file_path = os.path.join(bucket_cache_path, file_name)
+
+    # cache_file_path should be subdir of bucket_cache_path
+    if not is_sub_directory(cache_file_path, bucket_cache_path):
+        raise Exception(f'Forbidden file name {file_name}')
+
+    return cache_file_path
+
+
+def is_sub_directory(sub_dir, from_dir):
+    return os.path.realpath(sub_dir).startswith(os.path.realpath(from_dir))
 
 
 async def upload(directory, work_dir):
     try:
         directory_name = directory['name']
-        if '.' in directory_name:
-            raise Exception('Forbidden directory name')
-
         directory_path = get_directory_path(work_dir, directory_name)
 
         # clear the upload directory every time
@@ -77,8 +111,13 @@ async def upload(directory, work_dir):
             rmtree(directory_path)
         os.makedirs(directory_path, exist_ok=True)
 
-        for file_name, file_info in directory['files'].items():
-            file_path = os.path.join(directory_path, file_name)
+        for alias_name, file_info in directory['files'].items():
+            alias_path = get_alias_path(directory_path, alias_name)
+
+            # support for creating subdirs in alias name
+            alias_dir = os.path.dirname(alias_path)
+            if not os.path.exists(alias_dir):
+                os.makedirs(alias_dir)
 
             if file_info['type'] == 'url':
                 content = file_info['content']
@@ -90,18 +129,21 @@ async def upload(directory, work_dir):
                 file_name = content['fileName']
                 url = content['url']
 
-                # TODO move chache stuff into .cache
                 # url type files have a cache dir to prevent repeat download
-                cache_path = get_cache_path(work_dir, bucket_name)
-                if not os.path.exists(cache_path):
-                    os.makedirs(cache_path)
-                cache_file_path = os.path.join(cache_path, file_name)
+                bucket_cache_path = get_bucket_cache_path(
+                    work_dir, bucket_name
+                )
+                if not os.path.exists(bucket_cache_path):
+                    os.makedirs(bucket_cache_path)
+                cache_file_path = get_cache_file_path(
+                    bucket_cache_path, file_name
+                )
                 # only download the file if it's not in the cache
                 if not os.path.exists(cache_file_path):
                     await download_file(url, cache_file_path)
 
                 # create a symlink pointing to the cached downloaded file
-                os.symlink(cache_file_path, file_path)
+                os.symlink(cache_file_path, alias_path)
 
             elif file_info['type'] == 'text':
                 content = file_info['content']
@@ -109,7 +151,7 @@ async def upload(directory, work_dir):
                 if not valid_text_content(content):
                     raise Exception('Invalid text content')
 
-                async with aiofiles.open(file_path, 'w+') as file:
+                async with aiofiles.open(alias_path, 'w+') as file:
                     await file.write(content['text'])
 
     except Exception as e:
