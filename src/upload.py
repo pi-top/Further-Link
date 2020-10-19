@@ -1,5 +1,4 @@
 import os
-from . import BadUpload
 import aiofiles
 from aiohttp import ClientSession
 from shutil import rmtree
@@ -8,6 +7,10 @@ from .user_config import CACHE_DIR_NAME
 
 
 file_types = ['url', 'text']
+
+
+class BadUpload(Exception):
+    pass
 
 
 def file_is_valid(file):
