@@ -4,6 +4,7 @@ import aiofiles
 
 from tests import WORKING_DIRECTORY
 from src.message import create_message, parse_message
+from src.upload import get_cache_path, get_directory_path
 from .test_data.upload_data import directory
 
 
@@ -15,18 +16,19 @@ async def test_upload(ws_client):
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'uploaded'
 
+    directory_path = get_directory_path(WORKING_DIRECTORY, directory["name"])
+
     for aliasName, file_info in directory["files"].items():
-        alias_path = "{}/{}/{}".format(WORKING_DIRECTORY,
-                                       directory["name"], aliasName)
+        alias_path = os.path.join(directory_path, aliasName)
 
         assert os.path.isfile(alias_path)
 
         if file_info['type'] == 'url':
             content = file_info['content']
-            bucketName = content['bucketName']
-            fileName = content['fileName']
-            file_path = "{}/{}/{}".format(WORKING_DIRECTORY,
-                                          bucketName, fileName)
+            bucket_name = content['bucketName']
+            file_name = content['fileName']
+            cache_path = get_cache_path(WORKING_DIRECTORY, bucket_name)
+            file_path = os.path.join(cache_path, file_name)
             assert os.path.isfile(file_path)
 
         elif file_info['type'] == 'url':

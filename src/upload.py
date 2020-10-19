@@ -4,6 +4,9 @@ import aiofiles
 from aiohttp import ClientSession
 from shutil import rmtree
 
+from .user_config import CACHE_DIR_NAME
+
+
 file_types = ['url', 'text']
 
 
@@ -53,13 +56,21 @@ async def download_file(url, file_path):
                 await file.write(await response.read())
 
 
+def get_cache_path(work_dir, bucket_name):
+    return os.path.join(work_dir, CACHE_DIR_NAME, bucket_name)
+
+
+def get_directory_path(work_dir, directory_name):
+    return os.path.join(work_dir, directory_name)
+
+
 async def upload(directory, work_dir):
     try:
         directory_name = directory['name']
         if '.' in directory_name:
             raise Exception('Forbidden directory name')
 
-        directory_path = os.path.join(work_dir, directory_name)
+        directory_path = get_directory_path(work_dir, directory_name)
 
         # clear the upload directory every time
         if os.path.exists(directory_path):
@@ -75,15 +86,16 @@ async def upload(directory, work_dir):
                 if not valid_url_content(content):
                     raise Exception('Invalid url content')
 
-                bucketName = content['bucketName']
-                fileName = content['fileName']
+                bucket_name = content['bucketName']
+                file_name = content['fileName']
                 url = content['url']
 
+                # TODO move chache stuff into .cache
                 # url type files have a cache dir to prevent repeat download
-                cache_path = os.path.join(work_dir, bucketName)
+                cache_path = get_cache_path(work_dir, bucket_name)
                 if not os.path.exists(cache_path):
                     os.makedirs(cache_path)
-                cache_file_path = os.path.join(cache_path, fileName)
+                cache_file_path = os.path.join(cache_path, file_name)
                 # only download the file if it's not in the cache
                 if not os.path.exists(cache_file_path):
                     await download_file(url, cache_file_path)
