@@ -12,7 +12,7 @@ aresponses = "*"
 [packages]
 aiofiles = "*"
 aiohttp = "*"
-aiohttp_cors = "*"
+aiohttp-cors = "*"
 
 [requires]
 python_version = "3.7"
