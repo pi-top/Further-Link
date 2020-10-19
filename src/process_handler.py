@@ -12,6 +12,9 @@ IPC_CHANNELS = [
     'video'
 ]
 
+dirname = pathlib.Path(__file__).parent.absolute()
+further_link_module_path = os.path.join(dirname, 'lib')
+
 
 class InvalidOperation(Exception):
     pass
@@ -43,7 +46,7 @@ class ProcessHandler:
             command = f'sudo -u {self.user} {command}'
 
         process_env = os.environ.copy()
-        process_env["PYTHONPATH"] = pathlib.Path(__file__).parent.absolute()
+        process_env["PYTHONPATH"] = further_link_module_path
 
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),

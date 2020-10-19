@@ -6,7 +6,7 @@ from datetime import datetime
 
 from tests import TEST_PATH, WORKING_DIRECTORY, STATUS_URL, RUN_PY_URL
 from src.message import create_message, parse_message
-from src.version import __version__
+from src.lib.further_link import __version__
 
 
 @pytest.mark.asyncio
