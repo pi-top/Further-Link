@@ -80,16 +80,17 @@ class ProcessHandler:
         self.process.stdin.write(content.encode('utf-8'))
         await self.process.stdin.drain()
 
-    async def _get_entrypoint(self, script, path):
+    async def _get_entrypoint(self, script=None, path=None):
         if isinstance(path, str):
             # path is absolute or relative to work_dir
             first_char = path[0]
             if first_char != '/':
                 path = os.path.join(self.work_dir, path)
 
-            # create path if it doesn't exist
-            if not os.path.exists(path):
-                os.makedirs(path, exist_ok=True)
+            # if there's a script to create, create path dirs for it to go in
+            path_dirs = os.path.dirname(path)
+            if not os.path.exists(path_dirs) and isinstance(script, str):
+                os.makedirs(path_dirs, exist_ok=True)
 
         if isinstance(script, str):
             # write script to file, at path if given, otherwise temp
