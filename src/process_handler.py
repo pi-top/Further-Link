@@ -181,7 +181,7 @@ class ProcessHandler:
             for name in IPC_CHANNELS:
                 try:
                     os.remove(self._get_ipc_filename(name))
-                except:
+                except Exception:
                     pass
-        except:
+        except Exception:
             pass

@@ -15,7 +15,7 @@ try:
         ipc_channels[name] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         ipc_channels[name].connect(ipc_filename)
         ipc_channels[name].settimeout(0.1)
-except:
+except Exception:
     print('Warning: Module further_link cannot be used in this context')
 
 
