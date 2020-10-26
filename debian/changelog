@@ -1,4 +1,4 @@
-pt-further-link (3.0.1-1) buster; urgency=medium
+pt-further-link (3.0.1) buster; urgency=medium
 
   * Add /version endpoint to get package version as json
 
