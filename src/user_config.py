@@ -30,7 +30,7 @@ def get_home_directory(user):
 
 
 def default_user():
-    DEFAULT_USER if user_exists(DEFAULT_USER) else get_current_user()
+    return DEFAULT_USER if user_exists(DEFAULT_USER) else get_current_user()
 
 
 def get_temp_dir():
