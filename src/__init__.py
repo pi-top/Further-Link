@@ -28,6 +28,7 @@ async def handle_message(message, process_handler, socket):
         path = m_data.get('directoryName') if (
             'directoryName' in m_data
             and isinstance(m_data.get('directoryName'), str)
+            and len(m_data.get('directoryName')) > 0
         ) else None
         await process_handler.start(
             script=m_data['sourceScript'],
@@ -36,7 +37,9 @@ async def handle_message(message, process_handler, socket):
 
     elif (m_type == 'start'
             and 'sourcePath' in m_data
-            and isinstance(m_data.get('sourcePath'), str)):
+            and isinstance(m_data.get('sourcePath'), str)
+            and len(m_data.get('sourcePath')) > 0
+          ):
         await process_handler.start(path=m_data['sourcePath'])
 
     elif (m_type == 'upload'
