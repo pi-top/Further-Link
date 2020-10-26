@@ -5,7 +5,7 @@ import codecs
 from aiohttp import web
 import aiohttp_cors
 
-from src import status, run_py
+from src import status, version, run_py
 
 
 def port():
@@ -39,6 +39,9 @@ def create_app():
     })
     status_resource = cors.add(app.router.add_resource('/status'))
     cors.add(status_resource.add_route('GET', status))
+
+    status_resource = cors.add(app.router.add_resource('/version'))
+    cors.add(status_resource.add_route('GET', version))
 
     exec_resource = cors.add(app.router.add_resource('/run-py'))
     cors.add(exec_resource.add_route('GET', run_py))

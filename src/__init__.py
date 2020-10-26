@@ -1,9 +1,11 @@
 import os
 import asyncio
-
+import json
 from shutil import copy
-from aiohttp import web, WSMsgType
 
+from aiohttp import web
+
+from .version import __version__
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation
 
@@ -17,6 +19,10 @@ for file_name in os.listdir(LIB):
 
 async def status(_):
     return web.Response(text='OK')
+
+
+async def version(_):
+    return web.Response(text=json.dumps({'version': __version__}))
 
 
 async def handle_message(message, process_handler, socket):
@@ -51,7 +57,9 @@ async def run_py(request):
         print('Started', process_handler.id)
 
     async def on_stop(exit_code):
-        await socket.send_str(create_message('stopped', {'exitCode': exit_code}))
+        await socket.send_str(
+            create_message('stopped', {'exitCode': exit_code})
+        )
         print('Stopped', process_handler.id)
 
     async def on_output(channel, output):

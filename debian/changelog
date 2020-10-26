@@ -1,3 +1,9 @@
+pt-further-link (3.0.1) buster; urgency=medium
+
+  * Add /version endpoint to get package version as json
+
+ -- Angus Whitehead <angus@pi-top.com>  Fri, 19 Oct 2020 16:20:19 +0100
+
 pt-further-link (3.0.0) buster; urgency=medium
 
   * Upgrade to compat level 12
