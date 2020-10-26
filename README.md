@@ -18,18 +18,21 @@ pipenv sync
 python3 server.py
 ```
 
-The default user, for running code and determining home directory is `pi`, if
-it exists, otherwise the user running further-link is used.
-The default working directory where files are uploaded and executed from is
-`~/further`. This can be overridden by setting env var FURTHER_LINK_WORK_DIR.
-The default server port, __8028__, can be overridden by setting FURTHER_LINK_PORT env variable.
-
 To allow connecting to a local server with valid ssl, this server uses a ssl
 cert for *.further-link.pi-top.com, and we create dns records to point that
 hostname to local ip addresses. So if you are running this on localhost:
 ```
 curl https://127-0-0-1.further-link.pi-top.com:8028/status
 ```
+
+### Configuration
+The default user, for running code and determining home directory is `pi`, if
+it exists, otherwise the user running further-link is used.
+
+The default working directory where files are uploaded and executed from is
+`~/further`. This can be overridden by setting env var FURTHER_LINK_WORK_DIR.
+
+The default server port, __8028__, can be overridden by setting FURTHER_LINK_PORT env variable.
 
 ### Websocket API
 #### Example usage
