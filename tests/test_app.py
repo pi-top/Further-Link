@@ -61,6 +61,31 @@ print(datetime.now().strftime("%A"))
 
 
 @pytest.mark.asyncio
+async def test_run_code_script_with_directory(ws_client):
+    code = """\
+from datetime import datetime
+print(datetime.now().strftime("%A"))
+"""
+    start_cmd = create_message('start', {
+        'sourceScript': code,
+        'directoryName': "my-dirname"
+    })
+    await ws_client.send_str(start_cmd)
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'started'
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    day = datetime.now().strftime('%A')
+    assert m_type == 'stdout'
+    assert m_data == {'output': day + '\n'}
+
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
+
+
+@pytest.mark.asyncio
 async def test_run_code_relative_path(ws_client):
     copy('{}/test_data/print_date.py'.format(TEST_PATH), WORKING_DIRECTORY)
 
@@ -72,8 +97,6 @@ async def test_run_code_relative_path(ws_client):
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     day = datetime.now().strftime('%A')
-    print(m_type)
-    print(m_data)
     assert m_type == 'stdout'
     assert m_data == {'output': day + '\n'}
 

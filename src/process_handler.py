@@ -87,8 +87,10 @@ class ProcessHandler:
             if first_char != '/':
                 path = os.path.join(self.work_dir, path)
 
+            path_dirs = path if isinstance(
+                script, str) else os.path.dirname(path)
+
             # if there's a script to create, create path dirs for it to go in
-            path_dirs = os.path.dirname(path)
             if not os.path.exists(path_dirs) and isinstance(script, str):
                 os.makedirs(path_dirs, exist_ok=True)
 
