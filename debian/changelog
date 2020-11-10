@@ -1,6 +1,6 @@
 pt-further-link (3.1.0) buster; urgency=medium
 
-  * Add run-py upload API, allows to create a directory of file to use
+  * Add run-py upload API, allows to create a directory of files to use
   * Add sourcePath and directoryName options to start method
   * Use a default working dir of ~/further, improve user defaults system
 
