@@ -53,7 +53,7 @@ print(datetime.now().strftime("%A"))
     m_type, m_data = parse_message((await ws_client.receive()).data)
     day = datetime.now().strftime('%A')
     assert m_type == 'stdout'
-    assert m_data == {'output': day + '\r\n'}
+    assert m_data == {'output': day + '\n'}
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
@@ -172,13 +172,12 @@ async def test_bad_code(ws_client):
     assert m_type == 'started'
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stdout'
-    assert m_data['output'].startswith('  File')
-    assert 'i\'m not valid python' in m_data['output']
-
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stdout'
-    assert 'SyntaxError: EOL while scanning string literal' in m_data['output']
+    assert m_type == 'stderr'
+    lines = m_data['output'].split('\n')
+    assert lines[0].startswith('  File')
+    assert lines[1] == '    i\'m not valid python'
+    assert lines[2] == '                       ^'
+    assert lines[3] == 'SyntaxError: EOL while scanning string literal'
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
@@ -198,34 +197,22 @@ while "BYE" != s:
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
-    user_input = create_message('stdin', {'input': 'hello\r'})
+    user_input = create_message('stdin', {'input': 'hello\n'})
     await ws_client.send_str(user_input)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
-    assert m_data == {'output': 'hello\r\n'}
+    assert m_data == {'output': 'HUH?! SPEAK UP, SONNY!\n'}
 
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stdout'
-    assert m_data == {'output': 'HUH?! SPEAK UP, SONNY!\r\n'}
-
-    user_input = create_message('stdin', {'input': 'HEY GRANDMA\r'})
+    user_input = create_message('stdin', {'input': 'HEY GRANDMA\n'})
     await ws_client.send_str(user_input)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
-    assert m_data == {'output': 'HEY GRANDMA\r\n'}
+    assert m_data == {'output': 'NO, NOT SINCE 1930\n'}
 
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stdout'
-    assert m_data == {'output': 'NO, NOT SINCE 1930\r\n'}
-
-    user_input = create_message('stdin', {'input': 'BYE\r'})
+    user_input = create_message('stdin', {'input': 'BYE\n'})
     await ws_client.send_str(user_input)
-
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stdout'
-    assert m_data == {'output': 'BYE\r\n'}
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
@@ -266,7 +253,7 @@ async def test_two_clients(ws_client):
 @pytest.mark.asyncio
 async def test_out_of_order_commands(ws_client):
     # send input
-    user_input = create_message('stdin', {'input': 'hello\r'})
+    user_input = create_message('stdin', {'input': 'hello\n'})
     await ws_client.send_str(user_input)
 
     # bad message
@@ -335,11 +322,7 @@ async def test_discard_old_input(ws_client):
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
-    assert m_data == {'output': 'unterminated input'}
-
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stdout'
-    assert m_data == {'output': 'hello world\r\n'}
+    assert m_data == {'output': 'hello world\n'}
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
@@ -352,16 +335,12 @@ async def test_discard_old_input(ws_client):
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'started'
 
-    user_input = create_message('stdin', {'input': 'hello\r'})
+    user_input = create_message('stdin', {'input': 'hello\n'})
     await ws_client.send_str(user_input)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
-    assert m_data == {'output': 'hello\r\n'}
-
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stdout'
-    assert m_data == {'output': 'hello\r\n'}
+    assert m_data == {'output': 'hello\n'}
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stopped'
