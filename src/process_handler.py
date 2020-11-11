@@ -1,22 +1,20 @@
 import asyncio
-import pwd
 import os
 import signal
 import pty
+import pathlib
 
 import aiofiles
+
+from .user_config import default_user, get_current_user, user_exists, \
+    get_working_directory, get_temp_dir
 
 IPC_CHANNELS = [
     'video'
 ]
 
-
-def get_cmd_prefix():
-    # run as pi user if available
-    for user in pwd.getpwall():
-        if user[0] == 'pi':
-            return 'sudo -u pi '
-    return ''
+dirname = pathlib.Path(__file__).parent.absolute()
+further_link_module_path = os.path.join(dirname, 'lib')
 
 
 class InvalidOperation(Exception):
@@ -24,11 +22,10 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, on_start, on_stop, on_output, work_dir='/tmp'):
-        self.on_start = on_start
-        self.on_stop = on_stop
-        self.on_output = on_output
-        self.work_dir = work_dir
+    def __init__(self, user=None):
+        self.user = default_user() if user is None else user
+        self.work_dir = get_working_directory(user)
+        self.temp_dir = get_temp_dir()
 
         self.id = str(id(self))
         self.process = None
@@ -37,13 +34,11 @@ class ProcessHandler:
         if self.is_running():
             self.stop()
 
-    async def start(self, script):
-        if self.is_running() or not isinstance(script, str):
+    async def start(self, script=None, path=None):
+        if self.is_running():
             raise InvalidOperation()
 
-        main_filename = self._get_main_filename()
-        async with aiofiles.open(main_filename, 'w+') as file:
-            await file.write(script)
+        entrypoint = await self._get_entrypoint(script, path)
 
         asyncio.create_task(self._ipc_communicate())
 
@@ -52,12 +47,19 @@ class ProcessHandler:
         self.pty_master = await aiofiles.open(master, 'w+b', 0)
         self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
 
-        command = get_cmd_prefix() + 'python3 -u ' + main_filename
+        command = 'python3 -u ' + entrypoint
+        if self.user != get_current_user() and user_exists(self.user):
+            command = f'sudo -u {self.user} {command}'
+
+        process_env = os.environ.copy()
+        process_env["PYTHONPATH"] = further_link_module_path
+
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
             stdin=self.pty_slave,
             stdout=self.pty_slave,
             stderr=self.pty_slave,
+            env=process_env,
             preexec_fn=os.setsid)  # make a process group for this and children
 
         asyncio.create_task(self._process_communicate())
@@ -72,7 +74,10 @@ class ProcessHandler:
         if not self.is_running():
             raise InvalidOperation()
         # send TERM to process group in case we have child processes
-        os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+        try:
+            os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            pass
 
     async def send_input(self, content):
         if not self.is_running() or not isinstance(content, str):
@@ -80,11 +85,39 @@ class ProcessHandler:
 
         await self.pty_master.write(content.encode('utf-8'))
 
-    def _get_main_filename(self):
-        return self.work_dir + '/' + self.id + '.py'
+    async def _get_entrypoint(self, script=None, path=None):
+        if isinstance(path, str):
+            # path is absolute or relative to work_dir
+            first_char = path[0]
+            if first_char != '/':
+                path = os.path.join(self.work_dir, path)
+
+            path_dirs = path if isinstance(
+                script, str) else os.path.dirname(path)
+
+            # if there's a script to create, create path dirs for it to go in
+            if not os.path.exists(path_dirs) and isinstance(script, str):
+                os.makedirs(path_dirs, exist_ok=True)
+
+        if isinstance(script, str):
+            # write script to file, at path if given, otherwise temp
+            entrypoint = self._get_script_filename(path)
+            async with aiofiles.open(entrypoint, 'w+') as file:
+                await file.write(script)
+
+            return entrypoint
+
+        if path is not None:
+            return path
+
+        raise InvalidOperation()
+
+    def _get_script_filename(self, path=None):
+        dir = path if isinstance(path, str) else self.temp_dir
+        return dir + '/' + self.id + '.py'
 
     def _get_ipc_filename(self, channel):
-        return self.work_dir + '/' + self.id + '.' + channel + '.sock'
+        return self.temp_dir + '/' + self.id + '.' + channel + '.sock'
 
     async def _ipc_communicate(self):
         self.ipc_tasks = []
@@ -161,7 +194,7 @@ class ProcessHandler:
             for name in IPC_CHANNELS:
                 try:
                     os.remove(self._get_ipc_filename(name))
-                except:
+                except Exception:
                     pass
-        except:
+        except Exception:
             pass

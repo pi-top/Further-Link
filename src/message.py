@@ -1,6 +1,10 @@
 import json
 
 
+class BadMessage(Exception):
+    pass
+
+
 def create_message(msg_type, msg_data=None):
     return json.dumps({
         'type': msg_type,
@@ -21,7 +25,3 @@ def parse_message(message):
     msg_data = msg_data if isinstance(msg_data, dict) else {}
 
     return msg_type, msg_data
-
-
-class BadMessage(Exception):
-    pass
