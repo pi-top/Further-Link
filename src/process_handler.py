@@ -22,8 +22,9 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, user=None):
+    def __init__(self, user=None, pty=False):
         self.user = default_user() if user is None else user
+        self.pty = pty
         self.work_dir = get_working_directory(user)
         self.temp_dir = get_temp_dir()
 
@@ -42,10 +43,15 @@ class ProcessHandler:
 
         asyncio.create_task(self._ipc_communicate())
 
-        # communicate through a pty for terminal 'cooked mode' behaviour
-        master, slave = pty.openpty()
-        self.pty_master = await aiofiles.open(master, 'w+b', 0)
-        self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
+        stdio = asyncio.subprocess.PIPE
+
+        if self.pty:
+            # communicate through a pty for terminal 'cooked mode' behaviour
+            master, slave = pty.openpty()
+            self.pty_master = await aiofiles.open(master, 'w+b', 0)
+            self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
+
+            stdio = self.pty_slave
 
         command = 'python3 -u ' + entrypoint
         if self.user != get_current_user() and user_exists(self.user):
@@ -56,9 +62,9 @@ class ProcessHandler:
 
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
-            stdin=self.pty_slave,
-            stdout=self.pty_slave,
-            stderr=self.pty_slave,
+            stdin=stdio,
+            stdout=stdio,
+            stderr=stdio,
             env=process_env,
             preexec_fn=os.setsid)  # make a process group for this and children
 
@@ -83,7 +89,13 @@ class ProcessHandler:
         if not self.is_running() or not isinstance(content, str):
             raise InvalidOperation()
 
-        await self.pty_master.write(content.encode('utf-8'))
+        content_bytes = content.encode('utf-8')
+
+        if self.pty:
+            await self.pty_master.write(content_bytes)
+        else:
+            self.process.stdin.write(content_bytes)
+            await self.process.stdin.drain()
 
     async def _get_entrypoint(self, script=None, path=None):
         if isinstance(path, str):
@@ -127,10 +139,20 @@ class ProcessHandler:
             ))
 
     async def _process_communicate(self):
-        output_tasks = [
-            asyncio.create_task(self._handle_output(self.pty_master)),
-        ]
+        output_tasks = []
+        if self.pty:
+            output_tasks.append(asyncio.create_task(
+                self._handle_output(self.pty_master, 'stdout')
+            ))
+        else:
+            output_tasks.append(asyncio.create_task(
+                self._handle_output(self.process.stdout, 'stdout')
+            ))
+            output_tasks.append(asyncio.create_task(
+                self._handle_output(self.process.stderr, 'stderr')
+            ))
 
+        # wait for process to exit
         exit_code = await self.process.wait()
 
         # stop ongoing io tasks
@@ -148,7 +170,7 @@ class ProcessHandler:
         if self.on_stop:
             await self.on_stop(exit_code)
 
-    async def _handle_output(self, stream):
+    async def _handle_output(self, stream, channel):
         while True:
             data = await stream.read(4096)
             if data == b'':
@@ -156,7 +178,7 @@ class ProcessHandler:
 
             output = data.decode(encoding='utf-8')
             if self.on_output:
-                await self.on_output('stdout', output)
+                await self.on_output(channel, output)
 
     async def _handle_ipc(self, channel):
         async def handle_connection(reader, _):
@@ -186,10 +208,11 @@ class ProcessHandler:
         try:
             os.remove(self._get_main_filename())
 
-            self.pty_master.close()
-            self.pty_slave.close()
-            os.remove(self.pty_master)
-            os.remove(self.pty_slave)
+            if self.pty:
+                self.pty_master.close()
+                self.pty_slave.close()
+                os.remove(self.pty_master)
+                os.remove(self.pty_slave)
 
             for name in IPC_CHANNELS:
                 try:
