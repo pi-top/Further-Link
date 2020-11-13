@@ -66,6 +66,7 @@ class ProcessHandler:
             stdout=stdio,
             stderr=stdio,
             env=process_env,
+            cwd=os.path.dirname(entrypoint),
             preexec_fn=os.setsid)  # make a process group for this and children
 
         asyncio.create_task(self._process_communicate())
