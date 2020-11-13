@@ -5,10 +5,11 @@ from datetime import datetime
 
 from shutil import copy
 
-from tests import TEST_PATH, WORKING_DIRECTORY, STATUS_URL, VERSION_URL, \
-    RUN_PY_URL
 from src.message import create_message, parse_message
 from src.lib.further_link import __version__
+from tests import TEST_PATH, WORKING_DIRECTORY, STATUS_URL, VERSION_URL, \
+    RUN_PY_URL
+from .helpers import receive_data
 
 
 @pytest.mark.asyncio
@@ -215,6 +216,42 @@ while "BYE" != s:
     await ws_client.send_str(user_input)
 
     m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stopped'
+    assert m_data == {'exitCode': 0}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('query_params', [{'pty': '1'}])
+async def test_input_pty(ws_client_query):
+    code = """s = input()
+while "BYE" != s:
+    print(["HUH?! SPEAK UP, SONNY!","NO, NOT SINCE 1930"][s.isupper()])
+    s = input()"""
+
+    start_cmd = create_message('start', {'sourceScript': code})
+    await ws_client_query.send_str(start_cmd)
+
+    m_type, m_data = parse_message((await ws_client_query.receive()).data)
+    assert m_type == 'started'
+
+    user_input = create_message('stdin', {'input': 'hello\r'})
+    await ws_client_query.send_str(user_input)
+
+    await receive_data(ws_client_query, 'stdout', 'output',
+                       'hello\r\nHUH?! SPEAK UP, SONNY!\r\n')
+
+    user_input = create_message('stdin', {'input': 'HEY GRANDMA\r'})
+    await ws_client_query.send_str(user_input)
+
+    await receive_data(ws_client_query, 'stdout', 'output',
+                       'HEY GRANDMA\r\nNO, NOT SINCE 1930\r\n')
+
+    user_input = create_message('stdin', {'input': 'BYE\r'})
+    await ws_client_query.send_str(user_input)
+
+    await receive_data(ws_client_query, 'stdout', 'output', 'BYE\r\n')
+
+    m_type, m_data = parse_message((await ws_client_query.receive()).data)
     assert m_type == 'stopped'
     assert m_data == {'exitCode': 0}
 
