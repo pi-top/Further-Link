@@ -1,4 +1,4 @@
-pt-further-link (3.1.1) buster; urgency=medium
+pt-further-link (3.1.2) buster; urgency=medium
 
   * Set process' working directory to entrypoint file's directory
   * Fix access to further_link lib for non-root users
