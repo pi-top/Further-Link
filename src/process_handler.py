@@ -38,6 +38,7 @@ class ProcessHandler:
             raise InvalidOperation()
 
         entrypoint = await self._get_entrypoint(script, path)
+        self._remove_entrypoint = entrypoint if script is not None else None
 
         asyncio.create_task(self._ipc_communicate())
 
@@ -181,11 +182,13 @@ class ProcessHandler:
         # aiofiles.os.remove not released to debian buster
         # os.remove should not block significantly, just fires a single syscall
         try:
-            os.remove(self._get_main_filename())
-            for name in IPC_CHANNELS:
-                try:
-                    os.remove(self._get_ipc_filename(name))
-                except Exception:
-                    pass
+            if self._remove_entrypoint is not None:
+                os.remove(self._remove_entrypoint)
         except Exception:
             pass
+
+        for name in IPC_CHANNELS:
+            try:
+                os.remove(self._get_ipc_filename(name))
+            except Exception:
+                pass
