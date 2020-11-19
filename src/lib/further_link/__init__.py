@@ -1,10 +1,12 @@
-# This package is made available to code running with further-link
+# This package is made available to user code running with further-link
 
 import os
 import socket
 from base64 import b64encode
 
 import __main__
+
+# __version__ made available for users
 from .version import __version__
 
 ipc_channel_names = ['video']
@@ -12,8 +14,10 @@ ipc_channels = {}
 
 main_filename = os.path.basename(__main__.__file__)
 
+
 def get_temp_dir():
     return os.environ.get('FURTHER_LINK_TEMP_DIR', '/tmp')
+
 
 try:
     for name in ipc_channel_names:
