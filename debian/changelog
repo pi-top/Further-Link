@@ -1,3 +1,11 @@
+pt-further-link (3.1.1) buster; urgency=medium
+
+  * Fix access to further_link lib for non-root users
+  * Correct further_link lib ipc file location
+  * Fix cleanup of script files
+
+ -- Angus Whitehead <angus@pi-top.com>  Thu, 19 Nov 2020 17:23:16 +0000
+
 pt-further-link (3.1.0) buster; urgency=medium
 
   * Add run-py upload API, allows the creation of a directory of files to use
