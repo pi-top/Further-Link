@@ -1,5 +1,6 @@
 # This package is made available to code running with further-link
 
+import os
 import socket
 from base64 import b64encode
 
@@ -9,9 +10,15 @@ from .version import __version__
 ipc_channel_names = ['video']
 ipc_channels = {}
 
+main_filename = os.path.basename(__main__.__file__)
+
+def get_temp_dir():
+    return os.environ.get('FURTHER_LINK_TEMP_DIR', '/tmp')
+
 try:
     for name in ipc_channel_names:
-        ipc_filename = __main__.__file__.replace('.py', '.' + name + '.sock')
+        ipc_filename = main_filename.replace('.py', '.' + name + '.sock')
+        ipc_path = os.path.join(get_temp_dir(), ipc_filename)
         ipc_channels[name] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         ipc_channels[name].connect(ipc_filename)
         ipc_channels[name].settimeout(0.1)

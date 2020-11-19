@@ -43,7 +43,7 @@ class ProcessHandler:
 
         command = 'python3 -u ' + entrypoint
         if self.user != get_current_user() and user_exists(self.user):
-            command = f'sudo -u {self.user} {command}'
+            command = f'sudo -u {self.user} --preserve-env=PYTHONPATH {command}'
 
         process_env = os.environ.copy()
         process_env["PYTHONPATH"] = further_link_module_path
