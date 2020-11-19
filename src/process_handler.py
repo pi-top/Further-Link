@@ -38,12 +38,13 @@ class ProcessHandler:
             raise InvalidOperation()
 
         entrypoint = await self._get_entrypoint(script, path)
+        self._remove_entrypoint = entrypoint if script is not None else None
 
         asyncio.create_task(self._ipc_communicate())
 
         command = 'python3 -u ' + entrypoint
         if self.user != get_current_user() and user_exists(self.user):
-            command = f'sudo -u {self.user} {command}'
+            command = f'sudo -u {self.user} --preserve-env=PYTHONPATH {command}'
 
         process_env = os.environ.copy()
         process_env["PYTHONPATH"] = further_link_module_path
@@ -54,6 +55,7 @@ class ProcessHandler:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             env=process_env,
+            cwd=os.path.dirname(entrypoint),
             preexec_fn=os.setsid)  # make a process group for this and children
 
         asyncio.create_task(self._process_communicate())
@@ -180,11 +182,13 @@ class ProcessHandler:
         # aiofiles.os.remove not released to debian buster
         # os.remove should not block significantly, just fires a single syscall
         try:
-            os.remove(self._get_main_filename())
-            for name in IPC_CHANNELS:
-                try:
-                    os.remove(self._get_ipc_filename(name))
-                except Exception:
-                    pass
+            if self._remove_entrypoint is not None:
+                os.remove(self._remove_entrypoint)
         except Exception:
             pass
+
+        for name in IPC_CHANNELS:
+            try:
+                os.remove(self._get_ipc_filename(name))
+            except Exception:
+                pass

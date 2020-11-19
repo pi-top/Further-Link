@@ -127,6 +127,7 @@ async def test_run_code_absolute_path(ws_client):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('query_params', [{'user': 'root'}])
+@pytest.mark.skip(reason="Won't work in CI due to old sudo version")
 async def test_run_as_user(ws_client_query):
     # This test assumes non-root user with nopasswd sudo access...
     code = 'import getpass\nprint(getpass.getuser())'

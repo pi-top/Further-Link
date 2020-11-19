@@ -1,10 +1,19 @@
+pt-further-link (3.1.1) buster; urgency=medium
+
+  * Set process' working directory to entrypoint file's directory
+  * Fix access to further_link lib for non-root users
+  * Correct further_link lib ipc file location
+  * Fix cleanup of script files
+
+ -- Angus Whitehead <angus@pi-top.com>  Thu, 19 Nov 2020 17:23:16 +0000
+
 pt-further-link (3.1.0) buster; urgency=medium
 
-  * Add run-py upload API, allows to create a directory of files to use
+  * Add run-py upload API, allows the creation of a directory of files to use
   * Add sourcePath and directoryName options to start method
   * Use a default working dir of ~/further, improve user defaults system
 
- -- Angus Whitehead <angus@pi-top.com>  Fri, 26 Oct 2020 15:00:03 +0100
+ -- Angus Whitehead <angus@pi-top.com>  Mon, 26 Oct 2020 15:00:03 +0100
 
 pt-further-link (3.0.1) buster; urgency=medium
 
