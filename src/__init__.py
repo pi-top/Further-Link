@@ -67,6 +67,7 @@ async def handle_message(message, process_handler, socket):
 async def run_py(request):
     query_params = request.query
     user = query_params.get('user', None)
+    pty = query_params.get('pty', '').lower() in ['1', 'true']
 
     socket = web.WebSocketResponse()
     await socket.prepare(request)
@@ -84,7 +85,7 @@ async def run_py(request):
     async def on_output(channel, output):
         await socket.send_str(create_message(channel, {'output': output}))
 
-    process_handler = ProcessHandler(user=user)
+    process_handler = ProcessHandler(user=user, pty=pty)
     process_handler.on_start = on_start
     process_handler.on_stop = on_stop
     process_handler.on_output = on_output

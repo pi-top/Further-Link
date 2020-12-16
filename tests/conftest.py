@@ -30,7 +30,9 @@ async def start_server():
 @pytest.fixture()
 async def ws_client():
     async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(RUN_PY_URL) as client:
+        async with session.ws_connect(
+            RUN_PY_URL, receive_timeout=0.1
+        ) as client:
             yield client
 
 
@@ -38,5 +40,5 @@ async def ws_client():
 async def ws_client_query(query_params):
     url = RUN_PY_URL + '?' + urllib.parse.urlencode(query_params)
     async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(url) as client:
+        async with session.ws_connect(url, receive_timeout=0.1) as client:
             yield client

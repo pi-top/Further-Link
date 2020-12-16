@@ -1,6 +1,7 @@
 import asyncio
 import os
 import signal
+import pty
 import pathlib
 
 import aiofiles
@@ -21,8 +22,9 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, user=None):
+    def __init__(self, user=None, pty=False):
         self.user = default_user() if user is None else user
+        self.pty = pty
         self.work_dir = get_working_directory(user)
         self.temp_dir = get_temp_dir()
 
@@ -42,6 +44,16 @@ class ProcessHandler:
 
         asyncio.create_task(self._ipc_communicate())
 
+        stdio = asyncio.subprocess.PIPE
+
+        if self.pty:
+            # communicate through a pty for terminal 'cooked mode' behaviour
+            master, slave = pty.openpty()
+            self.pty_master = await aiofiles.open(master, 'w+b', 0)
+            self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
+
+            stdio = self.pty_slave
+
         command = 'python3 -u ' + entrypoint
         if self.user != get_current_user() and user_exists(self.user):
             command = f'sudo -u {self.user} --preserve-env=PYTHONPATH {command}'
@@ -51,9 +63,9 @@ class ProcessHandler:
 
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stdin=stdio,
+            stdout=stdio,
+            stderr=stdio,
             env=process_env,
             cwd=os.path.dirname(entrypoint),
             preexec_fn=os.setsid)  # make a process group for this and children
@@ -79,8 +91,13 @@ class ProcessHandler:
         if not self.is_running() or not isinstance(content, str):
             raise InvalidOperation()
 
-        self.process.stdin.write(content.encode('utf-8'))
-        await self.process.stdin.drain()
+        content_bytes = content.encode('utf-8')
+
+        if self.pty:
+            await self.pty_master.write(content_bytes)
+        else:
+            self.process.stdin.write(content_bytes)
+            await self.process.stdin.drain()
 
     async def _get_entrypoint(self, script=None, path=None):
         if isinstance(path, str):
@@ -124,29 +141,38 @@ class ProcessHandler:
             ))
 
     async def _process_communicate(self):
-        output_tasks = [
-            asyncio.create_task(self._handle_output('stdout')),
-            asyncio.create_task(self._handle_output('stderr')),
-        ]
+        output_tasks = []
+        if self.pty:
+            output_tasks.append(asyncio.create_task(
+                self._handle_output(self.pty_master, 'stdout')
+            ))
+        else:
+            output_tasks.append(asyncio.create_task(
+                self._handle_output(self.process.stdout, 'stdout')
+            ))
+            output_tasks.append(asyncio.create_task(
+                self._handle_output(self.process.stderr, 'stderr')
+            ))
 
-        # allow the output tasks to finish & flush
+        # wait for process to exit
+        exit_code = await self.process.wait()
+
+        # stop ongoing io tasks
+        for task in output_tasks:
+            task.cancel()
         await asyncio.wait(output_tasks)
 
-        # stop ongoing ipc servers
         for task in self.ipc_tasks:
             task.cancel()
         await asyncio.wait(self.ipc_tasks)
 
-        # process should be done now but await it to get exit code
-        exit_code = await self.process.wait()
-        self.process = None
         await self._clean_up()
+        self.process = None
 
         if self.on_stop:
             await self.on_stop(exit_code)
 
-    async def _handle_output(self, stream_name):
-        stream = getattr(self.process, stream_name)
+    async def _handle_output(self, stream, channel):
         while True:
             data = await stream.read(4096)
             if data == b'':
@@ -154,7 +180,7 @@ class ProcessHandler:
 
             output = data.decode(encoding='utf-8')
             if self.on_output:
-                await self.on_output(stream_name, output)
+                await self.on_output(channel, output)
 
     async def _handle_ipc(self, channel):
         async def handle_connection(reader, _):
@@ -184,6 +210,15 @@ class ProcessHandler:
         try:
             if self._remove_entrypoint is not None:
                 os.remove(self._remove_entrypoint)
+        except Exception:
+            pass
+
+        try:
+            if self.pty:
+                self.pty_master.close()
+                self.pty_slave.close()
+                os.remove(self.pty_master)
+                os.remove(self.pty_slave)
         except Exception:
             pass
 
