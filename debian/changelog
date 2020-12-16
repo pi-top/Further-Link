@@ -1,3 +1,9 @@
+pt-further-link (3.3.1) buster; urgency=medium
+
+  * Use environment variables in systemd service
+
+ -- Mike Roberts <mike@pi-top.com>  Wed, 16 Dec 2020 18:57:31 +0000
+
 pt-further-link (3.3.0) buster; urgency=medium
 
   * Add option to communicate with process through pty for 'cooked mode'
