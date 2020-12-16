@@ -1,7 +1,6 @@
 pt-further-link (3.3.0) buster; urgency=medium
 
   * Add option to communicate with process through pty for 'cooked mode'
-  * Set process' working directory to entrypoint file's directory
 
  -- Angus Whitehead <angusjfw@gmail.com>  Fri, 14 Nov 2020 11:14:57 +0000
 
