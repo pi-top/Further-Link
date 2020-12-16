@@ -1,3 +1,9 @@
+pt-further-link (3.2.0) buster; urgency=medium
+
+  * Add endpoint to get installed version of apt package
+
+ -- Angus Whitehead <angusjfw@gmail.com>  Tue, 15 Dec 2020 11:46:55 +0000
+
 pt-further-link (3.1.2) buster; urgency=medium
 
   * Set process' working directory to entrypoint file's directory
