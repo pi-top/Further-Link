@@ -2,6 +2,7 @@ import pytest
 import aiohttp
 import json
 from datetime import datetime
+from subprocess import run
 
 from shutil import copy
 
@@ -27,6 +28,19 @@ async def test_version():
             assert response.status == 200
             body = await response.text()
             assert json.loads(body).get('version') == __version__
+
+
+@pytest.mark.asyncio
+async def test_apt_version():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'{VERSION_URL}/apt/python3') as response:
+            assert response.status == 200
+            body = await response.text()
+            try:
+                run('apt')  # if apt is available, response should be useful
+                assert json.loads(body).get('version').startswith('3')
+            except FileNotFoundError:
+                assert json.loads(body).get('version') is None
 
 
 @pytest.mark.asyncio
@@ -128,6 +142,7 @@ async def test_run_code_absolute_path(ws_client):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('query_params', [{'user': 'root'}])
+@pytest.mark.skip(reason="Won't work in CI due to old sudo version")
 async def test_run_as_user(ws_client_query):
     # This test assumes non-root user with nopasswd sudo access...
     code = 'import getpass\nprint(getpass.getuser())'

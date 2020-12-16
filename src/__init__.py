@@ -4,6 +4,7 @@ import json
 from aiohttp import web
 
 from .lib.further_link import __version__
+from .apt_version import apt_version  # noqa: F401
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation
 from .upload import upload, directory_is_valid, BadUpload
