@@ -2,7 +2,7 @@ pt-further-link (3.3.0) buster; urgency=medium
 
   * Add option to communicate with process through pty for 'cooked mode'
 
- -- Angus Whitehead <angusjfw@gmail.com>  Fri, 14 Nov 2020 11:14:57 +0000
+ -- Angus Whitehead <angusjfw@gmail.com>  Wed, 16 Dec 2020 17:02:21 +0000
 
 pt-further-link (3.2.0) buster; urgency=medium
 
