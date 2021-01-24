@@ -1,8 +1,5 @@
 # This package is made available to user code running with further-link
 
-import numpy as np
-from PIL import Image
-
 import os
 import socket
 from base64 import b64encode
@@ -11,6 +8,7 @@ import __main__
 
 # __version__ made available for users
 from .version import __version__
+
 
 ipc_channel_names = ['video']
 ipc_channels = {}
@@ -36,10 +34,12 @@ except Exception:
 # Taken from SDK, to avoid hard dependency
 # TODO: evaluate how Further Link and SDK co-exist
 def _pil_to_opencv(image):
-    return np.array(image)[:, :, ::-1]
+    from numpy import array
+    return array(image)[:, :, ::-1]
 
 
 def _opencv_to_pil(image):
+    from PIL import Image
     if len(image.shape) == 3:
         return Image.fromarray(image[:, :, ::-1])
     else:
@@ -48,6 +48,7 @@ def _opencv_to_pil(image):
 
 def send_image(frame, format="PIL"):
     try:
+        # ~2.8s import time cost for first time use!
         from cv2 import imencode
     except ImportError as e:
         print(e)
