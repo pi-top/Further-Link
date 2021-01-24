@@ -1,19 +1,17 @@
 # This package is made available to user code running with further-link
 
-from PIL import Image
-import numpy as np
-from pitop.camera.pil_opencv_conversion import pil_to_opencv
-
 # __version__ made available for users
 from .version import __version__
 
+from base64 import b64encode
+import numpy as np
 from os import environ, path
+from PIL import Image
 from socket import (
     socket,
     AF_UNIX,
     SOCK_STREAM,
 )
-from base64 import b64encode
 
 import __main__
 
