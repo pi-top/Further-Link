@@ -1,10 +1,3 @@
-pt-further-link (4.0.0) buster; urgency=medium
-
-  * Handle PIL images by default when using `send_image`, with conversion
-  support, as primary use case is Further + SDK (which uses PIL by default)
-
- -- Mike Roberts <mike@pi-top.com>  Sun, 24 Jan 2021 16:04:01 +0000
-
 pt-further-link (3.3.1) buster; urgency=medium
 
   * Use environment variables in systemd service
