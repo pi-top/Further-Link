@@ -11,6 +11,8 @@ Package: pt-further-link
 Architecture: all
 Depends: ${misc:Depends},
  ${python3:Depends},
+# Used for handling data processing from SDK
+ python3-pitop,
  python3-aiofiles,
  python3-aiohttp,
  python3-aiohttp-cors,

@@ -1,3 +1,10 @@
+pt-further-link (4.0.0) buster; urgency=medium
+
+  * Use SDK for image handling when using `send_image`
+  (primary use case is Further + SDK)
+
+ -- Mike Roberts <mike@pi-top.com>  Sun, 24 Jan 2021 16:04:01 +0000
+
 pt-further-link (3.3.1) buster; urgency=medium
 
   * Use environment variables in systemd service
