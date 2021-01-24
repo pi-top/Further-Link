@@ -54,9 +54,6 @@ def send_image(frame, format="PIL"):
         print(e)
         return
 
-    if format == "PIL":
-        frame = _pil_to_opencv(frame)
-
     try:
         _, buffer = imencode('.jpg', frame)
         encoded = b64encode(buffer)

@@ -13,8 +13,6 @@ aresponses = "*"
 aiofiles = "*"
 aiohttp = "*"
 aiohttp-cors = "*"
-pillow = "*"
-numpy = "*"
 
 [requires]
 python_version = "3.7"
