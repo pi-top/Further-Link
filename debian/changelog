@@ -1,3 +1,9 @@
+pt-further-link (4.0.1) buster; urgency=medium
+
+  * Fix PIL image conversion
+
+ -- Mike Roberts <mike@pi-top.com>  Sun, 24 Jan 2021 20:05:34 +0000
+
 pt-further-link (4.0.0) buster; urgency=medium
 
   * Handle PIL images by default when using `send_image`, with conversion
