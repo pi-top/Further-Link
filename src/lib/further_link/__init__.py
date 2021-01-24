@@ -1,5 +1,7 @@
 # This package is made available to user code running with further-link
 
+import __main__
+
 # __version__ made available for users
 from .version import __version__
 
@@ -12,8 +14,6 @@ from socket import (
     AF_UNIX,
     SOCK_STREAM,
 )
-
-import __main__
 
 ipc_channel_names = ['video']
 ipc_channels = {}
