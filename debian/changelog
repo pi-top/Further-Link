@@ -1,3 +1,9 @@
+pt-further-link (4.0.2) buster; urgency=medium
+
+  * Improve image conversion
+
+ -- Mike Roberts <mike@pi-top.com>  Sun, 24 Jan 2021 22:33:01 +0000
+
 pt-further-link (4.0.1) buster; urgency=medium
 
   * Fix PIL image conversion

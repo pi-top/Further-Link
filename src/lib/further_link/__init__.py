@@ -33,17 +33,36 @@ except Exception:
 
 # Taken from SDK, to avoid hard dependency
 # TODO: evaluate how Further Link and SDK co-exist
+def _image_has_3_channels(image):
+    return len(image.shape) == 3
+
+
+def _image_rgb_bgr_convert(image):
+    return image[:, :, ::-1]
+
+
 def _pil_to_opencv(image):
     from numpy import array
-    return array(image)[:, :, ::-1]
+    image_arr = array(image)
+
+    if _image_has_3_channels(image_arr):
+        # Array has 3 channel, do nothing
+        image = _image_rgb_bgr_convert(image_arr)
+    else:
+        image = image_arr
+
+    return image
 
 
 def _opencv_to_pil(image):
     from PIL import Image
     if len(image.shape) == 3:
-        return Image.fromarray(image[:, :, ::-1])
+        image = Image.fromarray(_image_rgb_bgr_convert(image))
     else:
-        return Image.fromarray(image[:, :])
+        # Not 3 channel, do nothing
+        image = Image.fromarray(image)
+
+    return image
 
 
 def send_image(frame, format="PIL"):
