@@ -9,6 +9,7 @@ import __main__
 # __version__ made available for users
 from .version import __version__
 
+
 ipc_channel_names = ['video']
 ipc_channels = {}
 
@@ -30,8 +31,24 @@ except Exception:
     print('Warning: Module further_link cannot be used in this context')
 
 
-def send_image(frame):
+# Taken from SDK, to avoid hard dependency
+# TODO: evaluate how Further Link and SDK co-exist
+def _pil_to_opencv(image):
+    from numpy import array
+    return array(image)[:, :, ::-1]
+
+
+def _opencv_to_pil(image):
+    from PIL import Image
+    if len(image.shape) == 3:
+        return Image.fromarray(image[:, :, ::-1])
+    else:
+        return Image.fromarray(image[:, :])
+
+
+def send_image(frame, format="PIL"):
     try:
+        # ~2.8s import time cost for first time use!
         from cv2 import imencode
     except ImportError as e:
         print(e)
