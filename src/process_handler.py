@@ -59,7 +59,7 @@ class ProcessHandler:
             command = f'sudo -u {self.user} --preserve-env=PYTHONPATH {command}'
 
         process_env = os.environ.copy()
-        process_env["PYTHONPATH"] = further_link_module_path
+        process_env["PYTHONPATH"] += os.pathsep + further_link_module_path
 
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
