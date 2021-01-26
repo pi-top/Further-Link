@@ -1,6 +1,7 @@
 import pytest
 import os
 import aiofiles
+import asyncio
 
 from src.message import create_message, parse_message
 from src.upload import get_bucket_cache_path, get_directory_path
@@ -58,11 +59,12 @@ with open(os.path.dirname(__file__) + '/cereal.csv', 'r') as f:
 
     await receive_data(ws_client, 'started')
 
+    await asyncio.sleep(0.1)  # wait for data
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
     assert m_data["output"][788:796] == 'Cheerios'
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -84,9 +86,9 @@ print(call_some_lib())
 
     await receive_data(ws_client, 'started')
 
-    await receive_data(ws_client, 'stdout', 'output', 'some lib called\n')
+    await wait_for_data(ws_client, 'stdout', 'output', 'some lib called\n', 100)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio

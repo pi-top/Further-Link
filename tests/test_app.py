@@ -1,5 +1,6 @@
 import pytest
 import aiohttp
+import asyncio
 import json
 from datetime import datetime
 from subprocess import run
@@ -10,7 +11,7 @@ from src.message import create_message, parse_message
 from src.lib.further_link import __version__
 from tests import TEST_PATH, WORKING_DIRECTORY, STATUS_URL, VERSION_URL, \
     RUN_PY_URL
-from .helpers import receive_data
+from .helpers import receive_data, wait_for_data
 
 
 @pytest.mark.asyncio
@@ -63,9 +64,9 @@ print(datetime.now().strftime("%A"))
     await receive_data(ws_client, 'started')
 
     day = datetime.now().strftime('%A')
-    await receive_data(ws_client, 'stdout', 'output', day + '\n')
+    await wait_for_data(ws_client, 'stdout', 'output', day + '\n', 100)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -83,9 +84,9 @@ print(datetime.now().strftime("%A"))
     await receive_data(ws_client, 'started')
 
     day = datetime.now().strftime('%A')
-    await receive_data(ws_client, 'stdout', 'output', day + '\n')
+    await wait_for_data(ws_client, 'stdout', 'output', day + '\n', 100)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -98,9 +99,9 @@ async def test_run_code_relative_path(ws_client):
     await receive_data(ws_client, 'started')
 
     day = datetime.now().strftime('%A')
-    await receive_data(ws_client, 'stdout', 'output', day + '\n')
+    await wait_for_data(ws_client, 'stdout', 'output', day + '\n', 100)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -113,9 +114,9 @@ async def test_run_code_absolute_path(ws_client):
     await receive_data(ws_client, 'started')
 
     day = datetime.now().strftime('%A')
-    await receive_data(ws_client, 'stdout', 'output', day + '\n')
+    await wait_for_data(ws_client, 'stdout', 'output', day + '\n', 100)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -129,9 +130,9 @@ async def test_run_as_user(ws_client_query):
 
     await receive_data(ws_client_query, 'started')
 
-    await receive_data(ws_client_query, 'stdout', 'output', 'root\n')
+    await wait_for_data(ws_client_query, 'stdout', 'output', 'root\n', 100)
 
-    await receive_data(ws_client_query, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client_query, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -145,7 +146,7 @@ async def test_stop_early(ws_client):
     stop_cmd = create_message('stop')
     await ws_client.send_str(stop_cmd)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', -15)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', -15, 100)
 
 
 @pytest.mark.asyncio
@@ -156,6 +157,7 @@ async def test_bad_code(ws_client):
 
     await receive_data(ws_client, 'started')
 
+    await asyncio.sleep(0.1)  # wait for data
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stderr'
     lines = m_data['output'].split('\n')
@@ -164,7 +166,7 @@ async def test_bad_code(ws_client):
     assert lines[2] == '                       ^'
     assert lines[3] == 'SyntaxError: EOL while scanning string literal'
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 1)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 1, 100)
 
 
 @pytest.mark.asyncio
@@ -182,17 +184,17 @@ while "BYE" != s:
     user_input = create_message('stdin', {'input': 'hello\n'})
     await ws_client.send_str(user_input)
 
-    await receive_data(ws_client, 'stdout', 'output', 'HUH?! SPEAK UP, SONNY!\n')
+    await wait_for_data(ws_client, 'stdout', 'output', 'HUH?! SPEAK UP, SONNY!\n', 100)
 
     user_input = create_message('stdin', {'input': 'HEY GRANDMA\n'})
     await ws_client.send_str(user_input)
 
-    await receive_data(ws_client, 'stdout', 'output', 'NO, NOT SINCE 1930\n')
+    await wait_for_data(ws_client, 'stdout', 'output', 'NO, NOT SINCE 1930\n', 100)
 
     user_input = create_message('stdin', {'input': 'BYE\n'})
     await ws_client.send_str(user_input)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -211,21 +213,21 @@ while "BYE" != s:
     user_input = create_message('stdin', {'input': 'hello\r'})
     await ws_client_query.send_str(user_input)
 
-    await receive_data(ws_client_query, 'stdout', 'output',
-                       'hello\r\nHUH?! SPEAK UP, SONNY!\r\n')
+    await wait_for_data(ws_client_query, 'stdout', 'output',
+                        'hello\r\nHUH?! SPEAK UP, SONNY!\r\n', 100)
 
     user_input = create_message('stdin', {'input': 'HEY GRANDMA\r'})
     await ws_client_query.send_str(user_input)
 
-    await receive_data(ws_client_query, 'stdout', 'output',
-                       'HEY GRANDMA\r\nNO, NOT SINCE 1930\r\n')
+    await wait_for_data(ws_client_query, 'stdout', 'output',
+                        'HEY GRANDMA\r\nNO, NOT SINCE 1930\r\n', 100)
 
     user_input = create_message('stdin', {'input': 'BYE\r'})
     await ws_client_query.send_str(user_input)
 
-    await receive_data(ws_client_query, 'stdout', 'output', 'BYE\r\n')
+    await wait_for_data(ws_client_query, 'stdout', 'output', 'BYE\r\n', 100)
 
-    await receive_data(ws_client_query, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client_query, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -245,12 +247,12 @@ async def test_two_clients(ws_client):
             stop_cmd = create_message('stop')
             await ws_client.send_str(stop_cmd)
 
-            await receive_data(ws_client, 'stopped', 'exitCode', -15)
+            await wait_for_data(ws_client, 'stopped', 'exitCode', -15, 100)
 
             stop_cmd = create_message('stop')
             await ws_client2.send_str(stop_cmd)
 
-            await receive_data(ws_client2, 'stopped', 'exitCode', -15)
+            await wait_for_data(ws_client2, 'stopped', 'exitCode', -15, 100)
 
 
 @pytest.mark.asyncio
@@ -289,7 +291,7 @@ async def test_out_of_order_commands(ws_client):
     await ws_client.send_str(stop_cmd)
 
     # stopped
-    await receive_data(ws_client, 'stopped', 'exitCode', -15)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', -15, 100)
 
     # send stop
     stop_cmd = create_message('stop')
@@ -311,9 +313,9 @@ async def test_discard_old_input(ws_client):
         'stdin', {'input': 'unterminated input'})
     await ws_client.send_str(unterminated_input)
 
-    await receive_data(ws_client, 'stdout', 'output', 'hello world\n')
+    await wait_for_data(ws_client, 'stdout', 'output', 'hello world\n', 100)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
     code = 'print(input())'
     start_cmd = create_message('start', {'sourceScript': code})
@@ -324,9 +326,9 @@ async def test_discard_old_input(ws_client):
     user_input = create_message('stdin', {'input': 'hello\n'})
     await ws_client.send_str(user_input)
 
-    await receive_data(ws_client, 'stdout', 'output', 'hello\n')
+    await wait_for_data(ws_client, 'stdout', 'output', 'hello\n', 100)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
 
 @pytest.mark.asyncio
@@ -340,6 +342,6 @@ print(__version__)
 
     await receive_data(ws_client, 'started')
 
-    await receive_data(ws_client, 'stdout', 'output', f'{__version__}\n')
+    await wait_for_data(ws_client, 'stdout', 'output', f'{__version__}\n', 100)
 
-    await receive_data(ws_client, 'stopped', 'exitCode', 0)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
