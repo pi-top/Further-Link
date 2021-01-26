@@ -3,6 +3,7 @@ import os
 import signal
 import pty
 import pathlib
+from collections import deque
 
 import aiofiles
 
@@ -162,6 +163,7 @@ class ProcessHandler:
         exit_code = await self.process.wait()
 
         # stop ongoing io tasks
+        await asyncio.sleep(0.1)
         for task in output_tasks:
             task.cancel()
         await asyncio.wait(output_tasks)
@@ -177,14 +179,34 @@ class ProcessHandler:
             await self.on_stop(exit_code)
 
     async def _handle_output(self, stream, channel):
-        while True:
-            data = await stream.read(4096)
-            if data == b'':
-                break
+        max_lines = 50
+        ringbuf = deque(maxlen=max_lines)
 
-            output = data.decode(encoding='utf-8')
-            if self.on_output:
-                await self.on_output(channel, output)
+        async def read():
+            while True:
+                data = await stream.read(256)
+
+                if data == b'':
+                    break
+
+                ringbuf.append(data)
+
+        async def write():
+            while True:
+                await asyncio.sleep(0.1)
+                data = b''.join(ringbuf)
+                if data:
+                    ringbuf.clear()
+                    output = data.decode(encoding='utf-8')
+                    if self.on_output:
+                        await self.on_output(channel, output)
+                if self.process is None:
+                    break
+
+        await asyncio.wait([
+            asyncio.create_task(read()),
+            asyncio.create_task(write())
+        ], return_when=asyncio.FIRST_COMPLETED)
 
     async def _handle_ipc(self, channel):
         async def handle_connection(reader, _):

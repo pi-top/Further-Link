@@ -1,3 +1,9 @@
+pt-further-link (4.1.0) buster; urgency=medium
+
+  * Handle process output through ring buffer for optimised throughput
+
+ -- Angus Whitehead <angusjfw@gmail.com>  Mon, 25 Jan 2021 23:41:48 +0000
+
 pt-further-link (4.0.2) buster; urgency=medium
 
   * Improve image conversion
