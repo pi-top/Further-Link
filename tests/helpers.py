@@ -43,18 +43,19 @@ async def wait_for_data(ws, channel, data_key=None, data_value=None, timeout=0):
             if data_key is None:
                 return
 
-            assert(m_data.get(data_key, False))
+            assert(m_data.get(data_key, None) is not None)
 
-            # m_data should be at least the start of our data_value
+            # m_data[data_key] should be at least the start of our data_value
             # equality check here for non string values
-            assert(data_value == m_data or data_value.startswith(m_data))
+            value = m_data[data_key]
+            assert(data_value == value or data_value.startswith(value))
 
             # return if it's all the data
-            if data_value == m_data:
+            if data_value == value:
                 return
 
             # use receive_data to gather rest
-            remaining_data = data_value.replace(m_data, '', 1)
+            remaining_data = data_value.replace(value, '', 1)
             return await receive_data(ws, channel, data_key, remaining_data)
         except TimeoutError:
             continue
