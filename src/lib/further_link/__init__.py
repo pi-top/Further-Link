@@ -7,7 +7,7 @@ from base64 import b64encode
 import __main__
 
 try:
-    from cv2 import imencode  # ~2.8s import time cost for first time use!
+    from cv2 import imencode
     from PIL import Image
 except ImportError as e:
     print(e)
