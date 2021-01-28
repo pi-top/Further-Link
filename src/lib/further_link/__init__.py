@@ -79,7 +79,7 @@ def send_image(frame, format="PIL"):
     try:
         _, buffer = imencode('.jpg', frame)
         encoded = b64encode(buffer)
-        message = b'video ' + encoded
+        message = encoded + b' endvideo '
 
         total_sent = 0
         while total_sent < len(message):

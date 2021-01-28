@@ -216,19 +216,24 @@ class ProcessHandler:
                 if data == b'':
                     break
 
-                tokens = data.decode('utf-8').strip().split()
-                if tokens[0] == channel:
-                    if len(message) > 0:
-                        if self.on_output:
-                            await self.on_output(channel, message)
-                        message = ''
-                    message += ' '.join(tokens[1:])
-                else:
-                    message += ' '.join(tokens)
+                tokens = data.decode('utf-8').strip().split(' ')  # NOT split()
+                for i, token in enumerate(tokens):
+                    new_message = False
+                    if token == 'end' + channel:  # end of message
+                        if len(message) > 0:
+                            if self.on_output:
+                                await self.on_output(channel, message)
+                            message = ''
+                        new_message = True
+                    elif i == 0 or new_message:
+                        message += token  # no space in front of first part
+                        new_message = False
+                    else:
+                        message += ' ' + token  # reinsert spaces into rest
 
         ipc_filename = self._get_ipc_filename(channel)
         await asyncio.start_unix_server(handle_connection, path=ipc_filename)
-        os.chmod(ipc_filename, 0o666)  # ensure pi user can use this too
+        os.chmod(ipc_filename, 0o666)  # ensures pi user can use this too
 
     async def _clean_up(self):
         # aiofiles.os.remove not released to debian buster
