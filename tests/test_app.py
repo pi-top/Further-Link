@@ -342,6 +342,11 @@ print(__version__)
 
     await receive_data(ws_client, 'started')
 
-    await wait_for_data(ws_client, 'stdout', 'output', f'{__version__}\n', 100)
+    await asyncio.sleep(0.1)  # wait for data
+    m_type, m_data = parse_message((await ws_client.receive()).data)
+    assert m_type == 'stdout'
+
+    if m_data["output"] != f'{__version__}\n':  # was import error warning
+        assert(m_data["output"].split('\n')[-2] == __version__)
 
     await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)

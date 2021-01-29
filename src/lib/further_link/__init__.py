@@ -6,6 +6,12 @@ from base64 import b64encode
 
 import __main__
 
+try:
+    from cv2 import imencode
+    from PIL import Image
+except ImportError as e:
+    print(e)
+
 # __version__ made available for users
 from .version import __version__
 
@@ -32,7 +38,6 @@ except Exception:
 
 
 # Taken from SDK, to avoid hard dependency
-# TODO: evaluate how Further Link and SDK co-exist
 def _image_has_3_channels(image):
     return len(image.shape) == 3
 
@@ -55,25 +60,20 @@ def _pil_to_opencv(image):
 
 
 def _opencv_to_pil(image):
-    from PIL import Image
     if len(image.shape) == 3:
         image = Image.fromarray(_image_rgb_bgr_convert(image))
     else:
-        # Not 3 channel, do nothing
+        # Not 3 channel, just convert
         image = Image.fromarray(image)
 
     return image
 
 
-def send_image(frame, format="PIL"):
-    try:
-        # ~2.8s import time cost for first time use!
-        from cv2 import imencode
-    except ImportError as e:
-        print(e)
-        return
+def send_image(frame, format=None):
+    if format is not None:
+        print("The 'format' parameter is no longer required in this function. Both PIL and OpenCV formats can be used without specifying which.")
 
-    if format.lower() == "pil":
+    if isinstance(frame, Image.Image):
         frame = _pil_to_opencv(frame)
 
     try:
