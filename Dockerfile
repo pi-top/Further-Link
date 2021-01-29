@@ -9,9 +9,8 @@ RUN apt-get update && \
 COPY Pipfile Pipfile.lock ./
 RUN pipenv sync
 
-COPY cert.pem cert.pem
-COPY key.pem key.pem
-COPY data data
+ENV FURTHER_LINK_NOSSL=true
+
 COPY server.py server.py
 COPY src src
 
