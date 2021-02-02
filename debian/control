@@ -11,6 +11,7 @@ Package: pt-further-link
 Architecture: all
 Depends: ${misc:Depends},
  ${python3:Depends},
+ python3-pitop-full,
 # Hard-coded dependencies tracking Pipfile
  python3-aiofiles,
  python3-aiohttp,
