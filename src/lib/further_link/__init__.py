@@ -9,10 +9,10 @@ import __main__
 try:
     from cv2 import imencode
     from PIL import Image
+    from pitop.core import ImageFunctions
 except ImportError as e:
     print(e)
 
-from pitop.core import ImageFunctions
 
 # __version__ made available for users
 from .version import __version__
