@@ -16,8 +16,6 @@ Depends: ${misc:Depends},
  python3-aiofiles,
  python3-aiohttp,
  python3-aiohttp-cors,
- python3-numpy,
- python3-pil,
 Description: pi-top Further Link
  Connect to further.pi-top.com from a browser, allowing you to run
  your own Python projects on a pi-top remotely (as long as you are

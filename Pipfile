@@ -13,7 +13,6 @@ aresponses = "*"
 aiofiles = "*"
 aiohttp = "*"
 aiohttp-cors = "*"
-numpy = "*"
 pillow = "*"
 
 [requires]

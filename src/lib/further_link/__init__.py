@@ -8,7 +8,6 @@ import __main__
 
 try:
     from cv2 import imencode
-    from PIL import Image
     from pitop.core import ImageFunctions
 except ImportError as e:
     print(e)
@@ -43,8 +42,7 @@ def send_image(frame, format=None):
     if format is not None:
         print("The 'format' parameter is no longer required in this function. Both PIL and OpenCV formats can be used without specifying which.")
 
-    if isinstance(frame, Image.Image):
-        frame = ImageFunctions.convert(frame, format="opencv")
+    frame = ImageFunctions.convert(frame, format="opencv")
 
     try:
         _, buffer = imencode('.jpg', frame)
