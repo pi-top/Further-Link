@@ -1,3 +1,9 @@
+pt-further-link (4.3.0) buster; urgency=medium
+
+  * Use SDK to change image format
+
+ -- Jorge Capona <jorge@pi-top.com>  Tue, 02 Feb 2021 15:46:27 -0300
+
 pt-further-link (4.2.0) buster; urgency=medium
 
   * Fix send_image flipping cv image colors and slow first send
