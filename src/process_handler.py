@@ -43,8 +43,6 @@ class ProcessHandler:
         entrypoint = await self._get_entrypoint(script, path)
         self._remove_entrypoint = entrypoint if script is not None else None
 
-        asyncio.create_task(self._ipc_communicate())
-
         stdio = asyncio.subprocess.PIPE
 
         if self.pty:
@@ -75,6 +73,7 @@ class ProcessHandler:
             cwd=os.path.dirname(entrypoint),
             preexec_fn=os.setsid)  # make a process group for this and children
 
+        asyncio.create_task(self._ipc_communicate())
         asyncio.create_task(self._process_communicate())
 
         if self.on_start:
@@ -136,7 +135,7 @@ class ProcessHandler:
         return dir + '/' + self.id + '.py'
 
     def _get_ipc_filename(self, channel):
-        return self.temp_dir + '/' + self.id + '.' + channel + '.sock'
+        return self.temp_dir + '/' + str(self.process.pid) + '.' + channel + '.sock'
 
     async def _ipc_communicate(self):
         self.ipc_tasks = []
