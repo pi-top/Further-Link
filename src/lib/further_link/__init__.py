@@ -25,7 +25,7 @@ def setup_ipc_channel(channel, retry=True):
         return
 
     try:
-        ipc_filename = str(os.getpid()) + '.' + channel + '.sock'
+        ipc_filename = str(os.getpgid(os.getpid())) + '.' + channel + '.sock'
         ipc_path = os.path.join(get_temp_dir(), ipc_filename)
         further_link_ipc_channels[channel] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         further_link_ipc_channels[channel].connect(ipc_path)
