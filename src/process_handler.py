@@ -76,7 +76,7 @@ class ProcessHandler:
 
         self.pid = self.process.pid  # retain beyond process for ipc cleanup
 
-        asyncio.create_task(self._ipc_communicate())
+        asyncio.create_task(self._ipc_communicate())  # after exec as uses pid
         asyncio.create_task(self._process_communicate())
 
         if self.on_start:
