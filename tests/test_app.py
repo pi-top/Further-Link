@@ -346,6 +346,8 @@ print(__version__)
 
     await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
+jpeg_pixel_b64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z'
+
 
 @pytest.mark.asyncio
 async def test_send_image_pil(ws_client):
@@ -359,7 +361,7 @@ send_image(effect_noise((1, 1), 0))
 
     await wait_for_data(ws_client, 'started')
 
-    await wait_for_data(ws_client, 'video', 'output', '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z')
+    await wait_for_data(ws_client, 'video', 'output', jpeg_pixel_b64)
 
     await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
 
@@ -377,6 +379,26 @@ send_image(array(effect_noise((1, 1), 0)))
 
     await wait_for_data(ws_client, 'started')
 
-    await wait_for_data(ws_client, 'video', 'output', '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z')
+    await wait_for_data(ws_client, 'video', 'output', jpeg_pixel_b64)
+
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
+
+
+@pytest.mark.asyncio
+async def test_send_image_with_directory(ws_client):
+    code = """\
+from further_link import send_image
+from PIL.Image import effect_noise
+send_image(effect_noise((1, 1), 0))
+"""
+    start_cmd = create_message('start', {
+        'sourceScript': code,
+        'directoryName': "my-dirname"
+    })
+    await ws_client.send_str(start_cmd)
+
+    await wait_for_data(ws_client, 'started')
+
+    await wait_for_data(ws_client, 'video', 'output', jpeg_pixel_b64)
 
     await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
