@@ -59,7 +59,7 @@ with open(os.path.dirname(__file__) + '/cereal.csv', 'r') as f:
 
     await receive_data(ws_client, 'started')
 
-    await asyncio.sleep(0.1)  # wait for data
+    await asyncio.sleep(0.2)  # wait for data
     m_type, m_data = parse_message((await ws_client.receive()).data)
     assert m_type == 'stdout'
     assert m_data["output"][788:796] == 'Cheerios'
