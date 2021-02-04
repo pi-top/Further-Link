@@ -11,7 +11,7 @@ from time import sleep
 from .version import __version__
 
 
-ipc_channels = {}
+further_link_ipc_channels = {}
 
 
 def get_temp_dir():
@@ -19,19 +19,19 @@ def get_temp_dir():
 
 
 def setup_ipc_channel(channel, retry=True):
-    global ipc_channels
+    global further_link_ipc_channels
 
-    if ipc_channels.get(channel):
+    if further_link_ipc_channels.get(channel):
         return
 
     try:
         ipc_filename = str(os.getpid()) + '.' + channel + '.sock'
         ipc_path = os.path.join(get_temp_dir(), ipc_filename)
-        ipc_channels[channel] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        ipc_channels[channel].connect(ipc_path)
-        ipc_channels[channel].settimeout(0.1)
+        further_link_ipc_channels[channel] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        further_link_ipc_channels[channel].connect(ipc_path)
+        further_link_ipc_channels[channel].settimeout(0.1)
     except Exception:
-        ipc_channels[channel] = None
+        further_link_ipc_channels[channel] = None
         if retry:
             sleep(0.1)  # wait for the ipc channels to start
             setup_ipc_channel(channel, retry=False)
@@ -88,7 +88,7 @@ def send_image(frame, format=None):
 
         total_sent = 0
         while total_sent < len(message):
-            sent = ipc_channels['video'].send(message[total_sent:])
+            sent = further_link_ipc_channels['video'].send(message[total_sent:])
             if sent == 0:
                 raise RuntimeError('socket connection broken')
             total_sent = total_sent + sent
