@@ -45,6 +45,9 @@ async def wait_for_data(ws, channel, data_key=None, data_value=None, timeout=0):
 
             assert(m_data.get(data_key, None) is not None)
 
+            if data_value is None:
+                return
+
             # m_data[data_key] should be at least the start of our data_value
             # equality check here for non string values
             value = m_data[data_key]

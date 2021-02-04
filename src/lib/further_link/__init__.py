@@ -3,38 +3,40 @@
 import os
 import socket
 from base64 import b64encode
-
-import __main__
-
-try:
-    from cv2 import imencode
-    from PIL import Image
-except ImportError as e:
-    print(e)
+from PIL import Image
+from io import BytesIO
+from time import sleep
 
 # __version__ made available for users
 from .version import __version__
 
 
-ipc_channel_names = ['video']
-ipc_channels = {}
-
-main_filename = os.path.basename(__main__.__file__)
+further_link_ipc_channels = {}
 
 
 def get_temp_dir():
     return os.environ.get('FURTHER_LINK_TEMP_DIR', '/tmp')
 
 
-try:
-    for name in ipc_channel_names:
-        ipc_filename = main_filename.replace('.py', '.' + name + '.sock')
+def setup_ipc_channel(channel, retry=True):
+    global further_link_ipc_channels
+
+    if further_link_ipc_channels.get(channel):
+        return
+
+    try:
+        ipc_filename = str(os.getpgid(os.getpid())) + '.' + channel + '.sock'
         ipc_path = os.path.join(get_temp_dir(), ipc_filename)
-        ipc_channels[name] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        ipc_channels[name].connect(ipc_path)
-        ipc_channels[name].settimeout(0.1)
-except Exception:
-    print('Warning: Module further_link cannot be used in this context')
+        further_link_ipc_channels[channel] = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        further_link_ipc_channels[channel].connect(ipc_path)
+        further_link_ipc_channels[channel].settimeout(0.1)
+    except Exception:
+        further_link_ipc_channels[channel] = None
+        if retry:
+            sleep(0.1)  # wait for the ipc channels to start
+            setup_ipc_channel(channel, retry=False)
+        else:
+            print(f'Warning: further_link {channel} channel is not available.')
 
 
 # Taken from SDK, to avoid hard dependency
@@ -70,20 +72,23 @@ def _opencv_to_pil(image):
 
 
 def send_image(frame, format=None):
+    setup_ipc_channel('video')
+
     if format is not None:
         print("The 'format' parameter is no longer required in this function. Both PIL and OpenCV formats can be used without specifying which.")
 
-    if isinstance(frame, Image.Image):
-        frame = _pil_to_opencv(frame)
+    if not isinstance(frame, Image.Image):
+        frame = _opencv_to_pil(frame)
 
     try:
-        _, buffer = imencode('.jpg', frame)
-        encoded = b64encode(buffer)
+        buffered = BytesIO()
+        frame.save(buffered, format="JPEG", optimize=True)
+        encoded = b64encode(buffered.getvalue())
         message = encoded + b' endvideo '
 
         total_sent = 0
         while total_sent < len(message):
-            sent = ipc_channels['video'].send(message[total_sent:])
+            sent = further_link_ipc_channels['video'].send(message[total_sent:])
             if sent == 0:
                 raise RuntimeError('socket connection broken')
             total_sent = total_sent + sent

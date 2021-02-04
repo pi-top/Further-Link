@@ -342,11 +342,63 @@ print(__version__)
 
     await receive_data(ws_client, 'started')
 
-    await asyncio.sleep(0.1)  # wait for data
-    m_type, m_data = parse_message((await ws_client.receive()).data)
-    assert m_type == 'stdout'
+    await wait_for_data(ws_client, 'stdout', 'output', f'{__version__}\n', 100)
 
-    if m_data["output"] != f'{__version__}\n':  # was import error warning
-        assert(m_data["output"].split('\n')[-2] == __version__)
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
+
+jpeg_pixel_b64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z'
+
+
+@pytest.mark.asyncio
+async def test_send_image_pil(ws_client):
+    code = """\
+from further_link import send_image
+from PIL.Image import effect_noise
+send_image(effect_noise((1, 1), 0))
+"""
+    start_cmd = create_message('start', {'sourceScript': code})
+    await ws_client.send_str(start_cmd)
+
+    await wait_for_data(ws_client, 'started')
+
+    await wait_for_data(ws_client, 'video', 'output', jpeg_pixel_b64)
+
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
+
+
+@pytest.mark.asyncio
+async def test_send_image_opencv(ws_client):
+    code = """\
+from numpy import array
+from further_link import send_image
+from PIL.Image import effect_noise
+send_image(array(effect_noise((1, 1), 0)))
+"""
+    start_cmd = create_message('start', {'sourceScript': code})
+    await ws_client.send_str(start_cmd)
+
+    await wait_for_data(ws_client, 'started')
+
+    await wait_for_data(ws_client, 'video', 'output', jpeg_pixel_b64)
+
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
+
+
+@pytest.mark.asyncio
+async def test_send_image_with_directory(ws_client):
+    code = """\
+from further_link import send_image
+from PIL.Image import effect_noise
+send_image(effect_noise((1, 1), 0))
+"""
+    start_cmd = create_message('start', {
+        'sourceScript': code,
+        'directoryName': "my-dirname"
+    })
+    await ws_client.send_str(start_cmd)
+
+    await wait_for_data(ws_client, 'started')
+
+    await wait_for_data(ws_client, 'video', 'output', jpeg_pixel_b64)
 
     await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
