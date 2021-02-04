@@ -31,6 +31,7 @@ class ProcessHandler:
 
         self.id = str(id(self))
         self.process = None
+        self.pid = None
 
     def __del__(self):
         if self.is_running():
@@ -72,6 +73,8 @@ class ProcessHandler:
             env=process_env,
             cwd=os.path.dirname(entrypoint),
             preexec_fn=os.setsid)  # make a process group for this and children
+
+        self.pid = self.process.pid  # retain beyond process for ipc cleanup
 
         asyncio.create_task(self._ipc_communicate())
         asyncio.create_task(self._process_communicate())
@@ -135,7 +138,7 @@ class ProcessHandler:
         return dir + '/' + self.id + '.py'
 
     def _get_ipc_filename(self, channel):
-        return self.temp_dir + '/' + str(self.process.pid) + '.' + channel + '.sock'
+        return self.temp_dir + '/' + str(self.pid) + '.' + channel + '.sock'
 
     async def _ipc_communicate(self):
         self.ipc_tasks = []
