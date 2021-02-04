@@ -1,3 +1,10 @@
+pt-further-link (4.2.1) buster; urgency=medium
+
+  * Fix ipc system to work with directoryName option
+  * Remove send_image soft/hidden dependency on OpenCV
+
+ -- Angus Whitehead <angusjfw@gmail.com>  Thurs, 04 Feb 2021 15:25:31 +0000
+
 pt-further-link (4.2.0) buster; urgency=medium
 
   * Fix send_image flipping cv image colors and slow first send
