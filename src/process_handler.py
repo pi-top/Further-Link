@@ -60,6 +60,8 @@ class ProcessHandler:
 
         process_env = os.environ.copy()
 
+        process_env["DISPLAY"] = ":0"  # use the first local display for X GUIs
+
         if process_env.get("PYTHONPATH"):
             process_env["PYTHONPATH"] += os.pathsep + further_link_module_path
         else:
