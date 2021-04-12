@@ -58,12 +58,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install libv4l-dev # for building PyV4L2Camera
-          pip install "./main[test]"
+          sudo apt install pipenv
+          pipenv sync
 
       - name: Run pytest
         run: |
-          python -m pytest main
+          pipenv run pytest
 
   build-debian-packages:
     needs: [ test-python-linting, test-python-pytest ]
