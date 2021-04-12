@@ -63,7 +63,7 @@ async def run_async():
 
 
 def run():
-    return web.run_app(create_app(), port=port(), ssl_context=ssl_context())
+    return web.run_app(create_app(), port=port(), ssl_context=ssl_context(), handle_signals=False)
 
 
 if __name__ == '__main__':
