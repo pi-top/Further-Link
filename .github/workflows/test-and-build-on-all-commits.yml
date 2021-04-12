@@ -59,7 +59,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install pipenv
-          pipenv sync
+          pipenv sync --dev
 
       - name: Run pytest
         run: |
