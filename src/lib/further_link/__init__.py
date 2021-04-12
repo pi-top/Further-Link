@@ -8,7 +8,7 @@ from io import BytesIO
 from time import sleep
 
 # __version__ made available for users
-from .version import __version__
+from .version import __version__  # noqa: F401
 
 
 further_link_ipc_channels = {}
