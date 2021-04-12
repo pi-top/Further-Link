@@ -76,6 +76,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Insert data file
+        env:
+          DATA: ${{ secrets.data }}
+        run: |
+          echo $DATA > data
+
       - name: Patch changelog (snapshot)
         run: |
           docker run --rm \
