@@ -4,7 +4,7 @@ import signal
 import pty
 import pathlib
 from collections import deque
-
+from pitopcommon.current_session_info import get_first_display
 import aiofiles
 
 from .user_config import default_user, get_current_user, user_exists, \
@@ -58,9 +58,12 @@ class ProcessHandler:
         if self.user != get_current_user() and user_exists(self.user):
             command = f'sudo -u {self.user} --preserve-env=PYTHONPATH {command}'
 
+        # Ensure that DISPLAY is set, so that user can open GUI windows
+        #
+        # TODO: review moving to running as current user so that this comes
+        # naturally from the user's environment
         process_env = os.environ.copy()
-
-        process_env["DISPLAY"] = ":0"  # use the first local display for X GUIs
+        process_env["DISPLAY"] = get_first_display()
 
         if process_env.get("PYTHONPATH"):
             process_env["PYTHONPATH"] += os.pathsep + further_link_module_path
