@@ -189,6 +189,9 @@ class ProcessHandler:
             await self.on_stop(exit_code)
 
     async def _handle_output(self, stream, channel):
+        # output is read into a ring buffer so that if it's being produced at a
+        # rate our socket won't handle we dump the oldest stuff
+        # limit ~ 50 * 256b / 0.1s (128k characters per second)
         max_lines = 50
         ringbuf = deque(maxlen=max_lines)
 
@@ -203,14 +206,22 @@ class ProcessHandler:
 
         async def write():
             while True:
-                await asyncio.sleep(0.1)
+                # gather data in ringbuf for .1 second or until process ends
+                # if process ends still handle gathered data before break
+                done = False
+                try:
+                    await asyncio.wait_for(self.process.wait(), timeout=0.1)
+                    done = True
+                except asyncio.TimeoutError:
+                    pass
+
                 data = b''.join(ringbuf)
                 if data:
                     ringbuf.clear()
                     output = data.decode(encoding='utf-8')
                     if self.on_output:
                         await self.on_output(channel, output)
-                if self.process is None:
+                if done:
                     break
 
         await asyncio.wait([
