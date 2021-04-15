@@ -3,8 +3,9 @@
 %:
 	dh $@
 
+DEBVER=$(shell dpkg-parsechangelog -SVersion)
+
 override_dh_auto_build:
-	DEBVER := $(shell dpkg-parsechangelog -SVersion)
 	$(shell echo "__version__ = '${DEBVER}'" > src/lib/further_link/version.py)
 	$(shell cat src/lib/further_link/version.py)
 	dh_auto_build
