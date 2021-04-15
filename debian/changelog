@@ -1,9 +1,3 @@
-pt-further-link (4.3.0) buster; urgency=medium
-
-  * Set DISPLAY envvar to :0 for user code to allow opening GUI windows
-
- -- Angus Whitehead <angusjfw@gmail.com>  Mon, 22 Mar 2021 12:26:14 +0000
-
 pt-further-link (4.2.1) buster; urgency=medium
 
   * Fix ipc system to work with directoryName option
