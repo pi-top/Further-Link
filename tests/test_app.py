@@ -50,7 +50,7 @@ async def test_bad_message(ws_client):
     start_cmd = create_message('start')
     await ws_client.send_str(start_cmd)
 
-    await receive_data(ws_client, 'error', 'message', 'Bad message')
+    await wait_for_data(ws_client, 'error', 'message', 'Bad message')
 
 
 @pytest.mark.asyncio
