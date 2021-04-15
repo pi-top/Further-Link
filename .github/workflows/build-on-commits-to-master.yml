@@ -20,8 +20,8 @@ jobs:
       - name: Insert data file, if relevant
         env:
           DATA: ${{ secrets.data }}
-        if: ${DATA} != ""
-        run: echo ${DATA} > data
+        if: ${{ env.DATA }} != ""
+        run: echo ${{ env.DATA }} > data
 
       - name: Patch changelog (snapshot)
         run: |
