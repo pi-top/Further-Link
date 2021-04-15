@@ -254,10 +254,10 @@
         },
         "pitopcommon": {
             "hashes": [
-                "sha256:6ef87047f8d0ad8b713a28e8b0a9e8d35080b7bc20e70dacfca9b2105050d1e0"
+                "sha256:6f2f331fe1ec95c53c3102441a0b17cd1a4e93582d37ea38a2e20796e4f937ff"
             ],
             "index": "pypi",
-            "version": "==0.8.2"
+            "version": "==0.8.5"
         },
         "python-systemd": {
             "hashes": [
