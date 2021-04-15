@@ -1,10 +1,12 @@
 #!/usr/bin/make -f
 
+include /usr/share/dpkg/pkg-info.mk
+
 %:
 	dh $@
 
 override_dh_auto_build:
-	dpkg-parsechangelog -SVersion > src/lib/further_link/version.py
+	echo "__version__ = '$(DEB_VERSION)'" > src/lib/further_link/version.py
 	dh_auto_build
 
 override_dh_installsystemd:
