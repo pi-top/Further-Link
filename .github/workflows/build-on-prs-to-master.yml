@@ -18,8 +18,10 @@ jobs:
           fetch-depth: 0
 
       - name: Insert data file, if relevant
-        if: ${{ secrets.data }} != ""
-        run: echo ${{ secrets.data }} > data
+        env:
+          DATA: ${{ secrets.data }}
+        if: ${DATA} != ""
+        run: echo ${DATA} > data
 
       - name: Patch changelog (snapshot)
         run: |
