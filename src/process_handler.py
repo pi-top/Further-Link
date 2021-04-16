@@ -197,12 +197,21 @@ class ProcessHandler:
 
         async def read():
             while True:
-                data = await stream.read(256)
+                read_data = asyncio.create_task(stream.read(256))
+                wait_done = asyncio.create_task(self.process.wait())
 
-                if data == b'':
+                done, pending = await asyncio.wait(
+                    [read_data, wait_done],
+                    return_when=asyncio.FIRST_COMPLETED
+                )
+                for task in pending:
+                    task.cancel()
+                await asyncio.wait(pending)
+
+                if read_data not in done:
                     break
 
-                ringbuf.append(data)
+                ringbuf.append(read_data.result())
 
         async def write():
             while True:
