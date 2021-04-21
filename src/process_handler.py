@@ -3,10 +3,11 @@ import os
 import signal
 import pty
 import pathlib
-from collections import deque
-from pitopcommon.current_session_info import get_first_display
+from functools import partial
 import aiofiles
+from pitopcommon.current_session_info import get_first_display
 
+from .helpers import ringbuf_read
 from .user_config import default_user, get_current_user, user_exists, \
     get_working_directory, get_temp_dir
 
@@ -189,54 +190,14 @@ class ProcessHandler:
             await self.on_stop(exit_code)
 
     async def _handle_output(self, stream, channel):
-        # output is read into a ring buffer so that if it's being produced at a
-        # rate our socket won't handle we dump the oldest stuff
-        # limit ~ 50 * 256b / 0.1s (128k characters per second)
-        max_lines = 50
-        ringbuf = deque(maxlen=max_lines)
-
-        async def read():
-            while True:
-                read_data = asyncio.create_task(stream.read(256))
-                wait_done = asyncio.create_task(self.process.wait())
-
-                done, pending = await asyncio.wait(
-                    [read_data, wait_done],
-                    return_when=asyncio.FIRST_COMPLETED
-                )
-                for task in pending:
-                    task.cancel()
-                await asyncio.wait(pending)
-
-                if read_data not in done:
-                    break
-
-                ringbuf.append(read_data.result())
-
-        async def write():
-            while True:
-                # gather data in ringbuf for .1 second or until process ends
-                # if process ends still handle gathered data before break
-                done = False
-                try:
-                    await asyncio.wait_for(self.process.wait(), timeout=0.1)
-                    done = True
-                except asyncio.TimeoutError:
-                    pass
-
-                data = b''.join(ringbuf)
-                if data:
-                    ringbuf.clear()
-                    output = data.decode(encoding='utf-8')
-                    if self.on_output:
-                        await self.on_output(channel, output)
-                if done:
-                    break
-
-        await asyncio.wait([
-            asyncio.create_task(read()),
-            asyncio.create_task(write())
-        ], return_when=asyncio.FIRST_COMPLETED)
+        await ringbuf_read(
+            stream,
+            output_callback=partial(self.on_output, channel),
+            buffer_time=0.1,
+            max_chunks=50,
+            chunk_size=256,
+            done_condition=self.process.wait
+        )
 
     async def _handle_ipc(self, channel):
         async def handle_connection(reader, _):
