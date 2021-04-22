@@ -1,3 +1,13 @@
+pt-further-link (4.2.2) buster; urgency=medium
+
+  * Fix send_image run from code in directory (#42)
+  * Allow users to open GUI windows (#43)
+  * Set Python lib version from changelog (#44)
+  * Add GitHub Action workflow files (#45)
+  * Don't ignore sigterm signals - quit immediately (#46)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 22 Apr 2021 16:55:48 +0000
+
 pt-further-link (4.2.1) buster; urgency=medium
 
   * Fix ipc system to work with directoryName option
