@@ -1,3 +1,4 @@
+import os
 import pytest
 import aiohttp
 import asyncio
@@ -49,7 +50,7 @@ async def test_bad_message(ws_client):
     start_cmd = create_message('start')
     await ws_client.send_str(start_cmd)
 
-    await receive_data(ws_client, 'error', 'message', 'Bad message')
+    await wait_for_data(ws_client, 'error', 'message', 'Bad message')
 
 
 @pytest.mark.asyncio
@@ -345,6 +346,23 @@ print(__version__)
     await wait_for_data(ws_client, 'stdout', 'output', f'{__version__}\n', 100)
 
     await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif("DISPLAY" not in os.environ,
+                    reason="requires UI")
+async def test_use_display(ws_client):
+    code = """\
+from turtle import color
+color('red')
+"""
+    start_cmd = create_message('start', {'sourceScript': code})
+    await ws_client.send_str(start_cmd)
+
+    await receive_data(ws_client, 'started')
+
+    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 5000)
+
 
 jpeg_pixel_b64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z'
 
