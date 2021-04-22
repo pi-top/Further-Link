@@ -15,6 +15,7 @@ aiohttp = "*"
 aiohttp-cors = "*"
 numpy = "*"
 pillow = "*"
+pitopcommon = "*"
 
 [requires]
 python_version = "3.7"
