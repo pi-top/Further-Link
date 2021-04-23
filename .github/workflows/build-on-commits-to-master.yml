@@ -1,4 +1,4 @@
-name: Latest Build
+name: Latest Master Build
 
 on:
   push:
