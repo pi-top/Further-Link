@@ -1,9 +1,9 @@
-name: Run Tests and Upload Coverage Report
+name: PR Test and Upload Coverage Report
 
 on:
   pull_request:
     branches:
-      - master
+      - '**'
 
 jobs:
   test-and-upload-coverage-report:
