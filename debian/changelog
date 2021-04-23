@@ -1,6 +1,5 @@
 pt-further-link (4.2.3) buster; urgency=medium
 
-  [ Angus Whitehead ]
   * Fix data file in build
 
  -- pi-top <deb-maintainers@pi-top.com>  Fri, 23 Apr 2021 14:23:36 +0000
