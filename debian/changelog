@@ -1,3 +1,40 @@
+pt-further-link (4.2.3) buster; urgency=medium
+
+  [ Angus Whitehead ]
+  * Fix send_image run from code in directory (#42)
+  * Fix changelog
+
+  [ Mike Roberts ]
+  * Allow external sources when testing shell scripts
+  * Add GitHub Action workflow files (#45)
+  * Fix Lintian warnings (#48)
+  * Use latest CI workflows
+  * Re-add data file
+
+  [ Angus Whitehead ]
+  * Correct test-all-commits workflow test coverage dir
+  * Don't ignore sigterm requests - quit immediately (#46)
+
+  [ Mike Roberts ]
+  * Set Python lib version from changelog (#44)
+  * Only test on PRs
+  * Only write data file if secret exists (#49)
+
+  [ Angus Whitehead ]
+  * Fix test coverage dir
+  * Allow users to open GUI windows (#43)
+  * Read codecov token secret for coverage upload (#51)
+
+  [ github-actions[bot] ]
+  * [CI] Update debian/changelog for next release (#47)
+  * Add data file to deb build
+
+  [ github-actions[bot] ]
+  * [CI] Update debian/changelog for next release (#52)
+  * Update workflows (#54)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 23 Apr 2021 11:43:04 +0000
+
 pt-further-link (4.2.2) buster; urgency=medium
 
   * Fix send_image run from code in directory (#42)
