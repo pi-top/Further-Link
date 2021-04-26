@@ -3,11 +3,18 @@ import json
 
 from aiohttp import web
 
-from .lib.further_link import __version__
 from .apt_version import apt_version  # noqa: F401
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation
 from .upload import upload, directory_is_valid, BadUpload
+from .lib.further_link import (  # noqa: F401
+    __version__,
+    start_ipc_server,
+    async_start_ipc_server,
+    ipc_send,
+    async_ipc_send,
+    ipc_cleanup
+)
 
 
 async def status(_):
@@ -59,6 +66,13 @@ async def handle_message(message, process_handler, socket):
 
     elif m_type == 'stop':
         process_handler.stop()
+
+    elif (m_type == 'keyevent'
+          and 'key' in m_data
+          and isinstance(m_data.get('key'), str)
+          and 'event' in m_data
+          and isinstance(m_data.get('event'), str)):
+        await process_handler.send_key_event(m_data['key'], m_data['event'])
 
     else:
         raise BadMessage()

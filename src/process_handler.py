@@ -7,11 +7,12 @@ from functools import partial
 import aiofiles
 from pitopcommon.current_session_info import get_first_display
 
+from .lib.further_link import async_start_ipc_server, async_ipc_send, ipc_cleanup
 from .helpers import ringbuf_read
 from .user_config import default_user, get_current_user, user_exists, \
     get_working_directory, get_temp_dir
 
-IPC_CHANNELS = [
+SERVER_IPC_CHANNELS = [
     'video'
 ]
 
@@ -55,9 +56,9 @@ class ProcessHandler:
 
             stdio = self.pty_slave
 
-        command = 'python3 -u ' + entrypoint
+        cmd = 'python3 -u ' + entrypoint
         if self.user != get_current_user() and user_exists(self.user):
-            command = f'sudo -u {self.user} --preserve-env=PYTHONPATH {command}'
+            cmd = f'sudo -u {self.user} --preserve-env=PYTHONPATH {cmd}'
 
         process_env = os.environ.copy()
 
@@ -75,7 +76,7 @@ class ProcessHandler:
             process_env["PYTHONPATH"] = further_link_module_path
 
         self.process = await asyncio.create_subprocess_exec(
-            *command.split(),
+            *cmd.split(),
             stdin=stdio,
             stdout=stdio,
             stderr=stdio,
@@ -115,6 +116,17 @@ class ProcessHandler:
             self.process.stdin.write(content_bytes)
             await self.process.stdin.drain()
 
+    async def send_key_event(self, key, event):
+        if (
+            not self.is_running()
+            or not isinstance(key, str)
+            or not isinstance(event, str)
+        ):
+            raise InvalidOperation()
+
+        content_bytes = f'{key} {event}'.encode('utf-8')
+        await async_ipc_send('keyevent', content_bytes, pgid=self.pgid)
+
     async def _get_entrypoint(self, script=None, path=None):
         if isinstance(path, str):
             # path is absolute or relative to work_dir
@@ -146,14 +158,11 @@ class ProcessHandler:
         dir = path if isinstance(path, str) else self.temp_dir
         return dir + '/' + self.id + '.py'
 
-    def _get_ipc_filename(self, channel):
-        return self.temp_dir + '/' + str(self.pgid) + '.' + channel + '.sock'
-
     async def _ipc_communicate(self):
         self.ipc_tasks = []
-        for name in IPC_CHANNELS:
+        for channel in SERVER_IPC_CHANNELS:
             self.ipc_tasks.append(asyncio.create_task(
-                self._handle_ipc(name)
+                self._handle_ipc(channel)
             ))
 
     async def _process_communicate(self):
@@ -200,31 +209,8 @@ class ProcessHandler:
         )
 
     async def _handle_ipc(self, channel):
-        async def handle_connection(reader, _):
-            message = ''
-            while True:
-                data = await reader.read(4096)
-                if data == b'':
-                    break
-
-                tokens = data.decode('utf-8').strip().split(' ')  # NOT split()
-                for i, token in enumerate(tokens):
-                    new_message = False
-                    if token == 'end' + channel:  # end of message
-                        if len(message) > 0:
-                            if self.on_output:
-                                await self.on_output(channel, message)
-                            message = ''
-                        new_message = True
-                    elif i == 0 or new_message:
-                        message += token  # no space in front of first part
-                        new_message = False
-                    else:
-                        message += ' ' + token  # reinsert spaces into rest
-
-        ipc_filename = self._get_ipc_filename(channel)
-        await asyncio.start_unix_server(handle_connection, path=ipc_filename)
-        os.chmod(ipc_filename, 0o666)  # ensures pi user can use this too
+        await async_start_ipc_server(channel, partial(self.on_output, channel),
+                                     pgid=self.pgid)
 
     async def _clean_up(self):
         # aiofiles.os.remove not released to debian buster
@@ -244,8 +230,5 @@ class ProcessHandler:
         except Exception:
             pass
 
-        for name in IPC_CHANNELS:
-            try:
-                os.remove(self._get_ipc_filename(name))
-            except Exception:
-                pass
+        for channel in SERVER_IPC_CHANNELS:
+            ipc_cleanup(channel, pgid=self.pgid)
