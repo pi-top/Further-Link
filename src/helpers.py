@@ -72,4 +72,4 @@ async def ringbuf_read(
     await race([
         asyncio.create_task(read()),
         asyncio.create_task(write())
-    ], return_when=asyncio.FIRST_COMPLETED)
+    ])
