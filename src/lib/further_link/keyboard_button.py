@@ -1,46 +1,45 @@
 from threading import Thread
 import atexit
+from pitopcommon.singleton import Singleton
 
 from .ipc import start_ipc_server, ipc_send, ipc_cleanup
 
-buttons = {}
+
+class KeyboardButtonsListener(metaclass=Singleton):
+    def __init__(self):
+        self.buttons = {}
+
+        atexit.register(self.__clean_up)
+
+        self.listener_thread = Thread(target=start_ipc_server,
+                                      args=('keyevent', self.__on_key_event))
+        self.listener_thread.start()
+
+    def add_button(self, key, button):
+        self.buttons[key] = button
+
+    def __on_key_event(self, ipc_message):
+        key, event = ipc_message.split(' ')
+        button = self.buttons.get(key)
+        if button:
+            if event == 'keydown':
+                button._on_press()
+            elif event == 'keyup':
+                button._on_release()
+
+    def __clean_up(self):
+        ipc_cleanup('keyevent')
 
 
-def on_key_event(message):
-    key, event = message.split(' ')
-    button = buttons.get(key)
-    if button:
-        if event == 'keydown':
-            button._on_press()
-        elif event == 'keyup':
-            button._on_release()
-
-
-listening = False
-
-
-def start_listener():
-    global listening
-    if not listening:
-        Thread(target=start_ipc_server,
-               args=('keyevent', on_key_event)).start()
-        atexit.register(cleanup_listener)
-        listening = True
-
-
-def cleanup_listener():
-    ipc_cleanup('keyevent')
-
-
-class KeyboardButton:
+class KeyboardButton:  # interface to match pitop.KeyboardButton
     def __init__(self, key):
         self.key = key
         self.pressed_method = None
         self.released_method = None
         self.__key_pressed = False
 
-        buttons[key] = self
-        start_listener()
+        listener = KeyboardButtonsListener()
+        listener.add_button(key, self)
         ipc_send('keylisten', key)
 
     def _on_press(self):
