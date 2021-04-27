@@ -6,7 +6,7 @@ from time import sleep
 
 IPC_CHANNELS = [
     'video',
-    'keyevents'
+    'keyevent'
 ]
 _further_link_ipc_channels = {}
 _further_link_async_ipc_channels = {}
@@ -16,28 +16,31 @@ def _get_temp_dir():
     return os.environ.get('FURTHER_LINK_TEMP_DIR', '/tmp')
 
 
-def _get_ipc_filepath(channel, pgid=None):
+def _get_ipc_channel_key(channel, pgid=None):
     if pgid is None:
         pgid = os.getpgid(os.getpid())
+    return str(pgid) + '.' + str(channel)
 
-    ipc_filename = str(pgid) + '.' + channel + '.sock'
-    return os.path.join(_get_temp_dir(), ipc_filename)
+
+def _get_ipc_filepath(channel, pgid=None):
+    channel_key = _get_ipc_channel_key(channel, pgid=pgid)
+    return os.path.join(_get_temp_dir(), channel_key + '.sock')
 
 
 def _collect_ipc_messages(channel, incomplete, data):
     # split data on channel message terminator and return list of complete
     # messages and left over incomplete portion
     complete = []
-    tokens = data.decode('utf-8').strip().split(' ')  # NOT split()
-    print('tokens', tokens)
+    # split on spaces (not empty split() which ignores repeat spaces)
+    tokens = data.decode('utf-8').strip().split(' ')
+    new_message = True
     for i, token in enumerate(tokens):
-        new_message = False
-        if token == 'end' + channel:  # end of message
+        if token == 'end' + channel:  # message terminator
             if len(incomplete) > 0:
                 complete.append(incomplete)
                 incomplete = ''
             new_message = True
-        elif i == 0 or new_message:
+        elif new_message:
             incomplete += token  # no space in front of first part
             new_message = False
         else:
@@ -55,17 +58,18 @@ def start_ipc_server(channel, handle_message=None, pgid=None):
     while True:
         server.listen(1)
         conn, addr = server.accept()
-        data = conn.recv(4096)
-        print(data)  # TODO
+        # put below connection handler loop in thread to support multiple
+        while True:
+            data = conn.recv(4096)
 
-        if not data or data == b'':
-            break
+            if not data or data == b'':
+                break
 
-        complete, incomplete = _collect_ipc_messages(channel, incomplete,
-                                                     data)
-        if handle_message:
-            for c in complete:
-                handle_message(c)
+            complete, incomplete = _collect_ipc_messages(channel, incomplete,
+                                                         data)
+            if handle_message:
+                for c in complete:
+                    handle_message(c)
 
 
 async def async_start_ipc_server(channel, handle_message=None, pgid=None):
@@ -73,13 +77,11 @@ async def async_start_ipc_server(channel, handle_message=None, pgid=None):
         incomplete = ''
         while True:
             data = await reader.read(4096)
-            print('data', data)
             if data == b'':
                 break
 
             complete, incomplete = _collect_ipc_messages(channel, incomplete,
                                                          data)
-            print(complete, incomplete)
             if handle_message:
                 for c in complete:
                     await handle_message(c)
@@ -91,19 +93,20 @@ async def async_start_ipc_server(channel, handle_message=None, pgid=None):
 
 def _connect_ipc_client(channel, retry=True, pgid=None):
     global _further_link_ipc_channels
-    sock = None
+    channel_key = _get_ipc_channel_key(channel, pgid)
+    sock = _further_link_ipc_channels.get(channel_key)
 
-    if _further_link_ipc_channels.get(channel):
+    if sock:
         return sock
 
     try:
         ipc_path = _get_ipc_filepath(channel, pgid=pgid)
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        _further_link_ipc_channels[channel] = sock
-        _further_link_ipc_channels[channel].connect(ipc_path)
-        _further_link_ipc_channels[channel].settimeout(0.1)
+        sock.connect(ipc_path)
+        sock.settimeout(0.1)
+        _further_link_ipc_channels[channel_key] = sock
     except Exception:
-        _further_link_ipc_channels[channel] = None
+        _further_link_ipc_channels[channel_key] = None
         if retry:
             sleep(0.1)  # wait for the ipc channels to start
             _connect_ipc_client(channel, retry=False, pgid=pgid)
@@ -114,6 +117,8 @@ def _connect_ipc_client(channel, retry=True, pgid=None):
 
 
 def ipc_send(channel, message, pgid=None):
+    if not isinstance(message, bytes):
+        message = message.encode()
     sock = _connect_ipc_client(channel, pgid=pgid)
     message = message + f' end{channel} '.encode()
 
@@ -127,30 +132,33 @@ def ipc_send(channel, message, pgid=None):
 
 async def _async_connect_ipc_client(channel, retry=True, pgid=None):
     global _further_link_async_ipc_channels
-    conn = None
+    channel_key = _get_ipc_channel_key(channel, pgid)
+    conn = _further_link_async_ipc_channels.get(channel_key)
 
-    if _further_link_async_ipc_channels.get(channel):
+    if conn and not conn[1].is_closing():
         return conn
 
     try:
         ipc_path = _get_ipc_filepath(channel, pgid=pgid)
-        conn = asyncio.open_unix_connection(path=ipc_path)
-        _further_link_async_ipc_channels[channel] = conn
+        conn = await asyncio.open_unix_connection(path=ipc_path)
+        _further_link_async_ipc_channels[channel_key] = conn
     except Exception:
-        _further_link_async_ipc_channels[channel] = None
+        _further_link_async_ipc_channels[channel_key] = None
         if retry:
             sleep(0.1)  # wait for the ipc channels to start
-            _async_connect_ipc_client(channel, retry=False, pgid=pgid)
+            await _async_connect_ipc_client(channel, retry=False, pgid=pgid)
         else:
             print(f'Warning: further_link {channel} channel is not available.')
 
     return conn
 
 
-async def async_ipc_send(channel, message, pgid):
-    reader, writer = _async_connect_ipc_client(channel, pgid=pgid)
-    message = message + f' end{channel} '.encode()
+async def async_ipc_send(channel, message, pgid=None):
+    if not isinstance(message, bytes):
+        message = message.encode()
     try:
+        reader, writer = await _async_connect_ipc_client(channel, pgid=pgid)
+        message = message + f' end{channel} '.encode()
         writer.write(message)
         await writer.drain()
     except Exception:

@@ -7,13 +7,18 @@ from functools import partial
 import aiofiles
 from pitopcommon.current_session_info import get_first_display
 
-from .lib.further_link import async_start_ipc_server, async_ipc_send, ipc_cleanup
+from .lib.further_link import (
+    async_start_ipc_server,
+    async_ipc_send,
+    ipc_cleanup
+)
 from .helpers import ringbuf_read
 from .user_config import default_user, get_current_user, user_exists, \
     get_working_directory, get_temp_dir
 
 SERVER_IPC_CHANNELS = [
-    'video'
+    'video',
+    'keylisten',
 ]
 
 dirname = pathlib.Path(__file__).parent.absolute()
@@ -162,7 +167,9 @@ class ProcessHandler:
         self.ipc_tasks = []
         for channel in SERVER_IPC_CHANNELS:
             self.ipc_tasks.append(asyncio.create_task(
-                self._handle_ipc(channel)
+                async_start_ipc_server(channel,
+                                       partial(self.on_output, channel),
+                                       pgid=self.pgid)
             ))
 
     async def _process_communicate(self):
@@ -207,10 +214,6 @@ class ProcessHandler:
             chunk_size=256,
             done_condition=self.process.wait
         )
-
-    async def _handle_ipc(self, channel):
-        await async_start_ipc_server(channel, partial(self.on_output, channel),
-                                     pgid=self.pgid)
 
     async def _clean_up(self):
         # aiofiles.os.remove not released to debian buster

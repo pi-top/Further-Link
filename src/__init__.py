@@ -91,9 +91,12 @@ async def run_py(request):
         print('Started', process_handler.id)
 
     async def on_stop(exit_code):
-        await socket.send_str(
-            create_message('stopped', {'exitCode': exit_code})
-        )
+        try:
+            await socket.send_str(
+                create_message('stopped', {'exitCode': exit_code})
+            )
+        except ConnectionResetError:
+            pass  # already disconnected
         print('Stopped', process_handler.id)
 
     async def on_output(channel, output):

@@ -364,6 +364,43 @@ color('red')
     await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 5000)
 
 
+@pytest.mark.asyncio
+async def test_keyevent(ws_client):
+    code = """\
+from further_link import KeyboardButton
+from signal import pause
+a = KeyboardButton('a')
+b = KeyboardButton('b')
+a.when_pressed = lambda: print('a pressed')
+b.when_released = lambda: print('b released')
+pause()
+"""
+    start_cmd = create_message('start', {'sourceScript': code})
+    await ws_client.send_str(start_cmd)
+
+    await wait_for_data(ws_client, 'started')
+    await wait_for_data(ws_client, 'keylisten', 'output', 'a')
+    await wait_for_data(ws_client, 'keylisten', 'output', 'b')
+
+    await ws_client.send_str(create_message('keyevent', {
+        'key': 'a',
+        'event': 'keydown'
+    }))
+
+    await wait_for_data(ws_client, 'stdout', 'output', 'a pressed\n')
+
+    await ws_client.send_str(create_message('keyevent', {
+        'key': 'b',
+        'event': 'keyup'
+    }))
+
+    await wait_for_data(ws_client, 'stdout', 'output', 'b released\n')
+
+    await ws_client.send_str(create_message('stop'))
+
+    await wait_for_data(ws_client, 'stopped', 'exitCode', -15, 100)
+
+
 jpeg_pixel_b64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z'
 
 
