@@ -2,14 +2,13 @@ import os
 import socket
 import asyncio
 from time import sleep
+from pitopcommon.singleton import Singleton
 
 
-IPC_CHANNELS = [
-    'video',
-    'keyevent'
-]
-_further_link_ipc_channels = {}
-_further_link_async_ipc_channels = {}
+class FurtherLinkIPCClientCache(metaclass=Singleton):
+    def __init__(self):
+        self.ipc_clients = {}
+        self.async_ipc_clients = {}
 
 
 def _get_temp_dir():
@@ -92,9 +91,8 @@ async def async_start_ipc_server(channel, handle_message=None, pgid=None):
 
 
 def _connect_ipc_client(channel, retry=True, pgid=None):
-    global _further_link_ipc_channels
     channel_key = _get_ipc_channel_key(channel, pgid)
-    sock = _further_link_ipc_channels.get(channel_key)
+    sock = FurtherLinkIPCClientCache().ipc_clients.get(channel_key)
 
     if sock:
         return sock
@@ -104,9 +102,9 @@ def _connect_ipc_client(channel, retry=True, pgid=None):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(ipc_path)
         sock.settimeout(0.1)
-        _further_link_ipc_channels[channel_key] = sock
+        FurtherLinkIPCClientCache().ipc_clients[channel_key] = sock
     except Exception:
-        _further_link_ipc_channels[channel_key] = None
+        FurtherLinkIPCClientCache().ipc_clients[channel_key] = None
         if retry:
             sleep(0.1)  # wait for the ipc channels to start
             _connect_ipc_client(channel, retry=False, pgid=pgid)
@@ -131,26 +129,25 @@ def ipc_send(channel, message, pgid=None):
 
 
 async def _async_connect_ipc_client(channel, retry=True, pgid=None):
-    global _further_link_async_ipc_channels
     channel_key = _get_ipc_channel_key(channel, pgid)
-    conn = _further_link_async_ipc_channels.get(channel_key)
+    sock = FurtherLinkIPCClientCache().async_ipc_clients.get(channel_key)
 
-    if conn and not conn[1].is_closing():
-        return conn
+    if sock and not sock[1].is_closing():
+        return sock
 
     try:
         ipc_path = _get_ipc_filepath(channel, pgid=pgid)
-        conn = await asyncio.open_unix_connection(path=ipc_path)
-        _further_link_async_ipc_channels[channel_key] = conn
+        sock = await asyncio.open_unix_connection(path=ipc_path)
+        FurtherLinkIPCClientCache().async_ipc_clients[channel_key] = sock
     except Exception:
-        _further_link_async_ipc_channels[channel_key] = None
+        FurtherLinkIPCClientCache().async_ipc_clients[channel_key] = None
         if retry:
             sleep(0.1)  # wait for the ipc channels to start
             await _async_connect_ipc_client(channel, retry=False, pgid=pgid)
         else:
             print(f'Warning: further_link {channel} channel is not available.')
 
-    return conn
+    return sock
 
 
 async def async_ipc_send(channel, message, pgid=None):
