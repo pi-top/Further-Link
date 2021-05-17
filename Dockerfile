@@ -14,5 +14,12 @@ ENV FURTHER_LINK_NOSSL=true
 COPY server.py server.py
 COPY src src
 
+# overwrite version file based on changelog version
+COPY debian/changelog changelog
+RUN echo __version__ = \'$(\
+  sed -n "1 s/pt-further-link (\(.*\)).*/\1/p" changelog\
+)\' > src/lib/further_link/version.py \
+&& rm changelog
+
 EXPOSE 8028
 CMD [ "pipenv", "run", "python3", "server.py" ]
