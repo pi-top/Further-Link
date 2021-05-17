@@ -3,11 +3,19 @@
 import os
 import ssl
 import codecs
+import logging
+import sys
 
 from aiohttp import web
 import aiohttp_cors
 
 from src import status, version, apt_version, run_py
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=(logging.DEBUG if os.environ.get('FURTHER_LINK_DEBUG')
+           else logging.INFO)
+)
 
 
 def port():

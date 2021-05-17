@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 
 from aiohttp import web
 
@@ -88,7 +89,7 @@ async def run_py(request):
 
     async def on_start():
         await socket.send_str(create_message('started'))
-        print('Started', process_handler.id)
+        logging.info(f'{process_handler.id} Started')
 
     async def on_stop(exit_code):
         try:
@@ -97,30 +98,44 @@ async def run_py(request):
             )
         except ConnectionResetError:
             pass  # already disconnected
-        print('Stopped', process_handler.id)
+        logging.info(f'{process_handler.id} Stopped')
 
     async def on_output(channel, output):
+        logging.debug(
+            f'{process_handler.id} Sending Output {channel} {output}'
+        )
         await socket.send_str(create_message(channel, {'output': output}))
 
     process_handler = ProcessHandler(user=user, pty=pty)
     process_handler.on_start = on_start
     process_handler.on_stop = on_stop
     process_handler.on_output = on_output
-    print('New connection', process_handler.id)
+    logging.info(f'{process_handler.id} New connection')
 
     try:
         async for message in socket:
+            logging.debug(
+                f'{process_handler.id} Received Message {message.data}'
+            )
             try:
                 await handle_message(message.data, process_handler, socket)
 
             except BadUpload:
+                logging.exception(f'{process_handler.id} Bad Upload')
                 await socket.send_str(
                     create_message('error', {'message': 'Bad upload'})
                 )
 
             except (BadMessage, InvalidOperation):
+                logging.exception(f'{process_handler.id} Bad Message')
                 await socket.send_str(
                     create_message('error', {'message': 'Bad message'})
+                )
+
+            except Exception:
+                logging.exception(f'{process_handler.id} Message Exception')
+                await socket.send_str(
+                    create_message('error', {'message': 'Message Exception'})
                 )
 
     except asyncio.CancelledError:
@@ -128,7 +143,7 @@ async def run_py(request):
     finally:
         await socket.close()
 
-    print('Closed connection', process_handler.id)
+    logging.info(f'{process_handler.id} Closed connection')
     if process_handler.is_running():
         process_handler.stop()
 
