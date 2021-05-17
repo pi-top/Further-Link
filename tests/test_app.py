@@ -5,6 +5,7 @@ import asyncio
 import json
 from datetime import datetime
 from subprocess import run
+from re import match
 
 from shutil import copy
 
@@ -30,6 +31,7 @@ async def test_version():
             assert response.status == 200
             body = await response.text()
             assert json.loads(body).get('version') == __version__
+            assert match(r'\d+.\d+.\d+.*', __version__)
 
 
 @pytest.mark.asyncio
