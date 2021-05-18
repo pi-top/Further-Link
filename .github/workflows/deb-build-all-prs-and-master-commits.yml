@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Insert data file
-        run: echo ${{ secrets.DATA }} > data
+        run: echo ${{ secrets.DATA }} > data.txt
 
       - name: Patch changelog (snapshot)
         run: |

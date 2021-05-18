@@ -24,7 +24,7 @@ def ssl_context():
     key = file_dir + '/key.pem'
 
     def password():
-        with open(file_dir + '/data', 'r') as file:
+        with open(file_dir + '/data.txt', 'r') as file:
             return codecs.getencoder('rot-13')(file.read()[:-1])[0]
 
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
