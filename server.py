@@ -15,8 +15,10 @@ def port():
 
 
 def ssl_context():
-    if os.environ.get('FURTHER_LINK_NOSSL') is not None:
+    # use ssl if FURTHER_LINK_NOSSL is unset, 0 or false
+    if os.environ.get('FURTHER_LINK_NOSSL', '0').lower() not in ['0', 'false']:
         return None
+
     file_dir = os.path.dirname(os.path.realpath(__file__))
     cert = file_dir + '/cert.pem'
     key = file_dir + '/key.pem'
