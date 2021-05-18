@@ -11,9 +11,9 @@ RUN pipenv sync
 
 ENV FURTHER_LINK_NOSSL=true
 
+COPY data.txt cert.pem key.pem ./
 COPY server.py server.py
 COPY src src
-COPY data.txt data.txt
 
 # overwrite version file based on changelog version
 COPY debian/changelog changelog
