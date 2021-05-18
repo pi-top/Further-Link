@@ -13,7 +13,7 @@ ENV FURTHER_LINK_NOSSL=true
 
 COPY server.py server.py
 COPY src src
-COPY data ./
+COPY data.txt data.txt
 
 # overwrite version file based on changelog version
 COPY debian/changelog changelog
