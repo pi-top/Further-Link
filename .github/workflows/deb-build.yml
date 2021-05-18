@@ -1,12 +1,15 @@
-name: Latest Master Build
+name: Debian Build
 
 on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
-  build-latest-debian-package:
+  build-debian-package:
     runs-on: ubuntu-20.04
     steps:
       - name: GitHub Environment Variables Action
@@ -18,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Insert data file
-        run: echo ${{ secrets.DATA }} > data
+        run: echo ${{ secrets.DATA }} > data.txt
 
       - name: Patch changelog (snapshot)
         run: |
