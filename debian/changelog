@@ -1,3 +1,21 @@
+pt-further-link (4.3.1) buster; urgency=medium
+
+  [ Angus Whitehead ]
+  * Fix data file in build
+
+  [ github-actions[bot] ]
+  * [CI] Update debian/changelog for next release (#55)
+  * Fix task cleanup in ringbuf helper
+  * Make NOSSL variable overwritable
+  * Add docker build (#60)
+  * Keyevent ipc (#57)
+
+  [ github-actions[bot] ]
+  * [CI] Update debian/changelog for next release (#61)
+  * Fix release docker build
+
+ -- pi-top <deb-maintainers@pi-top.com>  Mon, 24 May 2021 17:21:05 +0000
+
 pt-further-link (4.3.0) buster; urgency=medium
 
   * Add keyevent, keylisten commands and KeyboardButton python module
