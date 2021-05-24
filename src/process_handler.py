@@ -12,7 +12,7 @@ from .lib.further_link import (
     async_ipc_send,
     ipc_cleanup
 )
-from .helpers import ringbuf_read
+from .async_helpers import ringbuf_read
 from .user_config import default_user, get_current_user, user_exists, \
     get_working_directory, get_temp_dir
 
