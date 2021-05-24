@@ -1,3 +1,17 @@
+pt-further-link (4.2.4) buster; urgency=medium
+
+  [ Angus Whitehead ]
+  * Fix data file in build
+
+  [ github-actions[bot] ]
+  * [CI] Update debian/changelog for next release (#55)
+  * Fix task cleanup in ringbuf helper
+  * Make NOSSL variable overwritable
+  * Add docker build (#60)
+  * Keyevent ipc (#57)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Mon, 24 May 2021 16:18:36 +0000
+
 pt-further-link (4.2.3) buster; urgency=medium
 
   * Fix data file in build
