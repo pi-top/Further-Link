@@ -11,7 +11,7 @@ RUN pipenv sync
 
 ENV FURTHER_LINK_NOSSL=true
 
-COPY data.txt cert.pem key.pem ./
+COPY data.txt cert.pem key.aes.pem ./
 COPY server.py server.py
 COPY src src
 
