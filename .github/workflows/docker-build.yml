@@ -40,5 +40,4 @@ jobs:
           tags: "pitop/pt-further-link:${{ steps.generate_tag.outputs.tag }}"
 
       - name: Show image digest
-        if: github.ref == 'refs/heads/master'
         run: echo ${{ steps.docker_build_push.outputs.digest }}

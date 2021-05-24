@@ -64,6 +64,8 @@ jobs:
           path: "/tmp/artifacts/bin/"
 
   build-docker-image:
+    needs: check-should-run
+    if: needs.check-should-run.outputs.should_run == 'true'
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
@@ -72,7 +74,7 @@ jobs:
           fetch-depth: 0
 
       - name: Insert data file
-        run: echo ${{ secrets.DATA }} > data
+        run: echo ${{ secrets.DATA }} > data.txt
 
       - name: Login to Docker Hub
         uses: docker/login-action@v1
@@ -89,16 +91,16 @@ jobs:
         id: docker_build_push
         uses: docker/build-push-action@v2
         with:
+          context: .
           push: true
           tags: "pitop/pt-further-link:v${{ env.VERSION }}"
 
       - name: Show image digest
-        if: github.ref == 'refs/heads/master'
         run: echo ${{ steps.docker_build_push.outputs.digest }}
 
   create-draft-release:
     runs-on: ubuntu-20.04
-    needs: build-debian
+    needs: [build-debian, build-docker-image]
     steps:
       - name: GitHub Environment Variables Action
         uses: FranzDiebold/github-env-vars-action@v1.2.1
