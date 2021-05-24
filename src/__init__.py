@@ -4,6 +4,7 @@ import logging
 
 from aiohttp import web
 
+from .ssl_context import ssl_context  # noqa: F401
 from .apt_version import apt_version  # noqa: F401
 from .message import parse_message, create_message, BadMessage
 from .process_handler import ProcessHandler, InvalidOperation

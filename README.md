@@ -27,19 +27,23 @@ curl http://localhost:8028/status
 ```
 
 ## Configuration
-The default user for running code and determining home directory is `pi`, if
-it exists, otherwise the user running the further-link server is used.
-
-The default working directory where files are uploaded and executed from is
-`~/further`. This can be overridden by setting env var FURTHER_LINK_WORK_DIR.
-
+### Port
 The default server port, __8028__, can be overridden by setting
 FURTHER_LINK_PORT env variable.
 
+### SSL/TLS
 The server uses TLS by default but the required certificates are not
-provided in this repository. For development and testing you should disable TLS
-by setting environment variable FURTHER_LINK_NOSSL=1. pi-top employees should
-contact the maintainers for information on the proper certificates.
+provided in this repository. For development and testing you can disable TLS
+by setting environment variable FURTHER_LINK_NOSSL=1. Alternatively, you can
+provide your own certificate and key files by placing them in repository root
+with the names `cert.pem` and `key.pem`. pi-top employees should
+contact the maintainer for information on the proper certificates.
+
+### Working directory
+The default working directory where files are uploaded and executed from is
+`~/further`. This can be overridden by setting env var FURTHER_LINK_WORK_DIR.
+For more information related to the `run-py` API see the options of the
+`upload` and `start` messages in the documentation below.
 
 ## API
 ### Websocket Endpoint /run-py
@@ -74,7 +78,7 @@ parameters:
 ```
 The `user` parameter is used to select the Linux user which the code is
 executed as. By default the `pi` user is selected if it exists, otherwise
-`root`.
+the user executing the server is used.
 
 ```
 /run-py?pty=1

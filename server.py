@@ -1,15 +1,13 @@
 #!/usr/bin/python3
 
 import os
-import ssl
-import codecs
 import logging
 import sys
 
 from aiohttp import web
 import aiohttp_cors
 
-from src import status, version, apt_version, run_py
+from src import ssl_context, status, version, apt_version, run_py
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -20,24 +18,6 @@ logging.basicConfig(
 
 def port():
     return int(os.environ.get('FURTHER_LINK_PORT', 8028))
-
-
-def ssl_context():
-    # use ssl if FURTHER_LINK_NOSSL is unset, 0 or false
-    if os.environ.get('FURTHER_LINK_NOSSL', '0').lower() not in ['0', 'false']:
-        return None
-
-    file_dir = os.path.dirname(os.path.realpath(__file__))
-    cert = file_dir + '/cert.pem'
-    key = file_dir + '/key.pem'
-
-    def password():
-        with open(file_dir + '/data.txt', 'r') as file:
-            return codecs.getencoder('rot-13')(file.read()[:-1])[0]
-
-    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.load_cert_chain(certfile=cert, keyfile=key, password=password)
-    return context
 
 
 def create_app():
