@@ -1,14 +1,9 @@
 pt-further-link (4.2.4) buster; urgency=medium
 
-  [ Angus Whitehead ]
-  * Fix data file in build
-
-  [ github-actions[bot] ]
-  * [CI] Update debian/changelog for next release (#55)
-  * Fix task cleanup in ringbuf helper
-  * Make NOSSL variable overwritable
-  * Add docker build (#60)
-  * Keyevent ipc (#57)
+  * Add keyevent, keylisten commands and KeyboardButton python module
+  * Make NOSSL variable overwritable and allow supplying custom certificates
+  * Improve logging
+  * Refactor user python module and ipc system
 
  -- pi-top <deb-maintainers@pi-top.com>  Mon, 24 May 2021 16:18:36 +0000
 
