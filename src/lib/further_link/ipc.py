@@ -29,6 +29,7 @@ def _get_ipc_filepath(channel, pgid=None):
 def _collect_ipc_messages(channel, incomplete, data):
     # split data on channel message terminator and return list of complete
     # messages and left over incomplete portion
+    # TODO consider a message-size header based solution instead of delimiter
     complete = []
     # split on spaces (not empty split() which ignores repeat spaces)
     tokens = data.decode('utf-8').strip().split(' ')
@@ -163,6 +164,8 @@ async def async_ipc_send(channel, message, pgid=None):
 
 
 def ipc_cleanup(channel, pgid=None):
+    # no async option - aiofiles.os.remove not released to debian buster
+    # os.remove should not block significantly, just fires a single syscall
     try:
         os.remove(_get_ipc_filepath(channel, pgid=pgid))
     except Exception:
