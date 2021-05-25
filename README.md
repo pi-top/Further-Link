@@ -35,9 +35,8 @@ FURTHER_LINK_PORT env variable.
 The server uses TLS by default but the required certificates are not
 provided in this repository. For development and testing you can disable TLS
 by setting environment variable FURTHER_LINK_NOSSL=1. Alternatively, you can
-provide your own certificate and key files by placing them in repository root
-with the names `cert.pem` and `key.pem`. pi-top employees should
-contact the maintainer for information on the proper certificates.
+provide your own certificate and key files by placing them in the repository
+root with the names `cert.pem` and `key.pem`.
 
 ### Working directory
 The default working directory where files are uploaded and executed from is
@@ -59,11 +58,11 @@ websocat ws://localhost:8028/run-py
 ```
 { "type": "start", "data": { "sourceScript": "print('hi')" } }
 ```
-- Recieve `stdout` response:
+- Receive `stdout` response:
 ```
 { "type": "stdout", "data": { "output": "hi\n" } }
 ```
-- Recieve `stopped` response:
+- Receive `stopped` response:
 ```
 { "type": "stopped", "data": { "exitCode": 0 } }
 ```

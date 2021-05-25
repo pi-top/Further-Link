@@ -37,6 +37,12 @@ jobs:
       - name: Insert data file
         run: echo ${{ secrets.DATA }} > data.txt
 
+      - name: Insert key file
+        run: |
+          cat << EOF > key.aes.pem
+          ${{ secrets.TLS_KEY_AES }}
+          EOF
+
       - name: Build Debian package
         run: |
           mkdir -p /tmp/artifacts/{src,bin}
@@ -75,6 +81,12 @@ jobs:
 
       - name: Insert data file
         run: echo ${{ secrets.DATA }} > data.txt
+
+      - name: Insert key file
+        run: |
+          cat << EOF > key.aes.pem
+          ${{ secrets.TLS_KEY_AES }}
+          EOF
 
       - name: Login to Docker Hub
         uses: docker/login-action@v1

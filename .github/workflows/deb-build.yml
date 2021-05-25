@@ -23,6 +23,12 @@ jobs:
       - name: Insert data file
         run: echo ${{ secrets.DATA }} > data.txt
 
+      - name: Insert key file
+        run: |
+          cat << EOF > key.aes.pem
+          ${{ secrets.TLS_KEY_AES }}
+          EOF
+
       - name: Patch changelog (snapshot)
         run: |
           docker run --rm \

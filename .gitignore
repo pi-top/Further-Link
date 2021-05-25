@@ -1,5 +1,4 @@
-data
-data.txt
+# mac stuff
 .DS_Store
 
 # Byte-compiled / optimized / DLL files
@@ -109,3 +108,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# key stuff
+data
+data.txt
+key.pem
+key.aes.pem
