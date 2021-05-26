@@ -8,7 +8,7 @@ from aiohttp import web
 import aiohttp_cors
 
 from src import ssl_context, status, version, apt_version, run_py, \
-    run as run_handler
+    run as run_handler, upload
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -38,6 +38,9 @@ def create_app():
 
     status_resource = cors.add(app.router.add_resource('/version'))
     cors.add(status_resource.add_route('GET', version))
+
+    status_resource = cors.add(app.router.add_resource('/upload'))
+    cors.add(status_resource.add_route('POST', upload))
 
     exec_resource = cors.add(app.router.add_resource('/run-py'))
     cors.add(exec_resource.add_route('GET', run_py))

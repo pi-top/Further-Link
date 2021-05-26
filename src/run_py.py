@@ -5,7 +5,7 @@ from aiohttp import web
 
 from .message import parse_message, create_message, BadMessage
 from .run_py_process_handler import RunPyProcessHandler, InvalidOperation
-from .upload import upload, directory_is_valid, BadUpload
+from .upload import do_upload, directory_is_valid, BadUpload
 
 
 async def handle_message(message, process_handler, socket):
@@ -36,7 +36,7 @@ async def handle_message(message, process_handler, socket):
     elif (m_type == 'upload'
             and 'directory' in m_data
             and directory_is_valid(m_data.get('directory'))):
-        await upload(m_data.get('directory'), process_handler.work_dir)
+        await do_upload(m_data.get('directory'), process_handler.work_dir)
         await socket.send_str(create_message('uploaded'))
 
     elif (m_type == 'stdin'
