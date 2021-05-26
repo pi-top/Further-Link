@@ -29,7 +29,7 @@ class InvalidOperation(Exception):
     pass
 
 
-class ProcessHandler:
+class RunPyProcessHandler:
     def __init__(self, user=None, pty=False):
         self.user = default_user() if user is None else user
         self.pty = pty

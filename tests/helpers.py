@@ -10,7 +10,7 @@ async def receive_data(ws, channel, data_key=None, data_value=None):
     # receive until we have enough data, or until return if non string data
     # receive has a timeout so if we don't get enough it will throw anyway
     while (not isinstance(data_value, str)) or len(received) < len(data_value):
-        m_type, m_data = parse_message((await ws.receive()).data)
+        m_type, m_data, m_process = parse_message((await ws.receive()).data)
 
         assert(m_type == channel)
 
@@ -35,7 +35,7 @@ async def wait_for_data(ws, channel, data_key=None, data_value=None, timeout=0):
     start_time = round(time())
     while timeout <= 0 or (round(time()) - start_time) <= timeout:
         try:
-            m_type, m_data = parse_message((await ws.receive()).data)
+            m_type, m_data, m_process = parse_message((await ws.receive()).data)
 
             assert(m_type == channel)
 
