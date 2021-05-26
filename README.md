@@ -161,6 +161,150 @@ Message and response details:
     "keyup" e.g. `data: { key: "ArrowUp", event: "keydown" }`
 <br>
 
+### Websocket Endpoint /run
+Each websocket client connected on `/run` can manage multuiple processes of
+different types, addressing them by a unique id.
+
+#### Example usage
+- Connect websocket on `/run` (using [websocat](https://github.com/vi/websocat)):
+```
+websocat ws://localhost:8028/run
+```
+
+- Send `start` command for process id 1, requesting `runner` "python3" and `sourceScript`:
+```
+{ "type": "start", "process": "1", "data": { "runner": "python3", "sourceScript": "print('hi')" } }
+```
+
+- Receive `started` response with expected id:
+```
+{ "type": "started", "process": "1" }
+```
+
+- Send `start` command for process id 2 requesting `runner` "shell":
+```
+{ "type": "start", "process": "2", "data": { "runner": "shell" } }
+```
+
+- Receive `started` response with expected id:
+```
+{ "type": "started", "process": "2" }
+```
+
+- Send `stdin` to shell process with id 2:
+```
+{ "type": "stdin", "process": "2", "data": { "input": "ls\n" } }
+```
+
+- Receive `stdout` response from python:
+```
+{ "type": "stdout", "process": "1", "data": { "output": "hi\n" } }
+```
+
+- Receive `stdout` response from shell:
+```
+{ "type": "stdout", "process": "2", "data": { "output": ".\n..\nfile.txt\n" } }
+```
+
+- Receive `stopped` response from python:
+```
+{ "type": "stopped", "process": "1", "data": { "exitCode": 0 } }
+```
+
+#### Spec
+##### Options
+This connection has some options which can be selected with query
+parameters:
+
+```
+/run?user=root
+```
+The `user` parameter is used to select the Linux user which the code is
+executed as. By default the `pi` user is selected if it exists, otherwise
+the user executing the server is used.
+
+```
+/run?pty=1
+```
+The pty parameter, if set to 1 or true, will create a pseudoterminal interface
+for the python process IO streams, in order to provide terminal behaviours such
+as 'cooked mode'. This is useful to produce identical behaviour of programs to
+that on the command line and to easily interface with terminal emulators such
+as [xterm.js](https://github.com/xtermjs/xterm.js/).
+
+##### Message Types
+Websocket messages sent between client and server are in JSON with three top
+level properties: required string `type`, optional string `process` and optional object `data`.
+
+Message types accepted by the server are:
+```
+{
+ "type":"[ping|start|stop|stdin|upload|keyevent]",
+ "data": {...},
+ "process": "id"
+}
+```
+
+Message types sent from the server are:
+```
+{
+ "type":"[pong|error|started|stopped|stdout|stderr|uploaded|keylisten]",
+ "data": {...},
+ "process": "id"
+}
+```
+
+Message and response details:
+Connection management - these messages don't require a process id
+- `ping` command from the client will be met with a `pong` response from
+    the server. This can be used to keep the socket active to prevent automatic
+    closures.
+- `pong` response is sent by the server immediately after a `ping` is received
+<br>
+
+- `error` response is sent for bad commands or server errors e.g. `data: { message: "something went wrong and it's not your python code" }`
+<br>
+
+Basic:
+- `start` command will start a new python process. The code to run can be
+    specified in data as either a `souceScript` or `sourcePath`. For
+    `sourceScript` an additional `directoryName` can be passed to specify an
+    (uploaded) directory to run the script in, within the work dir, otherwise
+    `/tmp` is used. If `sourcePath` is not absolute, it is assumed to be
+    relative to the work dir.
+    e.g. `data: {sourceScript:"print('hi')", directoryName: "myproject"}`
+    or `data: {sourcePath: "myproject/run.py"}`
+- `started` response is sent after a successful process `start`, has no data.
+<br>
+
+- `stdin` command is used to send data to process stdin e.g. `data: { input: "this can be read by python\n" }`.
+- `stdout` response is sent when process prints to stdout. e.g. `data: { output: "this was printed by python" }`
+- `stderr` response is sent when process prints to stderr e.g. `data: { output: "Traceback bleh bleh" }`
+<br>
+
+- `stop` command is used to stop a running process early, has no data.
+- `stopped` response is sent when a process finished and has the exit code in e.g. `data: { exitCode: 0 }`
+<br>
+
+Advanced
+- `video` response is sent by the server with data.output containing a base64
+    encoded mjpeg frame for the client to render as a video feed.
+<br>
+
+- `keylisten` message is sent by the server to indicate it would like to
+    receive keyboard events from the client for a specific key. This would be
+    initiated by user code using the further_link.KeyboardButton python module.
+    Keys are specified as web [KeyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
+    strings e.g. `data: { key: "ArrowUp" }`
+- `keyevent` message is sent by the client to provide keyboard events to the
+    server so that they can be forwarded to user code using
+    further_link.KeyboardButton. The data includes a key string matching those
+    used in `keylisten` and an event string which is either "keydown" or
+    "keyup" e.g. `data: { key: "ArrowUp", event: "keydown" }`
+<br>
+
+There is no upload message for this api. The separate http endpoint should be
+used instead.
 
 ## Notes
 ### Projects that make interesting comparison:
