@@ -5,7 +5,7 @@ import urllib.parse
 
 from shutil import rmtree
 
-from tests import WORKING_DIRECTORY, RUN_PY_URL
+from tests import WORKING_DIRECTORY, RUN_URL, RUN_PY_URL
 from server import run_async
 
 os.environ['FURTHER_LINK_PORT'] = '8028'
@@ -39,6 +39,23 @@ async def run_py_ws_client():
 @pytest.fixture()
 async def run_py_ws_client_query(query_params):
     url = RUN_PY_URL + '?' + urllib.parse.urlencode(query_params)
+    async with aiohttp.ClientSession() as session:
+        async with session.ws_connect(url, receive_timeout=0.1) as client:
+            yield client
+
+
+@pytest.fixture()
+async def run_ws_client():
+    async with aiohttp.ClientSession() as session:
+        async with session.ws_connect(
+            RUN_URL, receive_timeout=0.1
+        ) as client:
+            yield client
+
+
+@pytest.fixture()
+async def run_ws_client_query(query_params):
+    url = RUN_URL + '?' + urllib.parse.urlencode(query_params)
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url, receive_timeout=0.1) as client:
             yield client
