@@ -19,10 +19,10 @@ class PyProcessHandler(ProcessHandler):
         work_dir = os.path.dirname(entrypoint)
 
         env = {}
-        if os.environ.get("PYTHONPATH"):
-            env["PYTHONPATH"] += os.pathsep + further_link_module_path
-        else:
-            env["PYTHONPATH"] = further_link_module_path
+        python_path = '' if not os.environ.get("PYTHONPATH") else \
+            os.environ.get("PYTHONPATH") + os.pathsep
+
+        env["PYTHONPATH"] = python_path + further_link_module_path
 
         await super().start(command, work_dir, env)
 
