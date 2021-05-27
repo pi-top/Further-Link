@@ -29,6 +29,13 @@ def get_home_directory(user):
     return None
 
 
+def get_shell(user):
+    for existing_user in pwd.getpwall():
+        if existing_user.pw_name == user:
+            return existing_user.pw_shell
+    return None
+
+
 def default_user():
     return DEFAULT_USER if user_exists(DEFAULT_USER) else get_current_user()
 

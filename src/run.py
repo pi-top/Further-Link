@@ -99,8 +99,14 @@ class RunManager:
             await self.socket.send_str(create_message(channel,
                                                       {'output': output},
                                                       process_id))
+        if runner == 'shell':
+            handler = ShellProcessHandler(self.user, self.pty)
+            handler.on_start = on_start
+            handler.on_stop = on_stop
+            handler.on_output = on_output
+            await handler.start()
 
-        if (
+        elif (
             runner == 'python3'
             and 'sourceScript' in m_data
             and isinstance(m_data.get('sourceScript'), str)
