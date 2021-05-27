@@ -83,6 +83,8 @@ class RunManager:
             logging.info(f'{self.id} Started {process_id}')
 
         async def on_stop(exit_code):
+            # TODO instead of deleting each time, allow restarting same handler
+            self.process_handlers.pop(process_id, None)
             try:
                 await self.socket.send_str(
                     create_message('stopped', {'exitCode': exit_code},
@@ -138,7 +140,7 @@ class RunManager:
         else:
             raise BadMessage('Start command runner invalid')
 
-        self.process_handlers[id] = handler
+        self.process_handlers[process_id] = handler
 
 
 async def run(request):
