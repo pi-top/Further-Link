@@ -32,9 +32,9 @@ print(datetime.now().strftime("%A"))
     await receive_data(run_py_ws_client, 'started')
 
     day = datetime.now().strftime('%A')
-    await wait_for_data(run_py_ws_client, 'stdout', 'output', day + '\n', 100)
+    await wait_for_data(run_py_ws_client, 'stdout', 'output', day + '\n')
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -52,9 +52,9 @@ print(datetime.now().strftime("%A"))
     await receive_data(run_py_ws_client, 'started')
 
     day = datetime.now().strftime('%A')
-    await wait_for_data(run_py_ws_client, 'stdout', 'output', day + '\n', 100)
+    await wait_for_data(run_py_ws_client, 'stdout', 'output', day + '\n')
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -67,9 +67,9 @@ async def test_run_code_relative_path(run_py_ws_client):
     await receive_data(run_py_ws_client, 'started')
 
     day = datetime.now().strftime('%A')
-    await wait_for_data(run_py_ws_client, 'stdout', 'output', day + '\n', 100)
+    await wait_for_data(run_py_ws_client, 'stdout', 'output', day + '\n')
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -82,9 +82,9 @@ async def test_run_code_absolute_path(run_py_ws_client):
     await receive_data(run_py_ws_client, 'started')
 
     day = datetime.now().strftime('%A')
-    await wait_for_data(run_py_ws_client, 'stdout', 'output', day + '\n', 100)
+    await wait_for_data(run_py_ws_client, 'stdout', 'output', day + '\n')
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -98,10 +98,9 @@ async def test_run_as_user(run_py_ws_client_query):
 
     await receive_data(run_py_ws_client_query, 'started')
 
-    await wait_for_data(run_py_ws_client_query, 'stdout', 'output', 'root\n',
-                        100)
+    await wait_for_data(run_py_ws_client_query, 'stdout', 'output', 'root\n')
 
-    await wait_for_data(run_py_ws_client_query, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client_query, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -115,7 +114,7 @@ async def test_stop_early(run_py_ws_client):
     stop_cmd = create_message('stop')
     await run_py_ws_client.send_str(stop_cmd)
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', -15, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', -15)
 
 
 @pytest.mark.asyncio
@@ -136,7 +135,7 @@ async def test_bad_code(run_py_ws_client):
     assert lines[2] == '                       ^'
     assert lines[3] == 'SyntaxError: EOL while scanning string literal'
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 1, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 1)
 
 
 @pytest.mark.asyncio
@@ -155,18 +154,18 @@ while "BYE" != s:
     await run_py_ws_client.send_str(user_input)
 
     await wait_for_data(run_py_ws_client, 'stdout', 'output',
-                        'HUH?! SPEAK UP, SONNY!\n', 100)
+                        'HUH?! SPEAK UP, SONNY!\n')
 
     user_input = create_message('stdin', {'input': 'HEY GRANDMA\n'})
     await run_py_ws_client.send_str(user_input)
 
     await wait_for_data(run_py_ws_client, 'stdout', 'output',
-                        'NO, NOT SINCE 1930\n', 100)
+                        'NO, NOT SINCE 1930\n')
 
     user_input = create_message('stdin', {'input': 'BYE\n'})
     await run_py_ws_client.send_str(user_input)
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -186,20 +185,20 @@ while "BYE" != s:
     await run_py_ws_client_query.send_str(user_input)
 
     await wait_for_data(run_py_ws_client_query, 'stdout', 'output',
-                        'hello\r\nHUH?! SPEAK UP, SONNY!\r\n', 100)
+                        'hello\r\nHUH?! SPEAK UP, SONNY!\r\n')
 
     user_input = create_message('stdin', {'input': 'HEY GRANDMA\r'})
     await run_py_ws_client_query.send_str(user_input)
 
     await wait_for_data(run_py_ws_client_query, 'stdout', 'output',
-                        'HEY GRANDMA\r\nNO, NOT SINCE 1930\r\n', 100)
+                        'HEY GRANDMA\r\nNO, NOT SINCE 1930\r\n')
 
     user_input = create_message('stdin', {'input': 'BYE\r'})
     await run_py_ws_client_query.send_str(user_input)
 
-    await wait_for_data(run_py_ws_client_query, 'stdout', 'output', 'BYE\r\n', 100)
+    await wait_for_data(run_py_ws_client_query, 'stdout', 'output', 'BYE\r\n')
 
-    await wait_for_data(run_py_ws_client_query, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client_query, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -265,7 +264,7 @@ async def test_out_of_order_commands(run_py_ws_client):
     await run_py_ws_client.send_str(stop_cmd)
 
     # stopped
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', -15, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', -15)
 
     # send stop
     stop_cmd = create_message('stop')
@@ -290,7 +289,7 @@ async def test_discard_old_input(run_py_ws_client):
     await wait_for_data(run_py_ws_client, 'stdout', 'output', 'hello world\n',
                         100)
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
     code = 'print(input())'
     start_cmd = create_message('start', {'sourceScript': code})
@@ -301,9 +300,9 @@ async def test_discard_old_input(run_py_ws_client):
     user_input = create_message('stdin', {'input': 'hello\n'})
     await run_py_ws_client.send_str(user_input)
 
-    await wait_for_data(run_py_ws_client, 'stdout', 'output', 'hello\n', 100)
+    await wait_for_data(run_py_ws_client, 'stdout', 'output', 'hello\n')
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -318,9 +317,9 @@ print(__version__)
     await receive_data(run_py_ws_client, 'started')
 
     await wait_for_data(run_py_ws_client, 'stdout', 'output',
-                        f'{__version__}\n', 100)
+                        f'{__version__}\n')
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -373,7 +372,7 @@ pause()
 
     await run_py_ws_client.send_str(create_message('stop'))
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', -15, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', -15)
 
 
 jpeg_pixel_b64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z'
@@ -393,7 +392,7 @@ send_image(effect_noise((1, 1), 0))
 
     await wait_for_data(run_py_ws_client, 'video', 'output', jpeg_pixel_b64)
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -411,7 +410,7 @@ send_image(array(effect_noise((1, 1), 0)))
 
     await wait_for_data(run_py_ws_client, 'video', 'output', jpeg_pixel_b64)
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -431,4 +430,4 @@ send_image(effect_noise((1, 1), 0))
 
     await wait_for_data(run_py_ws_client, 'video', 'output', jpeg_pixel_b64)
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)

@@ -65,7 +65,7 @@ with open(os.path.dirname(__file__) + '/cereal.csv', 'r') as f:
     assert m_type == 'stdout'
     assert m_data["output"][788:796] == 'Cheerios'
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
@@ -88,9 +88,9 @@ print(call_some_lib())
     await receive_data(run_py_ws_client, 'started')
 
     await wait_for_data(run_py_ws_client, 'stdout', 'output',
-                        'some lib called\n', 100)
+                        'some lib called\n')
 
-    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio

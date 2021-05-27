@@ -28,10 +28,9 @@ print(datetime.now().strftime("%A"))
     await receive_data(run_ws_client, 'started', process='1')
 
     day = datetime.now().strftime('%A')
-    await wait_for_data(run_ws_client, 'stdout', 'output', day + '\n', 0.1,
-                        '1')
+    await wait_for_data(run_ws_client, 'stdout', 'output', day + '\n', 0, '1')
 
-    await wait_for_data(run_ws_client, 'stopped', 'exitCode', 0, 0.1, '1')
+    await wait_for_data(run_ws_client, 'stopped', 'exitCode', 0, 0, '1')
 
 
 @pytest.mark.asyncio
@@ -58,10 +57,10 @@ print(2)
 
     await receive_data(run_ws_client, 'started', process='2')
 
-    await wait_for_data(run_ws_client, 'stdout', 'output', '2\n', 0.1, '2')
+    await wait_for_data(run_ws_client, 'stdout', 'output', '2\n', 0, '2')
 
-    await wait_for_data(run_ws_client, 'stopped', 'exitCode', 0, 0.1, '2')
+    await wait_for_data(run_ws_client, 'stopped', 'exitCode', 0, 0, '2')
 
-    await wait_for_data(run_ws_client, 'stdout', 'output', '1\n', 1, '1')
+    await wait_for_data(run_ws_client, 'stdout', 'output', '1\n', 0, '1')
 
-    await wait_for_data(run_ws_client, 'stopped', 'exitCode', 0, 0.1, '1')
+    await wait_for_data(run_ws_client, 'stopped', 'exitCode', 0, 0, '1')
