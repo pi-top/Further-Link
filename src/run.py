@@ -6,6 +6,7 @@ from aiohttp import web
 from .message import parse_message, create_message, BadMessage
 from .process_handler import InvalidOperation
 from .py_process_handler import PyProcessHandler
+from .exec_process_handler import ExecProcessHandler
 from .shell_process_handler import ShellProcessHandler
 from .user_config import default_user
 
@@ -107,6 +108,18 @@ class RunManager:
             handler.on_stop = on_stop
             handler.on_output = on_output
             await handler.start()
+
+        elif (
+            runner == 'exec'
+            and 'sourcePath' in m_data
+            and isinstance(m_data.get('sourcePath'), str)
+            and len(m_data.get('sourcePath')) > 0
+        ):
+            handler = ExecProcessHandler(self.user, self.pty)
+            handler.on_start = on_start
+            handler.on_stop = on_stop
+            handler.on_output = on_output
+            await handler.start(path=m_data['sourcePath'])
 
         elif (
             runner == 'python3'
