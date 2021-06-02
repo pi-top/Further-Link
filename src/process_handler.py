@@ -11,7 +11,7 @@ from .lib.further_link import (
     async_ipc_send,
     ipc_cleanup
 )
-from .async_helpers import ringbuf_read
+from .async_helpers import ringbuf_read, timeout
 from .user_config import get_current_user, user_exists, get_working_directory,\
     get_temp_dir
 
@@ -52,7 +52,6 @@ class ProcessHandler:
             command = f'sudo --preserve-env -u {self.user} {command}'
 
         process_env = {**os.environ.copy(), **env}
-        print(command)
 
         # Ensure that DISPLAY is set, so that user can open GUI windows
         display = get_first_display()
@@ -83,12 +82,18 @@ class ProcessHandler:
     def is_running(self):
         return hasattr(self, 'process') and self.process is not None
 
-    def stop(self):
+    async def stop(self):
         if not self.is_running():
             raise InvalidOperation()
-        # send TERM to process group in case we have child processes
+        # send signal to process group in case we have child processes
         try:
             os.killpg(self.pgid, signal.SIGTERM)
+            stopped = asyncio.create_task(self.process.wait())
+            done = await timeout(stopped, 0.1)
+
+            # if SIGTERM didn't stop the process already, send SIGKILL
+            if stopped not in done:
+                os.killpg(self.pgid, signal.SIGKILL)
         except ProcessLookupError:
             pass
 

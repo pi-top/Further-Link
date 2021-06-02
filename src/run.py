@@ -23,10 +23,10 @@ class RunManager:
     def __del__(self):
         self.stop()
 
-    def stop(self):
+    async def stop(self):
         for p in self.process_handlers.values():
             try:
-                p.stop()
+                await p.stop()
             except InvalidOperation:
                 pass
 
@@ -49,7 +49,7 @@ class RunManager:
                 await process_handler.send_input(m_data['input'])
 
             elif m_type == 'stop' and process_handler:
-                process_handler.stop()
+                await process_handler.stop()
 
             elif (m_type == 'keyevent'
                   and process_handler
@@ -84,7 +84,7 @@ class RunManager:
             logging.info(f'{self.id} Started {process_id}')
 
         async def on_stop(exit_code):
-            # TODO instead of deleting each time, allow restarting same handler
+            # process_id may be reused with other runners so clean up handler
             self.process_handlers.pop(process_id, None)
             try:
                 await self.socket.send_str(
@@ -178,4 +178,4 @@ async def run(request):
     finally:
         await socket.close()
         logging.info(f'{run_manager.id} Closed connection')
-        run_manager.stop()
+        await run_manager.stop()
