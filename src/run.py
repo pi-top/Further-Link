@@ -20,9 +20,6 @@ class RunManager:
         self.id = str(id(self))
         self.process_handlers = {}
 
-    def __del__(self):
-        self.stop()
-
     async def stop(self):
         for p in self.process_handlers.values():
             try:

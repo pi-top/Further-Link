@@ -75,10 +75,6 @@ class ProcessHandler:
         if self.on_start:
             await self.on_start()
 
-    def __del__(self):
-        if self.is_running():
-            self.stop()
-
     def is_running(self):
         return hasattr(self, 'process') and self.process is not None
 
