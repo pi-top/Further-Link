@@ -13,8 +13,8 @@ async def receive_data(ws, channel, data_key=None, data_value=None,
     while (not isinstance(data_value, str)) or len(received) < len(data_value):
         m_type, m_data, m_process = parse_message((await ws.receive()).data)
 
-        assert(m_process == process)
-        assert(m_type == channel)
+        assert m_process == process, f'{m_process} != {process}'
+        assert m_type == channel, f'{m_type} != {channel}\ndata: {m_data}'
 
         # return if not looking for specific data
         if data_key is None:
@@ -41,8 +41,8 @@ async def wait_for_data(ws, channel, data_key=None, data_value=None, timeout=0,
             message = await ws.receive()
             m_type, m_data, m_process = parse_message(message.data)
 
-            assert(m_type == channel)
-            assert(m_process == process)
+            assert m_process == process, f'{m_process} != {process}'
+            assert m_type == channel, f'{m_type} != {channel}\ndata: {m_data}'
 
             # return if not looking for specific data
             if data_key is None:

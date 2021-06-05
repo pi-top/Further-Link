@@ -17,7 +17,7 @@ def parse_message(message):
     try:
         msg = json.loads(message)
     except json.decoder.JSONDecodeError:
-        raise BadMessage()
+        raise BadMessage('Invalid JSON') from None
 
     msg_type = msg.get('type')
     msg_data = msg.get('data')

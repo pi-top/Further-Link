@@ -15,7 +15,8 @@ async def race(tasks):
     )
     for task in pending:
         task.cancel()
-    await asyncio.wait(pending)
+    if len(pending):
+        await asyncio.wait(pending)
     return done
 
 
