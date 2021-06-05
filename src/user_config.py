@@ -53,3 +53,11 @@ def get_working_directory(user=None):
         user = default_user()
 
     return os.path.join(get_home_directory(user), DEFAULT_DIR_NAME)
+
+
+def get_absolute_path(path, relative_root=get_working_directory(default_user)):
+    # path is absolute or relative to relative_root
+    first_char = path[0]
+    if first_char != '/':
+        return os.path.join(relative_root, path)
+    return path

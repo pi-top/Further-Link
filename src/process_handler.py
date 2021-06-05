@@ -12,8 +12,7 @@ from .lib.further_link import (
     ipc_cleanup
 )
 from .async_helpers import ringbuf_read, timeout
-from .user_config import get_current_user, user_exists, get_working_directory,\
-    get_temp_dir
+from .user_config import get_current_user, user_exists, get_working_directory
 
 SERVER_IPC_CHANNELS = [
     'video',
@@ -29,7 +28,6 @@ class ProcessHandler:
     def __init__(self, user=None, pty=False):
         self.user = user
         self.pty = pty
-        self.temp_dir = get_temp_dir()
 
         self.id = str(id(self))
         self.process = None

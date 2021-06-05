@@ -8,7 +8,7 @@ from .process_handler import InvalidOperation
 from .py_process_handler import PyProcessHandler
 from .exec_process_handler import ExecProcessHandler
 from .shell_process_handler import ShellProcessHandler
-from .user_config import default_user
+from .user_config import default_user, get_temp_dir
 
 
 class RunManager:
@@ -19,6 +19,11 @@ class RunManager:
 
         self.id = str(id(self))
         self.process_handlers = {}
+        self.handler_classes = {
+            'exec': ExecProcessHandler,
+            'python3': PyProcessHandler,
+            'shell': ShellProcessHandler,
+        }
 
     async def stop(self):
         for p in self.process_handlers.values():
@@ -27,6 +32,12 @@ class RunManager:
             except InvalidOperation:
                 pass
 
+    async def send(self, type, data=None, process_id=None):
+        try:
+            await self.socket.send_str(create_message(type, data, process_id))
+        except ConnectionResetError:
+            pass  # already disconnected
+
     async def handle_message(self, message):
         try:
             m_type, m_data, m_process = parse_message(message)
@@ -34,14 +45,18 @@ class RunManager:
             process_handler = self.process_handlers.get(m_process)
 
             if m_type == 'ping':
-                await self.socket.send_str(create_message('pong'))
+                await self.send('pong')
 
-            elif m_type == 'start' and not process_handler and m_process:
-                await self.add_handler(m_process, m_data.get('runner'), m_data)
+            elif (m_type == 'start'
+                  and not process_handler
+                  and m_process
+                  and isinstance(m_data.get('runner'), str)):
+                code = m_data.get('code')
+                path = m_data.get('path') or get_temp_dir()
+                await self.add_handler(m_process, m_data['runner'], path, code)
 
             elif (m_type == 'stdin'
                   and process_handler
-                  and 'input' in m_data
                   and isinstance(m_data.get('input'), str)):
                 await process_handler.send_input(m_data['input'])
 
@@ -50,9 +65,7 @@ class RunManager:
 
             elif (m_type == 'keyevent'
                   and process_handler
-                  and 'key' in m_data
                   and isinstance(m_data.get('key'), str)
-                  and 'event' in m_data
                   and isinstance(m_data.get('event'), str)):
                 await process_handler.send_key_event(m_data['key'],
                                                      m_data['event'])
@@ -62,93 +75,39 @@ class RunManager:
 
         except (BadMessage, InvalidOperation):
             logging.exception(f'{self.id} Bad Message')
-            await self.socket.send_str(
-                create_message('error', {'message': 'Bad message'})
-            )
+            await self.send('error', {'message': 'Bad message'})
 
         except Exception:
             logging.exception(f'{self.id} Message Exception')
-            await self.socket.send_str(
-                create_message('error', {'message': 'Message Exception'})
-            )
+            await self.send('error', {'message': 'Message Exception'})
 
-    async def add_handler(self, process_id, runner, m_data):
-        handler = None
+    async def add_handler(self, process_id, runner, path, code):
+        try:
+            handler_class = self.handler_classes[runner]
+        except KeyError:
+            raise BadMessage('Start command runner invalid') from None
 
         async def on_start():
-            await self.socket.send_str(create_message('started', None,
-                                                      process_id))
+            await self.send('started', None, process_id)
             logging.info(f'{self.id} Started {process_id}')
 
         async def on_stop(exit_code):
             # process_id may be reused with other runners so clean up handler
             self.process_handlers.pop(process_id, None)
-            try:
-                await self.socket.send_str(
-                    create_message('stopped', {'exitCode': exit_code},
-                                   process_id)
-                )
-            except ConnectionResetError:
-                pass  # already disconnected
+            await self.send('stopped', {'exitCode': exit_code}, process_id)
             logging.info(f'{self.id} Stopped {process_id}')
 
         async def on_output(channel, output):
+            await self.send(channel, {'output': output}, process_id)
             logging.debug(
                 f'{self.id} Sending Output {process_id} {channel} {output}'
             )
-            await self.socket.send_str(create_message(channel,
-                                                      {'output': output},
-                                                      process_id))
-        if runner == 'shell':
-            handler = ShellProcessHandler(self.user, self.pty)
-            handler.on_start = on_start
-            handler.on_stop = on_stop
-            handler.on_output = on_output
-            await handler.start()
 
-        elif (
-            runner == 'exec'
-            and 'sourcePath' in m_data
-            and isinstance(m_data.get('sourcePath'), str)
-            and len(m_data.get('sourcePath')) > 0
-        ):
-            handler = ExecProcessHandler(self.user, self.pty)
-            handler.on_start = on_start
-            handler.on_stop = on_stop
-            handler.on_output = on_output
-            await handler.start(path=m_data['sourcePath'])
-
-        elif (
-            runner == 'python3'
-            and 'sourceScript' in m_data
-            and isinstance(m_data.get('sourceScript'), str)
-        ):
-            path = m_data.get('directoryName') if (
-                'directoryName' in m_data
-                and isinstance(m_data.get('directoryName'), str)
-                and len(m_data.get('directoryName')) > 0
-            ) else None
-
-            handler = PyProcessHandler(self.user, self.pty)
-            handler.on_start = on_start
-            handler.on_stop = on_stop
-            handler.on_output = on_output
-            await handler.start(script=m_data['sourceScript'], path=path)
-
-        elif (
-            runner == 'python3'
-            and 'sourcePath' in m_data
-            and isinstance(m_data.get('sourcePath'), str)
-            and len(m_data.get('sourcePath')) > 0
-        ):
-            handler = PyProcessHandler(self.user, self.pty)
-            handler.on_start = on_start
-            handler.on_stop = on_stop
-            handler.on_output = on_output
-            await handler.start(path=m_data['sourcePath'])
-
-        else:
-            raise BadMessage('Start command runner invalid')
+        handler = handler_class(self.user, self.pty)
+        handler.on_start = on_start
+        handler.on_stop = on_stop
+        handler.on_output = on_output
+        await handler.start(path, code)
 
         self.process_handlers[process_id] = handler
 

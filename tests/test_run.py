@@ -8,7 +8,7 @@ from .helpers import receive_data, wait_for_data
 @pytest.mark.asyncio
 async def test_bad_message(run_ws_client):
     start_cmd = create_message('start',
-                               {'runner': 'python3', 'sourceScript': ''})
+                               {'runner': 'python3', 'code': ''})
     await run_ws_client.send_str(start_cmd)
 
     await wait_for_data(run_ws_client, 'error', 'message', 'Bad message')
@@ -21,7 +21,7 @@ from datetime import datetime
 print(datetime.now().strftime("%A"))
 """
     start_cmd = create_message('start',
-                               {'runner': 'python3', 'sourceScript': code},
+                               {'runner': 'python3', 'code': code},
                                '1')
     await run_ws_client.send_str(start_cmd)
 
@@ -44,14 +44,14 @@ print(1)
 print(2)
 """
     start_cmd = create_message('start',
-                               {'runner': 'python3', 'sourceScript': code1},
+                               {'runner': 'python3', 'code': code1},
                                '1')
     await run_ws_client.send_str(start_cmd)
 
     await receive_data(run_ws_client, 'started', process='1')
 
     start_cmd = create_message('start',
-                               {'runner': 'python3', 'sourceScript': code2},
+                               {'runner': 'python3', 'code': code2},
                                '2')
     await run_ws_client.send_str(start_cmd)
 

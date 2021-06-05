@@ -2,21 +2,19 @@ import os
 import pathlib
 import aiofiles
 
-from .process_handler import ProcessHandler, InvalidOperation
-from .user_config import get_working_directory
+from .process_handler import ProcessHandler
+from .user_config import get_working_directory, get_absolute_path
 
 dirname = pathlib.Path(__file__).parent.absolute()
 further_link_module_path = os.path.join(dirname, 'lib')
 
 
 class ExecProcessHandler(ProcessHandler):
-    async def start(self, script=None, path=False):
-        entrypoint = await self._get_entrypoint(script, path)
-        self._remove_entrypoint = entrypoint if script is not None else None
+    async def start(self, path, code=None):
+        entrypoint = await self._get_entrypoint(path, code)
+        self._remove_entrypoint = entrypoint if code is not None else None
 
-        os.chmod(entrypoint, 0o777)  # executable
-
-        print(entrypoint)
+        os.chmod(entrypoint, 0o777)  # make it executable
 
         command = entrypoint
 
@@ -24,34 +22,24 @@ class ExecProcessHandler(ProcessHandler):
 
         await super().start(command, work_dir)
 
-    async def _get_entrypoint(self, script=None, path=None):
-        if isinstance(path, str):
-            # path is absolute or relative to work_dir
-            first_char = path[0]
-            if first_char != '/':
-                further_work_dir = get_working_directory(self.user)
-                path = os.path.join(further_work_dir, path)
+    async def _get_entrypoint(self, path, code=None):
+        path = get_absolute_path(path, get_working_directory(self.user))
 
-            path_dirs = path if isinstance(
-                script, str) else os.path.dirname(path)
+        # with no code path should point to a file, otherwise take its dir
+        path_dirs = path if isinstance(code, str) else os.path.dirname(path)
 
-            # if there's a script to create, create path dirs for it to go in
-            if not os.path.exists(path_dirs) and isinstance(script, str):
-                os.makedirs(path_dirs, exist_ok=True)
+        # create path dirs if they don't already exist
+        os.makedirs(path_dirs, exist_ok=True)
 
-        if isinstance(script, str):
-            # write script to file, at path if given, otherwise temp
-            entrypoint = self._get_script_filename(path)
-            async with aiofiles.open(entrypoint, 'w+') as file:
-                await file.write(script)
-
-            return entrypoint
-
-        if path is not None:
+        if code is None:
             return path
 
-        raise InvalidOperation()
+        # write script to file, at path if given, otherwise temp
+        entrypoint = self._get_script_filename(path)
+        async with aiofiles.open(entrypoint, 'w+') as file:
+            await file.write(code)
 
-    def _get_script_filename(self, path=None):
-        dir = path if isinstance(path, str) else self.temp_dir
+        return entrypoint
+
+    def _get_script_filename(self, dir):
         return dir + '/' + self.id + '.py'

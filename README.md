@@ -171,9 +171,9 @@ different types, addressing them by a unique id.
 websocat ws://localhost:8028/run
 ```
 
-- Send `start` command for process id 1, requesting `runner` "python3" and `sourceScript`:
+- Send `start` command for process id 1, requesting `runner` "python3" and `code`:
 ```
-{ "type": "start", "process": "1", "data": { "runner": "python3", "sourceScript": "print('hi')" } }
+{ "type": "start", "process": "1", "data": { "runner": "python3", "code": "print('hi')" } }
 ```
 
 - Receive `started` response with expected id:
@@ -266,14 +266,21 @@ Connection management - these messages don't require a process id
 <br>
 
 Basic:
-- `start` command will start a new python process. The code to run can be
-    specified in data as either a `souceScript` or `sourcePath`. For
-    `sourceScript` an additional `directoryName` can be passed to specify an
-    (uploaded) directory to run the script in, within the work dir, otherwise
-    `/tmp` is used. If `sourcePath` is not absolute, it is assumed to be
-    relative to the work dir.
-    e.g. `data: {sourceScript:"print('hi')", directoryName: "myproject"}`
-    or `data: {sourcePath: "myproject/run.py"}`
+// TODO non python!
+- `start` command will start a new python process. This can run an existing
+    python file or create one from the `code` data field. The `path` data field
+    is used to specify the path of a python file to run, or the directory in
+    which to create the file from `code`. The working directory for the python
+    process is the directory the entrypoint file is in, or /tmp. If `path` is
+    not absolute, it is assumed to be relative to the further link working
+    directory described above.
+
+    e.g.
+    `data: {code:"print('hi')"}`
+    `data: {code:"print('hi')", path: "myproject"}`
+    `data: {path: "myproject/run.py"}`
+    `data: {path: "/home/pi/run.py"}`
+
 - `started` response is sent after a successful process `start`, has no data.
 <br>
 
