@@ -1,7 +1,7 @@
 from time import time
 from concurrent.futures import TimeoutError
 
-from src.message import parse_message
+from src.util.message import parse_message
 
 
 # this allows for the data to be split into multiple messages

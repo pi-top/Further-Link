@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
 
-from src.message import create_message
+from src.util.message import create_message
 from .helpers import receive_data, wait_for_data
 
 

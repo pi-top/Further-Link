@@ -3,7 +3,7 @@ import pathlib
 import aiofiles
 
 from .process_handler import ProcessHandler
-from .user_config import get_working_directory, get_absolute_path
+from .util.user_config import get_working_directory, get_absolute_path
 
 dirname = pathlib.Path(__file__).parent.absolute()
 further_link_module_path = os.path.join(dirname, 'lib')

@@ -11,8 +11,9 @@ from .lib.further_link import (
     async_ipc_send,
     ipc_cleanup
 )
-from .async_helpers import ringbuf_read, timeout
-from .user_config import get_current_user, user_exists, get_working_directory
+from .util.async_helpers import ringbuf_read, timeout
+from .util.user_config import get_current_user, user_exists, \
+    get_working_directory
 
 SERVER_IPC_CHANNELS = [
     'video',

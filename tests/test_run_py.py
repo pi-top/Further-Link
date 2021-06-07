@@ -6,7 +6,7 @@ from datetime import datetime
 
 from shutil import copy
 
-from src.message import create_message, parse_message
+from src.util.message import create_message, parse_message
 from src.lib.further_link import __version__
 from tests import TEST_PATH, WORKING_DIRECTORY, RUN_PY_URL
 from .helpers import receive_data, wait_for_data

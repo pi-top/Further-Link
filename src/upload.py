@@ -5,7 +5,7 @@ import aiofiles
 from aiohttp import web, ClientSession
 from shutil import rmtree
 
-from .user_config import CACHE_DIR_NAME, get_working_directory
+from .util.user_config import CACHE_DIR_NAME, get_working_directory
 
 
 file_types = ['url', 'text']

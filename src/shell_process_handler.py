@@ -1,5 +1,5 @@
 from .process_handler import ProcessHandler
-from .user_config import get_shell, get_working_directory, get_absolute_path
+from .util.user_config import get_shell, get_working_directory, get_absolute_path
 
 
 class ShellProcessHandler(ProcessHandler):

@@ -3,7 +3,7 @@ import os
 import aiofiles
 import asyncio
 
-from src.message import create_message, parse_message
+from src.util.message import create_message, parse_message
 from src.upload import get_bucket_cache_path, get_directory_path
 from tests import WORKING_DIRECTORY
 from .test_data.upload_data import directory
