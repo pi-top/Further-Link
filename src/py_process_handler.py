@@ -11,13 +11,24 @@ further_link_module_path = os.path.join(dirname, 'lib')
 
 class PyProcessHandler(ProcessHandler):
     async def start(self, path, code=None):
-        entrypoint = await self._get_entrypoint(path, code)
-        self._remove_entrypoint = entrypoint if code is not None else None
+        path = get_absolute_path(path, get_working_directory(self.user))
+
+        # create path directories if they don't already exist
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        entrypoint = path if not code else os.path.join(path, f'{self.id}.py')
+
+        # create a temporary file to execute if code is provided
+        if code:
+            async with aiofiles.open(entrypoint, 'w+') as file:
+                await file.write(code)
+            self._remove_entrypoint = entrypoint
 
         command = 'python3 -u ' + entrypoint
 
         work_dir = os.path.dirname(entrypoint)
 
+        # preserve PYTHONPATH and add further link lib to it
         env = {}
         python_path = '' if not os.environ.get("PYTHONPATH") else \
             os.environ.get("PYTHONPATH") + os.pathsep
@@ -26,24 +37,11 @@ class PyProcessHandler(ProcessHandler):
 
         await super().start(command, work_dir, env)
 
-    async def _get_entrypoint(self, path, code=None):
-        path = get_absolute_path(path, get_working_directory(self.user))
+    async def _clean_up(self):
+        try:
+            if self._remove_entrypoint is not None:
+                os.remove(self._remove_entrypoint)
+        except Exception:
+            pass
 
-        # with no code path should point to a file, otherwise take its dir
-        path_dirs = path if isinstance(code, str) else os.path.dirname(path)
-
-        # create path dirs if they don't already exist
-        os.makedirs(path_dirs, exist_ok=True)
-
-        if code is None:
-            return path
-
-        # write script to file, at path if given, otherwise temp
-        entrypoint = self._get_script_filename(path)
-        async with aiofiles.open(entrypoint, 'w+') as file:
-            await file.write(code)
-
-        return entrypoint
-
-    def _get_script_filename(self, dir):
-        return dir + '/' + self.id + '.py'
+        await super()._clean_up()

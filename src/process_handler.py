@@ -168,14 +168,6 @@ class ProcessHandler:
         )
 
     async def _clean_up(self):
-        # aiofiles.os.remove not released to debian buster
-        # os.remove should not block significantly, just fires a single syscall
-        try:
-            if self._remove_entrypoint is not None:
-                os.remove(self._remove_entrypoint)
-        except Exception:
-            pass
-
         try:
             if self.pty:
                 self.pty_master.close()
