@@ -14,6 +14,7 @@ from .lib.further_link import (
 from .util.async_helpers import ringbuf_read, timeout
 from .util.user_config import get_current_user, user_exists, \
     get_working_directory
+from .util.terminal import set_winsize
 
 SERVER_IPC_CHANNELS = [
     'video',
@@ -45,9 +46,14 @@ class ProcessHandler:
             self.pty_master = await aiofiles.open(master, 'w+b', 0)
             self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
 
+            # set terminal size to a minimum that we display in Further
+            set_winsize(slave, 4, 60)
+            # TODO size should be updated by a resize message
+
             stdio = self.pty_slave
 
         if self.user != get_current_user() and user_exists(self.user):
+            # run command as user but preserving provided environment
             command = f'sudo --preserve-env -u {self.user} {command}'
 
         process_env = {**os.environ.copy(), **env}
