@@ -54,7 +54,8 @@ class ProcessHandler:
 
         if self.user != get_current_user() and user_exists(self.user):
             # run command as user but preserving provided environment
-            command = f'sudo --preserve-env -u {self.user} {command}'
+            envlist = ",".join(env.keys())
+            command = f'sudo --preserve-env={envlist} -u {self.user} {command}'
 
         process_env = {**os.environ.copy(), **env}
 
