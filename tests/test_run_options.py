@@ -63,10 +63,9 @@ async def test_run_code_absolute_path(run_ws_client):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('query_params', [{'user': 'root'}])
-@pytest.mark.skip(reason="Won't work in CI due to old sudo version")
+@pytest.mark.parametrize('query_params', [{'user': 'pi'}])
+@pytest.mark.skip(reason="Won't work unless run as root on rpi")
 async def test_run_as_user(run_ws_client_query):
-    # This test assumes non-root user with nopasswd sudo access...
     code = 'import getpass\nprint(getpass.getuser())'
     start_cmd = create_message('start', {'runner': 'python3', 'code': code},
                                '1')
@@ -74,7 +73,7 @@ async def test_run_as_user(run_ws_client_query):
 
     await receive_data(run_ws_client_query, 'started', process='1')
 
-    await wait_for_data(run_ws_client_query, 'stdout', 'output', 'root\n', 0,
+    await wait_for_data(run_ws_client_query, 'stdout', 'output', 'pi\n', 0,
                         '1')
 
     await wait_for_data(run_ws_client_query, 'stopped', 'exitCode', 0, 0, '1')

@@ -16,24 +16,38 @@ def get_current_user():
 
 
 def user_exists(user):
-    for existing_user in pwd.getpwall():
-        if existing_user.pw_name == user:
-            return True
-    return False
+    try:
+        return pwd.getpwnam(user) is not None
+    except (KeyError, TypeError):
+        return False
+
+
+def get_uid(user):
+    try:
+        return pwd.getpwnam(user).pw_uid
+    except (KeyError, TypeError):
+        return None
+
+
+def get_gid(user):
+    try:
+        return pwd.getpwnam(user).pw_gid
+    except (KeyError, TypeError):
+        return None
 
 
 def get_home_directory(user):
-    for existing_user in pwd.getpwall():
-        if existing_user.pw_name == user:
-            return existing_user.pw_dir
-    return None
+    try:
+        return pwd.getpwnam(user).pw_dir
+    except (KeyError, TypeError):
+        return None
 
 
 def get_shell(user):
-    for existing_user in pwd.getpwall():
-        if existing_user.pw_name == user:
-            return existing_user.pw_shell
-    return None
+    try:
+        return pwd.getpwnam(user).pw_shell
+    except (KeyError, TypeError):
+        return None
 
 
 def default_user():
@@ -55,7 +69,8 @@ def get_working_directory(user=None):
     return os.path.join(get_home_directory(user), DEFAULT_DIR_NAME)
 
 
-def get_absolute_path(path, relative_root=get_working_directory(default_user)):
+def get_absolute_path(path,
+                      relative_root=get_working_directory(default_user())):
     # path is absolute or relative to relative_root
     first_char = path[0]
     if first_char != '/':

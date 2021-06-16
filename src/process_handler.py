@@ -12,8 +12,8 @@ from .lib.further_link import (
     ipc_cleanup
 )
 from .util.async_helpers import ringbuf_read, timeout
-from .util.user_config import get_current_user, user_exists, \
-    get_working_directory
+from .util.user_config import user_exists, get_working_directory, \
+    get_home_directory, get_uid, get_gid
 from .util.terminal import set_winsize
 
 SERVER_IPC_CHANNELS = [
@@ -27,13 +27,11 @@ class InvalidOperation(Exception):
 
 
 class ProcessHandler:
-    def __init__(self, user=None, pty=False):
-        self.user = user
+    def __init__(self, user, pty=False):
         self.pty = pty
-
         self.id = str(id(self))
-        self.process = None
-        self.pgid = None
+        assert user_exists(user)
+        self.user = user
 
     async def start(self, command, work_dir=None, env={}):
         self.work_dir = work_dir or get_working_directory(self.user)
@@ -52,17 +50,26 @@ class ProcessHandler:
 
             stdio = self.pty_slave
 
-        if self.user != get_current_user() and user_exists(self.user):
-            # run command as user but preserving provided environment
-            envlist = ",".join(env.keys())
-            command = f'sudo --preserve-env={envlist} -u {self.user} {command}'
-
         process_env = {**os.environ.copy(), **env}
+
+        if self.user:
+            process_env['HOME'] = get_home_directory(self.user)
+            process_env['LOGNAME'] = self.user
+            process_env['PWD'] = self.work_dir
+            process_env['USER'] = self.user
 
         # Ensure that DISPLAY is set, so that user can open GUI windows
         display = get_first_display()
         if display is not None:
-            process_env["DISPLAY"] = display
+            process_env['DISPLAY'] = display
+
+        def preexec():
+            os.setgid(get_gid(self.user))
+            os.setuid(get_uid(self.user))
+            # create a new session and process group for the user process and
+            # subprocesses. this allows us to clean them up in one go as well
+            # as allowing a shell process to be a 'controlling terminal'
+            os.setsid()
 
         self.process = await asyncio.create_subprocess_exec(
             *command.split(),
@@ -71,7 +78,7 @@ class ProcessHandler:
             stderr=stdio,
             env=process_env,
             cwd=self.work_dir,
-            preexec_fn=os.setsid)  # make a process group for this and children
+            preexec_fn=preexec)
 
         self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
 
