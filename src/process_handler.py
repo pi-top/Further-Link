@@ -51,6 +51,7 @@ class ProcessHandler:
             stdio = self.pty_slave
 
         process_env = {**os.environ.copy(), **env}
+        process_env['TERM'] = 'xterm-256color'  # perhaps should be param
 
         if self.user:
             process_env['HOME'] = get_home_directory(self.user)
