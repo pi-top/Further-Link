@@ -41,6 +41,11 @@ class ProcessHandler:
         if self.pty:
             # communicate through a pty for terminal 'cooked mode' behaviour
             master, slave = openpty()
+
+            # on some distros process user must own slave, otherwise you get:
+            # cannot set terminal process group (-1): Inappropriate ioctl for device
+            os.chown(slave, get_uid(self.user), get_gid(self.user))
+
             self.pty_master = await aiofiles.open(master, 'w+b', 0)
             self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
 
