@@ -52,7 +52,9 @@ class RunManager:
                   and m_process
                   and isinstance(m_data.get('runner'), str)):
                 code = m_data.get('code')
-                path = m_data.get('path') or get_temp_dir()
+                code = code if isinstance(code, str) else None
+                path = m_data.get('path')
+                path = path if isinstance(path, str) else get_temp_dir()
                 await self.add_handler(m_process, m_data['runner'], path, code)
 
             elif (m_type == 'stdin'
