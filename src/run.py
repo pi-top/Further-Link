@@ -62,6 +62,13 @@ class RunManager:
                   and isinstance(m_data.get('input'), str)):
                 await process_handler.send_input(m_data['input'])
 
+            elif (m_type == 'resize'
+                  and process_handler
+                  and isinstance(m_data.get('rows'), int)
+                  and isinstance(m_data.get('cols'), int)):
+                await process_handler.resize_pty(m_data['rows'],
+                                                 m_data['cols'])
+
             elif m_type == 'stop' and process_handler:
                 await process_handler.stop()
 

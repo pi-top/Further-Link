@@ -239,7 +239,7 @@ level properties: required string `type`, optional string `process` and optional
 Message types accepted by the server are:
 ```
 {
- "type":"[ping|start|stop|stdin|upload|keyevent]",
+ "type":"[ping|start|stop|stdin|resize|keyevent]",
  "data": {...},
  "process": "id"
 }

@@ -124,6 +124,12 @@ class ProcessHandler:
             self.process.stdin.write(content_bytes)
             await self.process.stdin.drain()
 
+    async def resize_pty(self, rows, cols):
+        if not self.is_running() or not self.pty:
+            raise InvalidOperation()
+
+        set_winsize(self.pty_slave.fileno(), rows, cols)
+
     async def send_key_event(self, key, event):
         if (
             not self.is_running()
