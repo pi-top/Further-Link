@@ -51,7 +51,6 @@ class ProcessHandler:
 
             # set terminal size to a minimum that we display in Further
             set_winsize(slave, 4, 60)
-            # TODO size should be updated by a resize message
 
             stdio = self.pty_slave
 

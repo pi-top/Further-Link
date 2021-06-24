@@ -45,6 +45,13 @@ For more information related to the `run-py` API see the options of the
 `upload` and `start` messages in the documentation below.
 
 ## API
+### HTTP Post /upload
+- Body should be a JSON object with `name` of directory to upload into and
+  `files` object. Files are provided as `text` type, with the text content, or
+  `url` type, with a url for the file to be downloaded from
+  ([example](tests/test_data/upload_data.py)). Responds after creating files is
+  complete with a simple 200 OK.
+
 ### Websocket Endpoint /run-py
 Each websocket client connected on `/run-py` can manage a single python process
 at a time.
@@ -248,7 +255,7 @@ Message types accepted by the server are:
 Message types sent from the server are:
 ```
 {
- "type":"[pong|error|started|stopped|stdout|stderr|uploaded|keylisten]",
+ "type":"[pong|error|started|stopped|stdout|stderr|keylisten]",
  "data": {...},
  "process": "id"
 }
