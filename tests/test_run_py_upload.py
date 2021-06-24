@@ -94,9 +94,8 @@ print(call_some_lib())
 
 
 @pytest.mark.asyncio
-async def test_upload_bad_file(run_py_ws_client, aresponses):
-    aresponses.add('https://placekitten.com/50/50', '/', 'GET',
-                   aresponses.Response(text='error', status=500))
+async def test_upload_bad_file(run_py_ws_client, aioresponses):
+    aioresponses.add('https://placekitten.com/50/50', status=500)
 
     upload_cmd = create_message('upload', {'directory': directory})
     await run_py_ws_client.send_str(upload_cmd)

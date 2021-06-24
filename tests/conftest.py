@@ -4,6 +4,7 @@ import aiohttp
 import urllib.parse
 
 from shutil import rmtree
+from aioresponses import aioresponses as aioresponses_mock
 
 from tests import WORKING_DIRECTORY, RUN_URL, RUN_PY_URL
 from server import run_async
@@ -59,3 +60,9 @@ async def run_ws_client_query(query_params):
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url, receive_timeout=0.1) as client:
             yield client
+
+
+@pytest.fixture
+def aioresponses():
+    with aioresponses_mock(passthrough=['http://0.0.0.0']) as a:
+        yield a
