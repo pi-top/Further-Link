@@ -1,5 +1,6 @@
 import os
 import pwd
+import grp
 import getpass
 
 
@@ -46,6 +47,16 @@ def get_home_directory(user):
 def get_shell(user):
     try:
         return pwd.getpwnam(user).pw_shell
+    except (KeyError, TypeError):
+        return None
+
+
+def get_grp_ids(user):
+    try:
+        groups = [g.gr_gid for g in grp.getgrall() if user in g.gr_mem]
+        gid = pwd.getpwnam(user).pw_gid
+        groups.append(gid)
+        return groups
     except (KeyError, TypeError):
         return None
 
