@@ -5,7 +5,6 @@ from collections import deque
 async def loop_forever(*args, **kwargs):
     while True:
         await asyncio.sleep(1)
-        pass
 
 
 async def race(tasks):
