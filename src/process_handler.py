@@ -13,7 +13,7 @@ from .lib.further_link import (
 )
 from .util.async_helpers import ringbuf_read, timeout
 from .util.user_config import user_exists, get_working_directory, \
-    get_home_directory, get_uid, get_gid, get_grp_ids
+    get_home_directory, get_uid, get_gid, get_grp_ids, get_current_user
 from .util.terminal import set_winsize
 
 SERVER_IPC_CHANNELS = [
@@ -69,15 +69,16 @@ class ProcessHandler:
             process_env['DISPLAY'] = display
 
         def preexec():
-            # set the process group id for user
-            os.setgid(get_gid(self.user))
+            if (self.user != get_current_user()):
+                # set the process group id for user
+                os.setgid(get_gid(self.user))
 
-            # set the process supplemental groups for user
-            os.setgroups(get_grp_ids(self.user))
+                # set the process supplemental groups for user
+                os.setgroups(get_grp_ids(self.user))
 
-            # set the process user id
-            # must do this after setting groups as it reduces privilege
-            os.setuid(get_uid(self.user))
+                # set the process user id
+                # must do this after setting groups as it reduces privilege
+                os.setuid(get_uid(self.user))
 
             # create a new session and process group for the user process and
             # subprocesses. this allows us to clean them up in one go as well
