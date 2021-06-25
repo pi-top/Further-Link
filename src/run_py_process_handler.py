@@ -1,7 +1,8 @@
 import asyncio
 import os
 import signal
-from pty import openpty
+import pty
+import pathlib
 from functools import partial
 import aiofiles
 from pitopcommon.current_session_info import get_first_display
@@ -11,88 +12,82 @@ from .lib.further_link import (
     async_ipc_send,
     ipc_cleanup
 )
-from .util.async_helpers import ringbuf_read, timeout
-from .util.user_config import user_exists, get_working_directory, \
-    get_home_directory, get_uid, get_gid, get_grp_ids, get_current_user
-from .util.terminal import set_winsize
+from .util.async_helpers import ringbuf_read
+from .util.user_config import default_user, get_current_user, user_exists, \
+    get_working_directory, get_temp_dir
 
 SERVER_IPC_CHANNELS = [
     'video',
     'keylisten',
 ]
 
+dirname = pathlib.Path(__file__).parent.absolute()
+further_link_module_path = os.path.join(dirname, 'lib')
+
 
 class InvalidOperation(Exception):
     pass
 
 
-class ProcessHandler:
-    def __init__(self, user, pty=False):
+class RunPyProcessHandler:
+    def __init__(self, user=None, pty=False):
+        self.user = default_user() if user is None else user
         self.pty = pty
-        self.id = str(id(self))
-        assert user_exists(user)
-        self.user = user
+        self.work_dir = get_working_directory(user)
+        self.temp_dir = get_temp_dir()
 
-    async def start(self, command, work_dir=None, env={}):
-        self.work_dir = work_dir or get_working_directory(self.user)
+        self.id = str(id(self))
+        self.process = None
+        self.pgid = None
+
+    def __del__(self):
+        if self.is_running():
+            self.stop()
+
+    async def start(self, script=None, path=None):
+        if self.is_running():
+            raise InvalidOperation()
+
+        entrypoint = await self._get_entrypoint(script, path)
+        self._remove_entrypoint = entrypoint if script is not None else None
 
         stdio = asyncio.subprocess.PIPE
 
         if self.pty:
             # communicate through a pty for terminal 'cooked mode' behaviour
-            master, slave = openpty()
-
-            # on some distros process user must own slave, otherwise you get:
-            # cannot set terminal process group (-1): Inappropriate ioctl for device
-            os.chown(slave, get_uid(self.user), get_gid(self.user))
-
+            master, slave = pty.openpty()
             self.pty_master = await aiofiles.open(master, 'w+b', 0)
             self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
 
-            # set terminal size to a minimum that we display in Further
-            set_winsize(slave, 4, 60)
-
             stdio = self.pty_slave
 
-        process_env = {**os.environ.copy(), **env}
-        process_env['TERM'] = 'xterm-256color'  # perhaps should be param
+        cmd = 'python3 -u ' + entrypoint
+        if self.user != get_current_user() and user_exists(self.user):
+            cmd = f'sudo -u {self.user} --preserve-env=PYTHONPATH {cmd}'
 
-        if self.user:
-            process_env['HOME'] = get_home_directory(self.user)
-            process_env['LOGNAME'] = self.user
-            process_env['PWD'] = self.work_dir
-            process_env['USER'] = self.user
+        process_env = os.environ.copy()
 
         # Ensure that DISPLAY is set, so that user can open GUI windows
+        #
+        # TODO: review moving to running as current user so that this comes
+        # naturally from the user's environment
         display = get_first_display()
         if display is not None:
-            process_env['DISPLAY'] = display
+            process_env["DISPLAY"] = display
 
-        def preexec():
-            if (self.user != get_current_user()):
-                # set the process group id for user
-                os.setgid(get_gid(self.user))
-
-                # set the process supplemental groups for user
-                os.setgroups(get_grp_ids(self.user))
-
-                # set the process user id
-                # must do this after setting groups as it reduces privilege
-                os.setuid(get_uid(self.user))
-
-            # create a new session and process group for the user process and
-            # subprocesses. this allows us to clean them up in one go as well
-            # as allowing a shell process to be a 'controlling terminal'
-            os.setsid()
+        if process_env.get("PYTHONPATH"):
+            process_env["PYTHONPATH"] += os.pathsep + further_link_module_path
+        else:
+            process_env["PYTHONPATH"] = further_link_module_path
 
         self.process = await asyncio.create_subprocess_exec(
-            *command.split(),
+            *cmd.split(),
             stdin=stdio,
             stdout=stdio,
             stderr=stdio,
             env=process_env,
-            cwd=self.work_dir,
-            preexec_fn=preexec)
+            cwd=os.path.dirname(entrypoint),
+            preexec_fn=os.setsid)  # make a process group for this and children
 
         self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
 
@@ -105,18 +100,12 @@ class ProcessHandler:
     def is_running(self):
         return hasattr(self, 'process') and self.process is not None
 
-    async def stop(self):
+    def stop(self):
         if not self.is_running():
             raise InvalidOperation()
-        # send signal to process group in case we have child processes
+        # send TERM to process group in case we have child processes
         try:
             os.killpg(self.pgid, signal.SIGTERM)
-            stopped = asyncio.create_task(self.process.wait())
-            done = await timeout(stopped, 0.1)
-
-            # if SIGTERM didn't stop the process already, send SIGKILL
-            if stopped not in done:
-                os.killpg(self.pgid, signal.SIGKILL)
         except ProcessLookupError:
             pass
 
@@ -132,12 +121,6 @@ class ProcessHandler:
             self.process.stdin.write(content_bytes)
             await self.process.stdin.drain()
 
-    async def resize_pty(self, rows, cols):
-        if not self.is_running() or not self.pty:
-            raise InvalidOperation()
-
-        set_winsize(self.pty_slave.fileno(), rows, cols)
-
     async def send_key_event(self, key, event):
         if (
             not self.is_running()
@@ -148,6 +131,37 @@ class ProcessHandler:
 
         content_bytes = f'{key} {event}'.encode('utf-8')
         await async_ipc_send('keyevent', content_bytes, pgid=self.pgid)
+
+    async def _get_entrypoint(self, script=None, path=None):
+        if isinstance(path, str):
+            # path is absolute or relative to work_dir
+            first_char = path[0]
+            if first_char != '/':
+                path = os.path.join(self.work_dir, path)
+
+            path_dirs = path if isinstance(
+                script, str) else os.path.dirname(path)
+
+            # if there's a script to create, create path dirs for it to go in
+            if not os.path.exists(path_dirs) and isinstance(script, str):
+                os.makedirs(path_dirs, exist_ok=True)
+
+        if isinstance(script, str):
+            # write script to file, at path if given, otherwise temp
+            entrypoint = self._get_script_filename(path)
+            async with aiofiles.open(entrypoint, 'w+') as file:
+                await file.write(script)
+
+            return entrypoint
+
+        if path is not None:
+            return path
+
+        raise InvalidOperation()
+
+    def _get_script_filename(self, path=None):
+        dir = path if isinstance(path, str) else self.temp_dir
+        return dir + '/' + self.id + '.py'
 
     async def _ipc_communicate(self):
         self.ipc_tasks = []
@@ -202,6 +216,14 @@ class ProcessHandler:
         )
 
     async def _clean_up(self):
+        # aiofiles.os.remove not released to debian buster
+        # os.remove should not block significantly, just fires a single syscall
+        try:
+            if self._remove_entrypoint is not None:
+                os.remove(self._remove_entrypoint)
+        except Exception:
+            pass
+
         try:
             if self.pty:
                 self.pty_master.close()

@@ -1,9 +1,11 @@
 import os
+import json
+
 import aiofiles
-from aiohttp import ClientSession
+from aiohttp import web, ClientSession
 from shutil import rmtree
 
-from .user_config import CACHE_DIR_NAME
+from .util.user_config import CACHE_DIR_NAME, get_working_directory
 
 
 file_types = ['url', 'text']
@@ -104,7 +106,7 @@ def is_sub_directory(sub_dir, from_dir):
     return os.path.realpath(sub_dir).startswith(os.path.realpath(from_dir))
 
 
-async def upload(directory, work_dir):
+async def do_upload(directory, work_dir):
     try:
         directory_name = directory['name']
         directory_path = get_directory_path(work_dir, directory_name)
@@ -159,3 +161,26 @@ async def upload(directory, work_dir):
 
     except Exception as e:
         raise BadUpload(e)
+
+
+async def upload(request):
+    query_params = request.query
+    user = query_params.get('user', None)
+
+    work_dir = get_working_directory(user)
+
+    try:
+        directory = await request.json()
+
+        if not directory_is_valid(directory):
+            raise web.HTTPBadRequest()
+
+        await do_upload(directory, work_dir)
+
+    except (web.HTTPBadRequest, json.decoder.JSONDecodeError):
+        raise web.HTTPBadRequest()
+
+    except BadUpload:
+        raise web.HTTPInternalServerError()
+
+    return web.Response(text='OK')

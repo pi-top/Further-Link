@@ -1,18 +1,20 @@
 from time import time
 from concurrent.futures import TimeoutError
 
-from src.message import parse_message
+from src.util.message import parse_message
 
 
 # this allows for the data to be split into multiple messages
-async def receive_data(ws, channel, data_key=None, data_value=None):
+async def receive_data(ws, channel, data_key=None, data_value=None,
+                       process=''):
     received = ''
     # receive until we have enough data, or until return if non string data
     # receive has a timeout so if we don't get enough it will throw anyway
     while (not isinstance(data_value, str)) or len(received) < len(data_value):
-        m_type, m_data = parse_message((await ws.receive()).data)
+        m_type, m_data, m_process = parse_message((await ws.receive()).data)
 
-        assert(m_type == channel)
+        assert m_process == process, f'{m_process} != {process}'
+        assert m_type == channel, f'{m_type} != {channel}\ndata: {m_data}'
 
         # return if not looking for specific data
         if data_key is None:
@@ -31,13 +33,16 @@ async def receive_data(ws, channel, data_key=None, data_value=None):
 
 
 # this also allows for delay before receiving begins, beyond default timeout
-async def wait_for_data(ws, channel, data_key=None, data_value=None, timeout=0):
+async def wait_for_data(ws, channel, data_key=None, data_value=None, timeout=0,
+                        process=''):
     start_time = round(time())
     while timeout <= 0 or (round(time()) - start_time) <= timeout:
         try:
-            m_type, m_data = parse_message((await ws.receive()).data)
+            message = await ws.receive()
+            m_type, m_data, m_process = parse_message(message.data)
 
-            assert(m_type == channel)
+            assert m_process == process, f'{m_process} != {process}'
+            assert m_type == channel, f'{m_type} != {channel}\ndata: {m_data}'
 
             # return if not looking for specific data
             if data_key is None:

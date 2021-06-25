@@ -7,7 +7,8 @@ import sys
 from aiohttp import web
 import aiohttp_cors
 
-from src import ssl_context, status, version, apt_version, run_py
+from src import ssl_context, status, version, apt_version, run_py, \
+    run as run_handler, upload
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -38,8 +39,14 @@ def create_app():
     status_resource = cors.add(app.router.add_resource('/version'))
     cors.add(status_resource.add_route('GET', version))
 
+    status_resource = cors.add(app.router.add_resource('/upload'))
+    cors.add(status_resource.add_route('POST', upload))
+
     exec_resource = cors.add(app.router.add_resource('/run-py'))
     cors.add(exec_resource.add_route('GET', run_py))
+
+    exec_resource = cors.add(app.router.add_resource('/run'))
+    cors.add(exec_resource.add_route('GET', run_handler))
 
     return app
 
@@ -57,9 +64,9 @@ def run():
         create_app(),
         port=port(),
         ssl_context=ssl_context(),
-        # Web sockets are open indefinitely
-        # So don't ignore sigterm, as it may cause shutdown to hang/slow down
-        # unnecessary. Pi isn't serving fast-responding HTTP requests.
+        # Default handle_signals=True will ignore sigterm signals whilst there
+        # are requests that are not complete. This isn't appropriate for our
+        # indefinitely running websockets and can cause device shutdown to hang
         handle_signals=False
     )
 

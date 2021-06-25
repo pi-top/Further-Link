@@ -5,7 +5,6 @@ from collections import deque
 async def loop_forever(*args, **kwargs):
     while True:
         await asyncio.sleep(1)
-        pass
 
 
 async def race(tasks):
@@ -15,8 +14,13 @@ async def race(tasks):
     )
     for task in pending:
         task.cancel()
-    await asyncio.wait(pending)
+    if len(pending):
+        await asyncio.wait(pending)
     return done
+
+
+async def timeout(task, time):
+    return await race([task, asyncio.create_task(asyncio.sleep(time))])
 
 
 async def ringbuf_read(

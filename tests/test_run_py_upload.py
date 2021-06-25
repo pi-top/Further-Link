@@ -3,7 +3,7 @@ import os
 import aiofiles
 import asyncio
 
-from src.message import create_message, parse_message
+from src.util.message import create_message, parse_message
 from src.upload import get_bucket_cache_path, get_directory_path
 from tests import WORKING_DIRECTORY
 from .test_data.upload_data import directory
@@ -11,11 +11,11 @@ from .helpers import receive_data, wait_for_data
 
 
 @pytest.mark.asyncio
-async def test_upload(ws_client):
+async def test_upload(run_py_ws_client):
     upload_cmd = create_message('upload', {'directory': directory})
-    await ws_client.send_str(upload_cmd)
+    await run_py_ws_client.send_str(upload_cmd)
 
-    await wait_for_data(ws_client, 'uploaded')
+    await wait_for_data(run_py_ws_client, 'uploaded')
 
     directory_path = get_directory_path(WORKING_DIRECTORY, directory["name"])
 
@@ -40,11 +40,11 @@ async def test_upload(ws_client):
 
 
 @pytest.mark.asyncio
-async def test_upload_read_file(ws_client):
+async def test_upload_read_file(run_py_ws_client):
     upload_cmd = create_message('upload', {'directory': directory})
-    await ws_client.send_str(upload_cmd)
+    await run_py_ws_client.send_str(upload_cmd)
 
-    await wait_for_data(ws_client, 'uploaded')
+    await wait_for_data(run_py_ws_client, 'uploaded')
 
     code = """\
 import os
@@ -55,24 +55,25 @@ with open(os.path.dirname(__file__) + '/cereal.csv', 'r') as f:
         'sourceScript': code,
         'directoryName': directory["name"]
     })
-    await ws_client.send_str(start_cmd)
+    await run_py_ws_client.send_str(start_cmd)
 
-    await receive_data(ws_client, 'started')
+    await receive_data(run_py_ws_client, 'started')
 
     await asyncio.sleep(0.2)  # wait for data
-    m_type, m_data = parse_message((await ws_client.receive()).data)
+    message = await run_py_ws_client.receive()
+    m_type, m_data, m_process = parse_message(message.data)
     assert m_type == 'stdout'
     assert m_data["output"][788:796] == 'Cheerios'
 
-    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
-async def test_upload_import_script(ws_client):
+async def test_upload_import_script(run_py_ws_client):
     upload_cmd = create_message('upload', {'directory': directory})
-    await ws_client.send_str(upload_cmd)
+    await run_py_ws_client.send_str(upload_cmd)
 
-    await wait_for_data(ws_client, 'uploaded')
+    await wait_for_data(run_py_ws_client, 'uploaded')
 
     code = """\
 from some_lib import call_some_lib
@@ -82,54 +83,54 @@ print(call_some_lib())
         'sourceScript': code,
         'directoryName': directory["name"]
     })
-    await ws_client.send_str(start_cmd)
+    await run_py_ws_client.send_str(start_cmd)
 
-    await receive_data(ws_client, 'started')
+    await receive_data(run_py_ws_client, 'started')
 
-    await wait_for_data(ws_client, 'stdout', 'output', 'some lib called\n', 100)
+    await wait_for_data(run_py_ws_client, 'stdout', 'output',
+                        'some lib called\n')
 
-    await wait_for_data(ws_client, 'stopped', 'exitCode', 0, 100)
+    await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 0)
 
 
 @pytest.mark.asyncio
-async def test_upload_bad_file(ws_client, aresponses):
-    aresponses.add('https://placekitten.com/50/50', '/', 'GET',
-                   aresponses.Response(text='error', status=500))
+async def test_upload_bad_file(run_py_ws_client, aioresponses):
+    aioresponses.add('https://placekitten.com/50/50', status=500)
 
     upload_cmd = create_message('upload', {'directory': directory})
-    await ws_client.send_str(upload_cmd)
+    await run_py_ws_client.send_str(upload_cmd)
 
-    await receive_data(ws_client, 'error', 'message', 'Bad upload')
+    await receive_data(run_py_ws_client, 'error', 'message', 'Bad upload')
 
 
 @pytest.mark.asyncio
-async def test_upload_existing_directory(ws_client):
+async def test_upload_existing_directory(run_py_ws_client):
     existing_directory = directory.copy()
     existing_directory['name'] = 'existing_directory'
 
     os.mkdir("{}/existing_directory".format(WORKING_DIRECTORY))
 
     upload_cmd = create_message('upload', {'directory': existing_directory})
-    await ws_client.send_str(upload_cmd)
+    await run_py_ws_client.send_str(upload_cmd)
 
-    await wait_for_data(ws_client, 'uploaded')
+    await wait_for_data(run_py_ws_client, 'uploaded')
 
 
 @pytest.mark.asyncio
-async def test_upload_restricted_directory(ws_client):
+async def test_upload_restricted_directory(run_py_ws_client):
     # name directory something that tries to escape from working dir
     restricted_directory = directory.copy()
     restricted_directory['name'] = '../injected'
 
     upload_cmd = create_message('upload', {'directory': restricted_directory})
-    await ws_client.send_str(upload_cmd)
+    await run_py_ws_client.send_str(upload_cmd)
 
-    await receive_data(ws_client, 'error', 'message', 'Bad upload')
+    await receive_data(run_py_ws_client, 'error', 'message', 'Bad upload')
 
 
 @pytest.mark.asyncio
-async def test_upload_empty_directory(ws_client):
+async def test_upload_empty_directory(run_py_ws_client):
     upload_cmd = create_message('upload', {'directory': {}})
-    await ws_client.send_str(upload_cmd)
+    await run_py_ws_client.send_str(upload_cmd)
 
-    await receive_data(ws_client, 'error', 'message', 'Bad message')
+    await receive_data(run_py_ws_client, 'error', 'message', 'Bad message')
