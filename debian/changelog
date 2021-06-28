@@ -1,3 +1,16 @@
+pt-further-link (4.4.4) buster; urgency=medium
+
+  * Add /run API which supports concurrent processes and various runners(#67)
+    * Runners for shell and executables as well as python3
+    * Improved environment and user configuration
+    * Handles setting size of process pseudoterminal and resizing
+    * Stop processes with sigkill when sigterm doesn't work
+  * Add http file upload endpoint
+  * Update readme and tests
+  * Improve test setup, timeouts, replace mocker aresponses with aioresponses
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 25 Jun 2021 09:00:32 +0000
+
 pt-further-link (4.3.1) buster; urgency=medium
 
   * Update License to Apache 2.0 (#65)
