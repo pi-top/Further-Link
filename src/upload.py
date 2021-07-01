@@ -111,10 +111,18 @@ async def do_upload(directory, work_dir):
         directory_name = directory['name']
         directory_path = get_directory_path(work_dir, directory_name)
 
-        # clear the upload directory every time
-        if os.path.exists(directory_path):
-            rmtree(directory_path)
         os.makedirs(directory_path, exist_ok=True)
+
+        # clear the upload directory every time
+        for filename in os.listdir(directory_path):
+            file_path = os.path.join(directory_path, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    rmtree(file_path)
+            except Exception:
+                pass
 
         for alias_name, file_info in directory['files'].items():
             alias_path = get_alias_path(directory_path, alias_name)
