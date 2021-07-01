@@ -16,10 +16,10 @@ class ExecProcessHandler(ProcessHandler):
         # create path directories if they don't already exist
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        entrypoint = path if not code else os.path.join(path, f'{self.id}')
+        entrypoint = path if code is None else os.path.join(path, self.id)
 
         # create a temporary file to execute if code is provided
-        if code:
+        if code is not None:
             async with aiofiles.open(entrypoint, 'w+') as file:
                 await file.write(code)
             self._remove_entrypoint = entrypoint
