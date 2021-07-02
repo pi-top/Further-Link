@@ -1,3 +1,10 @@
+pt-further-link (4.4.5) buster; urgency=medium
+
+  [ Angus Whitehead ]
+  * Fur 1607 fix upload delete dirs (#70)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 02 Jul 2021 14:23:35 +0000
+
 pt-further-link (4.4.4) buster; urgency=medium
 
   * Add /run API which supports concurrent processes and various runners(#67)
