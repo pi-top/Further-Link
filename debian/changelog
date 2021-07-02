@@ -1,7 +1,7 @@
 pt-further-link (4.4.5) buster; urgency=medium
 
-  [ Angus Whitehead ]
-  * Fur 1607 fix upload delete dirs (#70)
+  * Fix upload to delete files in dir but not dir itself (#70)
+  * Fix creating empty code files in python and exec runners
 
  -- pi-top <deb-maintainers@pi-top.com>  Fri, 02 Jul 2021 14:23:35 +0000
 
