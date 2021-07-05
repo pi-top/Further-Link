@@ -1,9 +1,6 @@
 name: PR Test and Upload Coverage Report
 
-on:
-  pull_request:
-    branches:
-      - '**'
+on: push
 
 jobs:
   test-and-upload-coverage-report:
