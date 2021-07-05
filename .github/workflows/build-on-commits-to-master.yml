@@ -1,15 +1,12 @@
-name: Debian Build
+name: Latest Build
 
 on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - '**'
 
 jobs:
-  build-debian-package:
+  build-latest-debian-package:
     runs-on: ubuntu-20.04
     steps:
       - name: GitHub Environment Variables Action
