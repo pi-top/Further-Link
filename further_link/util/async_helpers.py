@@ -8,8 +8,10 @@ async def loop_forever(*args, **kwargs):
         await asyncio.sleep(1)
 
 
-async def race(tasks):
-    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+async def race(tasks, timeout=None):
+    done, pending = await asyncio.wait(
+        tasks, timeout=timeout, return_when=asyncio.FIRST_COMPLETED
+    )
     for task in pending:
         task.cancel()
     if len(pending):
@@ -17,8 +19,17 @@ async def race(tasks):
     return done
 
 
-async def timeout(task, time):
-    return await race([task, asyncio.create_task(asyncio.sleep(time))])
+async def timeout(tasks, timeout):
+    if not isinstance(tasks, list):
+        tasks = [tasks]
+    return await race(tasks, timeout)
+
+
+async def stream_read(stream, chunk_size):
+    try:
+        return await stream.read(chunk_size)
+    except OSError:
+        pass  # probably stream was closed by end of process
 
 
 async def ringbuf_read(
@@ -37,7 +48,7 @@ async def ringbuf_read(
 
     async def read():
         while True:
-            read_data = asyncio.create_task(stream.read(chunk_size))
+            read_data = asyncio.create_task(stream_read(stream, chunk_size))
             wait_done = asyncio.create_task(done_condition())
 
             done = await race([read_data, wait_done])

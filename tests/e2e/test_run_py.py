@@ -360,6 +360,9 @@ pause()
     await wait_for_data(run_py_ws_client, "keylisten", "output", "a")
     await wait_for_data(run_py_ws_client, "keylisten", "output", "b")
 
+    # keyevent ipc server can take a moment to start up
+    await asyncio.sleep(0.1)
+
     await run_py_ws_client.send_str(
         create_message("keyevent", {"key": "a", "event": "keydown"})
     )
