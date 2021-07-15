@@ -19,8 +19,10 @@ async def race(tasks):
     return done
 
 
-async def timeout(task, time):
-    return await race([task, asyncio.create_task(asyncio.sleep(time))])
+async def timeout(tasks, time):
+    if not isinstance(tasks, list):
+        tasks = [tasks]
+    return await race([*tasks, asyncio.create_task(asyncio.sleep(time))])
 
 
 async def ringbuf_read(
