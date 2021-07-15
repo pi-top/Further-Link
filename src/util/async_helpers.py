@@ -25,6 +25,13 @@ async def timeout(tasks, time):
     return await race([*tasks, asyncio.create_task(asyncio.sleep(time))])
 
 
+async def stream_read(stream, chunk_size):
+    try:
+        return await stream.read(chunk_size)
+    except OSError:
+        pass  # probably stream was closed by end of process
+
+
 async def ringbuf_read(
     stream,
     output_callback=None,
@@ -41,7 +48,7 @@ async def ringbuf_read(
 
     async def read():
         while True:
-            read_data = asyncio.create_task(stream.read(chunk_size))
+            read_data = asyncio.create_task(stream_read(stream, chunk_size))
             wait_done = asyncio.create_task(done_condition())
 
             done = await race([read_data, wait_done])
