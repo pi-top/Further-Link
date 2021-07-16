@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime
 
 from src.util.message import create_message, parse_message
-from tests import RUN_URL
+from . import RUN_URL
 from .helpers import receive_data, wait_for_data
 
 

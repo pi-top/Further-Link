@@ -5,7 +5,7 @@ from subprocess import run
 from re import match
 
 from src.lib.further_link import __version__
-from tests import STATUS_URL, VERSION_URL
+from . import STATUS_URL, VERSION_URL
 
 
 @pytest.mark.asyncio

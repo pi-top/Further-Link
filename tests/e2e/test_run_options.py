@@ -4,7 +4,8 @@ from datetime import datetime
 from shutil import copy
 
 from src.util.message import create_message
-from tests import TEST_PATH, WORKING_DIRECTORY
+from tests import WORKING_DIRECTORY
+from . import E2E_PATH
 from .helpers import receive_data, wait_for_data
 
 
@@ -31,7 +32,7 @@ print(datetime.now().strftime("%A"))
 
 @pytest.mark.asyncio
 async def test_run_code_relative_path(run_ws_client):
-    copy('{}/test_data/print_date.py'.format(TEST_PATH), WORKING_DIRECTORY)
+    copy('{}/test_data/print_date.py'.format(E2E_PATH), WORKING_DIRECTORY)
 
     start_cmd = create_message('start', {
         'runner': 'python3', 'path': 'print_date.py'
@@ -50,7 +51,7 @@ async def test_run_code_relative_path(run_ws_client):
 async def test_run_code_absolute_path(run_ws_client):
     start_cmd = create_message('start', {
         'runner': 'python3',
-        'path': "{}/test_data/print_date.py".format(TEST_PATH)
+        'path': "{}/test_data/print_date.py".format(E2E_PATH)
     }, '1')
     await run_ws_client.send_str(start_cmd)
 
