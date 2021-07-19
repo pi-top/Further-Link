@@ -22,6 +22,7 @@ jobs:
           pipenv install --dev
           PYTHONPATH=src pipenv run pytest --verbose --cov-report term-missing --cov=src
           pipenv run coverage xml
+
       - name: Upload Python test coverage reports to Codecov
         uses: codecov/codecov-action@v1
         with:
