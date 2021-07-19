@@ -1,4 +1,4 @@
-name: PR Test and Upload Coverage Report
+name: Test and Upload Coverage Report
 
 on: push
 
