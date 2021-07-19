@@ -34,7 +34,7 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Generate non-release tag
+      - name: Generate human-readable non-release tag
         if: ! startsWith(github.ref, 'refs/tags/releases/')
         run: |
           echo "DOCKER_TAG=$(basename ${GITHUB_HEAD_REF:-$GITHUB_REF})-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
