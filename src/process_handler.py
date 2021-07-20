@@ -38,7 +38,9 @@ class ProcessHandler:
 
         stdio = asyncio.subprocess.PIPE
 
+        print(self.pty)
         if self.pty:
+            print('using pty')
             # communicate through a pty for terminal 'cooked mode' behaviour
             master, slave = openpty()
 
