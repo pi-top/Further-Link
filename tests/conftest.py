@@ -25,6 +25,7 @@ def create_working_directory():
 async def start_server():
     runner = await run_async()
     yield
+    await runner.shutdown()
     await runner.cleanup()
 
 
