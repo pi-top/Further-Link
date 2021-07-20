@@ -12,12 +12,17 @@ jobs:
       - name: Run Python tests and generate coverage report
         run: |
           docker run --rm \
-            --volume ${{ github.workspace }}:/src \
+            --volume ${{ github.workspace }}:/${{ github.event.repository.name }} \
             debian:buster \
-            apt-get install python3 python3-pip pipenv && \
-            pipenv sync --dev && \
-            pipenv run test && \
-            pipenv run coverage xml
+            /bin/bash -c "\
+              apt-get update && \
+              apt-get install -y python3 python3-pip && \
+              pip3 install pipenv && \
+              cd /${{ github.event.repository.name }} && \
+              pipenv sync --dev && \
+              pipenv run test && \
+              pipenv run coverage xml\
+            "
 
       - name: Upload Python test coverage reports to Codecov
         uses: codecov/codecov-action@v1
