@@ -49,7 +49,7 @@ class ProcessHandler:
             os.chown(slave, get_uid(self.user), get_gid(self.user))
 
             self.pty_master = await aiofiles.open(master, 'w+b', 0)
-            self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
+            self.pty_slave = await aiofiles.open(slave, 'rb', 0)
 
             # set terminal size to a minimum that we display in Further
             set_winsize(slave, 4, 60)
