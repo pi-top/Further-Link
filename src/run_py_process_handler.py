@@ -191,13 +191,8 @@ class RunPyProcessHandler:
 
         # stop ongoing io tasks
         await asyncio.sleep(0.1)
-        for task in output_tasks:
+        for task in output_tasks + self.ipc_tasks:
             task.cancel()
-        await asyncio.wait(output_tasks)
-
-        for task in self.ipc_tasks:
-            task.cancel()
-        await asyncio.wait(self.ipc_tasks)
 
         await self._clean_up()
         self.process = None
