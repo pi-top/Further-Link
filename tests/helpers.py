@@ -1,5 +1,6 @@
 from time import time
 from concurrent.futures import TimeoutError
+import asyncio
 
 from src.util.message import parse_message
 
@@ -65,6 +66,6 @@ async def wait_for_data(ws, channel, data_key=None, data_value=None, timeout=0,
             # use receive_data to gather rest
             remaining_data = data_value.replace(value, '', 1)
             return await receive_data(ws, channel, data_key, remaining_data)
-        except TimeoutError:
+        except (TimeoutError, asyncio.TimeoutError):
             continue
     raise TimeoutError
