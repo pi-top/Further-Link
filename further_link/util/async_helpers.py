@@ -1,5 +1,6 @@
 import asyncio
 from collections import deque
+from concurrent.futures import TimeoutError
 
 
 async def loop_forever(*args, **kwargs):
@@ -58,7 +59,7 @@ async def ringbuf_read(
             try:
                 await asyncio.wait_for(done_condition(), timeout=buffer_time)
                 done = True
-            except asyncio.TimeoutError:
+            except (TimeoutError, asyncio.TimeoutError):
                 pass
 
             data = b"".join(ringbuf)
