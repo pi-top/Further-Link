@@ -1,3 +1,18 @@
+pt-further-link (4.4.6) buster; urgency=medium
+
+  [ Mike Roberts ]
+  * Workflow: create draft release manually
+  * Update workflow files
+
+  [ pre-commit-ci[bot] ]
+  * [pre-commit.ci] pre-commit autoupdate
+  * Update CI workflows (#72)
+
+  [ Angus Whitehead ]
+  * Add unit tests (#73)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 22 Jul 2021 08:54:32 +0000
+
 pt-further-link (4.4.5) buster; urgency=medium
 
   * Fix upload to delete files in dir but not dir itself (#70)
