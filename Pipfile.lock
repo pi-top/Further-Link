@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6d53c9ade351319a98574c1da7670280b4d4ac26cc995461c155430e4333a5f4"
+            "sha256": "5f7e63d1ec7f10d4e6d03e943d90380a5f8bb8ecef76f855bca5af78f9c57875"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -120,6 +120,14 @@
                 "sha256:ee5e7d1ce49d5c0dc176ffbb4b90d914a459b25fffaec99e8e7ba3fa1e9a3e09"
             ],
             "version": "==0.9.1"
+        },
+        "mock": {
+            "hashes": [
+                "sha256:122fcb64ee37cfad5b3f48d7a7d51875d7031aaf3d8be7c42e2bee25044eee62",
+                "sha256:7d3fbbde18228f4ff2f1f119a45cdffa458b4c0dee32eb4d2bb2f82554bac7bc"
+            ],
+            "index": "pypi",
+            "version": "==4.0.3"
         },
         "multidict": {
             "hashes": [
@@ -306,7 +314,7 @@
                 "sha256:50b6f157849174217d0656f99dc82fe932884fb250826c18350e159ec6cdf342",
                 "sha256:779383f6086d90c99ae41cf0ff39aac8a7937a9283ce0a414e5dd782f4c94a84"
             ],
-            "markers": "python_version <= '3.9'",
+            "markers": "python_version < '3.8'",
             "version": "==3.10.0.0"
         },
         "yarl": {
@@ -608,6 +616,14 @@
             ],
             "index": "pypi",
             "version": "==2.12.1"
+        },
+        "pytest-timeout": {
+            "hashes": [
+                "sha256:20b3113cf6e4e80ce2d403b6fb56e9e1b871b510259206d40ff8d609f48bda76",
+                "sha256:541d7aa19b9a6b4e475c759fd6073ef43d7cdc9a92d95644c260076eb257a063"
+            ],
+            "index": "pypi",
+            "version": "==1.4.2"
         },
         "toml": {
             "hashes": [
