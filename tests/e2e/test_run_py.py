@@ -133,7 +133,7 @@ async def test_bad_code(run_py_ws_client):
     lines = m_data['output'].split('\n')
     assert lines[0].startswith('  File')
     assert lines[1] == '    i\'m not valid python'
-    assert lines[2] == '                       ^'
+    assert lines[2][-1] == '^'
     assert lines[3] == 'SyntaxError: EOL while scanning string literal'
 
     await wait_for_data(run_py_ws_client, 'stopped', 'exitCode', 1)
