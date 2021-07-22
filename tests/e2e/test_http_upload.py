@@ -5,7 +5,8 @@ import aiohttp
 import json
 
 from src.upload import get_bucket_cache_path, get_directory_path
-from tests import WORKING_DIRECTORY, UPLOAD_URL
+from tests import WORKING_DIRECTORY
+from . import UPLOAD_URL
 from .test_data.upload_data import directory
 
 

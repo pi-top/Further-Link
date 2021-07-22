@@ -1,13 +1,8 @@
 import os
 import pytest
-import aiohttp
-import urllib.parse
-
 from shutil import rmtree
-from aioresponses import aioresponses as aioresponses_mock
 
-from tests import WORKING_DIRECTORY, RUN_URL, RUN_PY_URL
-from server import run_async
+from . import WORKING_DIRECTORY
 
 os.environ['FURTHER_LINK_PORT'] = '8028'
 os.environ['FURTHER_LINK_NOSSL'] = 'true'
@@ -22,47 +17,14 @@ def create_working_directory():
 
 
 @pytest.fixture(autouse=True)
-async def start_server():
-    runner = await run_async()
-    yield
-    await runner.cleanup()
-
-
-@pytest.fixture()
-async def run_py_ws_client():
-    async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(
-            RUN_PY_URL, receive_timeout=0.1
-        ) as client:
-            yield client
-
-
-@pytest.fixture()
-async def run_py_ws_client_query(query_params):
-    url = RUN_PY_URL + '?' + urllib.parse.urlencode(query_params)
-    async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(url, receive_timeout=0.1) as client:
-            yield client
-
-
-@pytest.fixture()
-async def run_ws_client():
-    async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(
-            RUN_URL, receive_timeout=0.1
-        ) as client:
-            yield client
-
-
-@pytest.fixture()
-async def run_ws_client_query(query_params):
-    url = RUN_URL + '?' + urllib.parse.urlencode(query_params)
-    async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(url, receive_timeout=0.1) as client:
-            yield client
-
-
-@pytest.fixture
-def aioresponses():
-    with aioresponses_mock(passthrough=['http://0.0.0.0']) as a:
-        yield a
+def clear_loggers():
+    # this probably isn't the best solution to this problem
+    # https://github.com/pytest-dev/pytest/issues/5502#issuecomment-647157873
+    """Remove handlers from all loggers"""
+    import logging
+    loggers = [logging.getLogger()] + list(
+        logging.Logger.manager.loggerDict.values())
+    for logger in loggers:
+        handlers = getattr(logger, 'handlers', [])
+        for handler in handlers:
+            logger.removeHandler(handler)
