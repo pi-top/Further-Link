@@ -20,7 +20,7 @@ jobs:
               pip3 install pipenv && \
               cd /${{ github.event.repository.name }} && \
               pipenv sync --dev && \
-              pipenv run test -v --cov=src&& \
+              pipenv run test -v --cov=src --timeout=5 && \
               pipenv run coverage xml\
             "
 
