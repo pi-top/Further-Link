@@ -6,6 +6,7 @@ import asyncio
 from mock import AsyncMock
 from aiofiles.threadpool.binary import AsyncFileIO
 from asyncio.subprocess import Process
+import getpass
 
 from src.process_handler import ProcessHandler
 
@@ -15,10 +16,12 @@ logging.basicConfig(
            else logging.INFO)
 )
 
+user = getpass.getuser()
+
 
 @pytest.mark.asyncio
 async def test_basic():
-    p = ProcessHandler(os.environ.get('USER'))
+    p = ProcessHandler(user)
 
     p.on_start = AsyncMock()
     p.on_stop = AsyncMock()
@@ -41,7 +44,7 @@ async def test_basic():
 
 @pytest.mark.asyncio
 async def test_input():
-    p = ProcessHandler(os.environ.get('USER'))
+    p = ProcessHandler(user)
 
     p.on_start = AsyncMock()
     p.on_stop = AsyncMock()
@@ -62,7 +65,7 @@ async def test_input():
 
 @pytest.mark.asyncio
 async def test_pty():
-    p = ProcessHandler(os.environ.get('USER'), pty=True)
+    p = ProcessHandler(user, pty=True)
 
     p.on_start = AsyncMock()
     p.on_stop = AsyncMock()
