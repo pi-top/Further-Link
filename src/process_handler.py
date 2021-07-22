@@ -179,6 +179,7 @@ class ProcessHandler:
         # wait a little for the io tasks to complete to let them send
         # output produced right before the process stopped
         # but cancel them after a timeout if they don't stop themselves
+        await asyncio.sleep(0.5)
         await timeout(output_tasks, 1)
         await timeout(self.ipc_tasks, 0.1)
 

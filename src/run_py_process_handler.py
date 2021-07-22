@@ -190,7 +190,7 @@ class RunPyProcessHandler:
         exit_code = await self.process.wait()
 
         # stop ongoing io tasks
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5)
         for task in output_tasks:
             task.cancel()
         await asyncio.wait(output_tasks)
