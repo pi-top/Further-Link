@@ -8,7 +8,7 @@ include /usr/share/dpkg/pkg-info.mk
 override_dh_auto_build:
 	echo "__version__ = '$(DEB_VERSION)'" > src/lib/further_link/version.py
 	[ -f extra/fl.dat ] || echo "$(DATA)" > extra/fl.dat
-	[ -f extra/key.aes.pem ] || echo -e "$(TLS_KEY)" > extra/key.aes.pem
+	[ -f extra/key.aes.pem ] || echo -e $(TLS_KEY) > extra/key.aes.pem
 
 	dh_auto_build
 
