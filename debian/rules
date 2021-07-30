@@ -10,6 +10,7 @@ override_dh_auto_build:
 	mkdir -p extra
 	echo "$(DATA)" > extra/data.txt
 	echo "$(TLS_KEY)" > extra/key.aes.pem
+
 	dh_auto_build
 
 override_dh_clean:
