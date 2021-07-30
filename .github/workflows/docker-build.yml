@@ -14,13 +14,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Insert data file
-        run: echo ${{ secrets.DATA }} > data.txt
-
-      - name: Insert key file
+      - name: Insert extra files
         run: |
-          cat << EOF > key.aes.pem
-          ${{ secrets.TLS_KEY_AES }}
+          echo ${{ secrets.DATA }} > extra/data.txt
+          cat << EOF > extra/key.aes.pem
+          ${{ secrets.TLS_KEY }}
           EOF
 
       - name: Login to Docker Hub

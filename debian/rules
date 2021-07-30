@@ -7,14 +7,13 @@ include /usr/share/dpkg/pkg-info.mk
 
 override_dh_auto_build:
 	echo "__version__ = '$(DEB_VERSION)'" > src/lib/further_link/version.py
-	mkdir -p extra
-	echo "$(DATA)" > extra/data.txt
+	echo "$(DATA)" > extra/fl.dat
 	echo "$(TLS_KEY)" > extra/key.aes.pem
 
 	dh_auto_build
 
 override_dh_clean:
-	rm -rf extra
+	rm -rf extra/fl.dat extra/key.aes.pem
 
 	dh_clean
 

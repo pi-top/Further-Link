@@ -52,8 +52,8 @@ jobs:
           docker_image: ${{ env.DEB_BUILD_DOCKER_IMAGE }}:${{ env.DEB_BUILD_DOCKER_TAG }}
           build_directory: ./artifacts
           additional_env: |
-            SECRET_DATA=${{ secrets.DATA }}
-            SECRET_TLS_KEY=${{ secrets.TLS_KEY }}
+            DATA=${{ secrets.DATA }}
+            TLS_KEY=${{ secrets.TLS_KEY }}
 
       - name: Generate artifact name
         run: |
