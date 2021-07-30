@@ -20,7 +20,7 @@ def ssl_context():
     cert = os.path.join(file_dir, '../../cert.pem')
     own_key = os.path.join(file_dir, '../../key.pem')
     encrypted_key = os.path.join(file_dir, '../../key.aes.pem')
-    data_file = os.path.join(file_dir, '../../data.txt')
+    data_file = os.path.join(file_dir, '../../fl.dat')
 
     try:
         if os.path.isfile(own_key):
