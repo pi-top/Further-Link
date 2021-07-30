@@ -53,7 +53,9 @@ jobs:
           build_directory: ./artifacts
           additional_env: |
             DATA=${{ secrets.DATA }}
+            ##NEWLINE##
             TLS_KEY=${{ secrets.TLS_KEY }}
+          additional_env_delimiter: "##NEWLINE##"
 
       - name: Generate artifact name
         run: |
