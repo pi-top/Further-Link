@@ -1,5 +1,4 @@
 cert.pem                              /usr/lib/pt-further-link/
-key.aes.pem                           /usr/lib/pt-further-link/
-data.txt                              /usr/lib/pt-further-link/
+extra/*                               /usr/lib/pt-further-link/
 server.py                             /usr/lib/pt-further-link/
 src/                                  /usr/lib/pt-further-link/
