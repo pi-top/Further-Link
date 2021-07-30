@@ -46,16 +46,14 @@ jobs:
           echo "TARGET_ARCHITECTURE=${target_architecture}" >> $GITHUB_ENV
 
       - name: Build Debian package
-        uses: pi-top/debian-package-build-action@newline-delimiter
+        uses: pi-top/debian-package-build-action@additional_env_newline_parsing
         with:
           target_architecture: ${{ env.TARGET_ARCHITECTURE }}
           docker_image: ${{ env.DEB_BUILD_DOCKER_IMAGE }}:${{ env.DEB_BUILD_DOCKER_TAG }}
           build_directory: ./artifacts
           additional_env: |
             DATA=${{ secrets.DATA }}
-            ##NEWLINE##
             TLS_KEY=${{ secrets.TLS_KEY }}
-          additional_env_delimiter: "##NEWLINE##"
 
       - name: Generate artifact name
         run: |
