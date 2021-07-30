@@ -21,6 +21,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2.2.0
 
+      - name: Insert data file
+        run: echo ${{ secrets.DATA }} > data.txt
+
+      - name: Insert key file
+        run: |
+          cat << EOF > key.aes.pem
+          ${{ secrets.TLS_KEY_AES }}
+          EOF
+
       - id: version
         uses: docker://lpenz/ghaction-version-gen:0.3
 
