@@ -1,57 +1,78 @@
 name: Debian Package Build
 
-on: push
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+env:
+  DEB_BUILD_DOCKER_IMAGE: "pitop/pi-top-os-deb-build"
+  DEB_BUILD_DOCKER_TAG: "latest"
+  CHANGELOG_AUTHOR_NAME: "pi-top"
+  CHANGELOG_AUTHOR_EMAIL: "deb-maintainers@pi-top.com"
 
 jobs:
   build-debian-package:
     runs-on: ubuntu-20.04
     steps:
-      - name: GitHub Environment Variables Action
-        uses: FranzDiebold/github-env-vars-action@v1.2.1
-
       - name: Checkout code
         uses: actions/checkout@v2.2.0
+
+      - id: version
+        uses: docker://lpenz/ghaction-version-gen:0.3
+
+      - name: Add changelog entry for latest snapshot version
+        uses: pi-top/git-debian-changelog-bump-action@master
         with:
-          fetch-depth: 0
+          release: false
+          author_name: ${{ env.CHANGELOG_AUTHOR_NAME }}
+          author_email: ${{ env.CHANGELOG_AUTHOR_EMAIL }}
+          snapshot_number: ${{ steps.version.outputs.distance }}
+          since: ${{ steps.version.outputs.tag_latest }}
 
-      - name: Insert data file
-        run: echo ${{ secrets.DATA }} > data.txt
-
-      - name: Insert key file
+      # We only want ARM builds. This step is here to provide the option of
+      # using a strategy matrix if additional builds (e.g. `arm64`) are desired
+      - name: Determine architecture to use from package info
+        # If architecture is 'all', then it can be compiled on host architecture
+        # All other pi-topOS cases require 'armhf'
         run: |
-          cat << EOF > key.aes.pem
-          ${{ secrets.TLS_KEY_AES }}
-          EOF
-
-      - name: Patch changelog (snapshot)
-        run: |
-          docker run --rm \
-            --volume ${{ github.workspace }}:/src \
-            -e RELEASE=0 \
-            pitop/gbp-dch-gen:latest
+          target_architecture=amd64
+          if grep '^Architecture:' debian/control | grep -q -v 'all'; then
+            target_architecture=armhf
+          fi
+          echo "TARGET_ARCHITECTURE=${target_architecture}" >> $GITHUB_ENV
 
       - name: Build Debian package
-        run: |
-          mkdir -p /tmp/artifacts/{src,bin}
-          docker run --rm \
-            --volume ${{ github.workspace }}:/src \
-            --volume /tmp/artifacts/bin:/build \
-            -e LINTIAN_TAGS_TO_SUPPRESS="debian-changelog-line-too-long,spelling-error-in-changelog,unreleased-changelog-distribution" \
-            pitop/deb-build:latest
+        uses: pi-top/debian-package-build-action@master
+        with:
+          target_architecture: ${{ env.TARGET_ARCHITECTURE }}
+          docker_image: ${{ env.DEB_BUILD_DOCKER_IMAGE }}:${{ env.DEB_BUILD_DOCKER_TAG }}
+          build_directory: ./artifacts
 
-      - name: Separate Debian source package files from binary
+      - name: Generate artifact name
         run: |
-          mv /tmp/artifacts/bin/* /tmp/artifacts/src/
-          mv /tmp/artifacts/src/*.deb /tmp/artifacts/bin/
+          echo "ARTIFACT_PREFIX=$(basename -s .dsc "$(find . -name "*.dsc")")" >> $GITHUB_ENV
 
-      - name: Upload Debian source package files
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: "${{ env.GITHUB_REPOSITORY_NAME }}-#${{ env.GITHUB_SHA_SHORT }}-deb-src"
-          path: "/tmp/artifacts/src/"
+          name: ${{ env.ARTIFACT_PREFIX }}.deb
+          path: ./artifacts/*.deb
 
-      - name: Upload Debian binary packages
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: "${{ env.GITHUB_REPOSITORY_NAME }}-#${{ env.GITHUB_SHA_SHORT }}-deb"
-          path: "/tmp/artifacts/bin/"
+          name: ${{ env.ARTIFACT_PREFIX }}.deb-src
+          path: ./artifacts/*.tar.xz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_PREFIX }}.metadata
+          path: |
+            ./artifacts/**
+            !./artifacts/*.deb
+            !./artifacts/*.tar.xz
