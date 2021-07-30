@@ -16,7 +16,7 @@ jobs:
 
       - name: Insert extra files
         run: |
-          echo ${{ secrets.DATA }} > extra/data.txt
+          echo ${{ secrets.DATA }} > extra/fl.dat
           cat << EOF > extra/key.aes.pem
           ${{ secrets.TLS_KEY }}
           EOF
