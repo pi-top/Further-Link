@@ -11,7 +11,7 @@ RUN pipenv sync
 
 ENV FURTHER_LINK_NOSSL=true
 
-COPY ./extra/* ./
+COPY extra extra
 COPY server.py server.py
 COPY src src
 
