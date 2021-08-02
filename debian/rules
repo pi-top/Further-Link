@@ -7,14 +7,8 @@ include /usr/share/dpkg/pkg-info.mk
 
 override_dh_auto_build:
 	echo "__version__ = '$(DEB_VERSION)'" > src/lib/further_link/version.py
-	# Write to file if it doesn't exist
-	# This allows for Docker build to write these to file
-	ifeq ("$(wildcard extra/fl.dat)","")
-		$(file > extra/fl.dat,$(DATA))
-	endif
-	ifeq ("$(wildcard extra/key.aes.pem)","")
-		$(file > extra/key.aes.pem,$(TLS_KEY))
-	endif
+	$(file > extra/fl.dat,$(DATA))
+	$(file > extra/key.aes.pem,$(TLS_KEY))
 
 	dh_auto_build
 
