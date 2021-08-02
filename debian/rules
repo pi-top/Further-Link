@@ -7,8 +7,11 @@ include /usr/share/dpkg/pkg-info.mk
 
 override_dh_auto_build:
 	echo "__version__ = '$(DEB_VERSION)'" > src/lib/further_link/version.py
-	$(file > extra/fl.dat,$(DATA))
-	$(file > extra/key.aes.pem,$(TLS_KEY))
+	# Create extra files from env vars, without quotes
+	# https://stackoverflow.com/questions/10424645/how-to-convert-a-quoted-string-to-a-normal-one-in-makefile
+	echo $(DATA) # just testing
+	$(file > extra/fl.dat,$(subst $\",,$(DATA)))
+	$(file > extra/key.aes.pem,$(shell echo $(TLS_KEY)))
 
 	dh_auto_build
 
