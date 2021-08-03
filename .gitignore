@@ -112,5 +112,6 @@ venv.bak/
 # key stuff
 data
 data.txt
+fl.dat
 key.pem
 key.aes.pem

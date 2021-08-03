@@ -7,7 +7,17 @@ include /usr/share/dpkg/pkg-info.mk
 
 override_dh_auto_build:
 	echo "__version__ = '$(DEB_VERSION)'" > src/lib/further_link/version.py
+	# Create extra files from env vars, removing ALL quotes
+	# https://stackoverflow.com/a/10430975
+	$(file > extra/fl.dat,$(subst $\",,$(DATA)))
+	$(file > extra/key.aes.pem,$(subst $\",,$(TLS_KEY)))
+
 	dh_auto_build
+
+override_dh_clean:
+	rm -rf extra/fl.dat extra/key.aes.pem
+
+	dh_clean
 
 override_dh_installsystemd:
 	dh_installsystemd --name=pt-further-link

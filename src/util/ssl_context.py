@@ -17,10 +17,11 @@ def ssl_context():
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 
     file_dir = os.path.dirname(os.path.realpath(__file__))
-    cert = os.path.join(file_dir, '../../cert.pem')
-    own_key = os.path.join(file_dir, '../../key.pem')
-    encrypted_key = os.path.join(file_dir, '../../key.aes.pem')
-    data_file = os.path.join(file_dir, '../../data.txt')
+    cert_dir = os.path.join(file_dir, '../../extra')
+    cert = os.path.join(cert_dir, 'cert.pem')
+    own_key = os.path.join(cert_dir, 'key.pem')
+    encrypted_key = os.path.join(cert_dir, 'key.aes.pem')
+    data_file = os.path.join(cert_dir, 'fl.dat')
 
     try:
         if os.path.isfile(own_key):
