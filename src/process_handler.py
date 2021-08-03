@@ -182,6 +182,8 @@ class ProcessHandler:
         await timeout(output_tasks, 1)
         await timeout(self.ipc_tasks, 0.1)
 
+        await asyncio.sleep(0.1)
+
         await self._clean_up()
         self.process = None
 
