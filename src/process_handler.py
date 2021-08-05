@@ -4,7 +4,7 @@ import signal
 from pty import openpty
 from functools import partial
 import aiofiles
-from pitopcommon.current_session_info import get_first_display
+from pitop.common.current_session_info import get_first_display
 from shlex import split
 
 from .lib.further_link import (

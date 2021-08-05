@@ -16,7 +16,6 @@ aiohttp = "*"
 aiohttp_cors = "*"
 numpy = "*"
 Pillow = "*"
-pitopcommon = "*"
 aioresponses = "*"
 mock = "*"
 

@@ -5,7 +5,7 @@ import pty
 import pathlib
 from functools import partial
 import aiofiles
-from pitopcommon.current_session_info import get_first_display
+from pitop.common.current_session_info import get_first_display
 
 from .lib.further_link import (
     async_start_ipc_server,
