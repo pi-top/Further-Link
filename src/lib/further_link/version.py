@@ -6,7 +6,7 @@ from re import search
 __version__ = 'Undefined'
 
 changelog = path.abspath(path.join(__file__, '../../../../debian/changelog'))
-version_regex = r'pt-further-link \((.*?)\).*'
+version_regex = r'further-link \((.*?)\).*'
 
 with open(changelog) as f:
     first_line = f.readline()

@@ -1,4 +1,4 @@
-# Further Link (pt-further-link)
+# Further Link (further-link)
 Further Link is a web server application, intended to run on
 [pi-top](https://www.pi-top.com) hardware, which allows communicating with the
 device from the educational website [Further](https://further.pi-top.com). The
