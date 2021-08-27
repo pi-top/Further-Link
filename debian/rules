@@ -20,4 +20,4 @@ override_dh_clean:
 	dh_clean
 
 override_dh_installsystemd:
-	dh_installsystemd --name=pt-further-link
+	dh_installsystemd --name=further-link

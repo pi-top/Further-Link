@@ -1,6 +1,6 @@
 from threading import Thread
 import atexit
-from pitopcommon.singleton import Singleton
+from pitop.common.singleton import Singleton
 
 from .ipc import start_ipc_server, ipc_send, ipc_cleanup
 
