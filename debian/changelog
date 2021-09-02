@@ -1,4 +1,4 @@
-further-link (4.5.1) bullseye; urgency=medium
+further-link (4.5.1-1) bullseye; urgency=medium
 
   * Add unit tests (#73)
   * Bullseye release: rename package to `further-link` (#81)
