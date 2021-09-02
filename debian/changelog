@@ -1,19 +1,8 @@
 further-link (4.5.1) bullseye; urgency=medium
 
-  * Workflow: create draft release manually
-  * Update workflow files
-  * [pre-commit.ci] pre-commit autoupdate
-  * Update CI workflows (#72)
   * Add unit tests (#73)
-  * New workflows (#76)
-  * Drop bad workflow files; re-add custom step for deb-build
-  * Re-add shellcheck
-  * Decouple CI from build (#78)
-  * Update master workflow files
-  * Update master workflow files
   * Bullseye release: rename package to `further-link` (#81)
-  * Updated master workflow files
-  * Updated master workflow files
+  * Update master workflow files
 
  -- pi-top <deb-maintainers@pi-top.com>  Wed, 01 Sep 2021 20:48:05 +0000
 
