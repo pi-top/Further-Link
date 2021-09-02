@@ -1,4 +1,4 @@
-further-link (4.5.1) buster; urgency=medium
+further-link (4.5.1) bullseye; urgency=medium
 
   * Workflow: create draft release manually
   * Update workflow files
