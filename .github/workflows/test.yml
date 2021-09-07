@@ -1,6 +1,13 @@
 name: Run Tests and Upload Coverage Report
 
-on: push
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
   test-and-upload-coverage-report:
