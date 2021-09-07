@@ -1,0 +1,8 @@
+pitop python3-pitop; PEP386
+click python3-click; PEP386
+aiofiles python3-aiofiles; PEP386
+aiohttp python3-aiohttp; PEP386
+aiohttp_cors python3-aiohttp-cors; PEP386
+aioresponses python3-aioresponses; PEP386
+numpy python3-numpy; PEP386
+Pillow python3-pil; PEP386

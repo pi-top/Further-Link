@@ -5,7 +5,7 @@ import aiohttp
 from aioresponses import aioresponses as aioresponses_mock
 
 from . import RUN_URL, RUN_PY_URL
-from server import run_async
+from further_link.__main__ import run_async
 
 
 @pytest.fixture(autouse=True)

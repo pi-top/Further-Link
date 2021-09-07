@@ -1,4 +1,4 @@
-FROM python:3.7-buster
+FROM python:3.9-bullseye
 
 WORKDIR /usr/lib/further-link
 
@@ -12,8 +12,7 @@ RUN pipenv sync
 ENV FURTHER_LINK_NOSSL=true
 
 COPY extra extra
-COPY server.py server.py
-COPY src src
+COPY pt_further
 
 # overwrite version file based on changelog version
 COPY debian/changelog changelog

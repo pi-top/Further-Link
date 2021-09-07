@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import click
 import os
 import logging
 import sys
@@ -59,7 +60,8 @@ async def run_async():
     return runner
 
 
-def run():
+@click.command()
+def main():
     return web.run_app(
         create_app(),
         port=port(),
@@ -72,4 +74,4 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    main(prog_name="further-link")
