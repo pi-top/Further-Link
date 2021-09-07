@@ -3,8 +3,9 @@ import os
 
 import aiofiles
 import pytest
-from src.upload import get_bucket_cache_path, get_directory_path
-from src.util.message import create_message, parse_message
+
+from further_link.upload import get_bucket_cache_path, get_directory_path
+from further_link.util.message import create_message, parse_message
 
 from ..dirs import WORKING_DIRECTORY
 from .helpers import receive_data, wait_for_data

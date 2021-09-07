@@ -8,7 +8,8 @@ from asyncio.subprocess import Process
 import pytest
 from aiofiles.threadpool.binary import AsyncFileIO
 from mock import AsyncMock
-from src.process_handler import ProcessHandler
+
+from further_link.process_handler import ProcessHandler
 
 logging.basicConfig(
     stream=sys.stdout,

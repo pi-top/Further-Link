@@ -4,7 +4,8 @@ import os
 import aiofiles
 import aiohttp
 import pytest
-from src.upload import get_bucket_cache_path, get_directory_path
+
+from further_link.upload import get_bucket_cache_path, get_directory_path
 
 from ..dirs import WORKING_DIRECTORY
 from . import UPLOAD_URL

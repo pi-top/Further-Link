@@ -5,9 +5,9 @@ from shutil import copy
 
 import aiohttp
 import pytest
-from src.util.message import create_message, parse_message
 
 from further_link import __version__
+from further_link.util.message import create_message, parse_message
 
 from ..dirs import WORKING_DIRECTORY
 from . import E2E_PATH, RUN_PY_URL

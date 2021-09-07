@@ -2,7 +2,8 @@ from datetime import datetime
 from shutil import copy
 
 import pytest
-from src.util.message import create_message
+
+from further_link.util.message import create_message
 
 from ..dirs import WORKING_DIRECTORY
 from . import E2E_PATH

@@ -3,7 +3,8 @@ from datetime import datetime
 
 import aiohttp
 import pytest
-from src.util.message import create_message, parse_message
+
+from further_link.util.message import create_message, parse_message
 
 from . import RUN_URL
 from .helpers import receive_data, wait_for_data

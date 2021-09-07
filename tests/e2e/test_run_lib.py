@@ -1,9 +1,9 @@
 import os
 
 import pytest
-from src.util.message import create_message
 
 from further_link import __version__
+from further_link.util.message import create_message
 
 from .helpers import receive_data, wait_for_data
 
