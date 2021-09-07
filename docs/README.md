@@ -1,18 +1,3 @@
-# Further Link (further-link)
-Further Link is a web server application, intended to run on
-[pi-top](https://www.pi-top.com) hardware, which allows communicating with the
-device from the educational website [Further](https://further.pi-top.com). The
-primary use case of this is to remotely run Further user's code (python3) on
-the pi-top.
-
-A websocket api is provided to start and stop python programs and
-access their stdin/stdout/stderr streams. File can be uploaded to a directory
-for use in the execution. There is also a system of additional IO streams, for
-uses such as video output and keyboard events, which can be used with special
-Python module accessible to [code](examples/keyboard_rover.py) run by the server.
-
-The server is written in Python3 using aiohttp and asyncio subprocesses.
-
 ## Development usage
 We are using Python 3.7 and managing dependencies with
 [pipenv](https://github.com/pypa/pipenv)
