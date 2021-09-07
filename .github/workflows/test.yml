@@ -16,8 +16,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          sudo python3 setup.py install .[test]
+          pip install .[test]
 
       - name: Run tests with pytest
         run: |
