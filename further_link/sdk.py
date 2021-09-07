@@ -9,8 +9,6 @@ from glob import glob
 from os import environ
 from typing import List, Optional
 
-from pitop.common.logger import PTLogger
-
 
 def get_current_user():
     """Returns the name of the user that invoked this function.
@@ -36,7 +34,6 @@ def get_list_of_displays() -> List[str]:
 def get_first_display() -> Optional[str]:
     displays = get_list_of_displays()
     first_display = displays[0] if len(displays) > 0 else None
-    PTLogger.debug("First display is: {}".format(first_display))
     return first_display
 
 
