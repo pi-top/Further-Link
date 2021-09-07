@@ -1,7 +1,3 @@
-import json
-
-from aiohttp import web
-
 from .apt_version import apt_version  # noqa: F401
 from .ipc import (  # noqa: F401
     async_ipc_send,
@@ -20,8 +16,14 @@ from .version import __version__  # noqa: F401
 
 
 async def status(_):
+    from aiohttp import web
+
     return web.Response(text="OK")
 
 
 async def version(_):
-    return web.Response(text=json.dumps({"version": __version__}))
+    from json import dumps
+
+    from aiohttp import web
+
+    return web.Response(text=dumps({"version": __version__}))
