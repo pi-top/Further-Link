@@ -2,7 +2,8 @@ import os
 from shutil import rmtree
 
 import pytest
-from dirs import WORKING_DIRECTORY
+
+WORKING_DIRECTORY = f"{os.path.dirname(os.path.realpath(__file__))}/work_dir"
 
 os.environ["FURTHER_LINK_PORT"] = "8028"
 os.environ["FURTHER_LINK_NOSSL"] = "true"
