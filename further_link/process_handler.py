@@ -6,9 +6,9 @@ from pty import openpty
 from shlex import split
 
 import aiofiles
-from pitop.common.current_session_info import get_first_display
 
 from .ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
+from .sdk import get_first_display
 from .util.async_helpers import ringbuf_read, timeout
 from .util.terminal import set_winsize
 from .util.user_config import (

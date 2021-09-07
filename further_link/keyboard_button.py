@@ -1,9 +1,8 @@
 import atexit
 from threading import Thread
 
-from pitop.common.singleton import Singleton
-
 from .ipc import ipc_cleanup, ipc_send, start_ipc_server
+from .sdk import Singleton
 
 
 class KeyboardButtonsListener(metaclass=Singleton):

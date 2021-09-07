@@ -3,7 +3,7 @@ import os
 import socket
 from time import sleep
 
-from pitop.common.singleton import Singleton
+from .sdk import Singleton
 
 
 class FurtherLinkIPCClientCache(metaclass=Singleton):
