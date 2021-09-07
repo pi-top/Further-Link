@@ -3,13 +3,18 @@
 import logging
 import os
 import sys
+from json import dumps
 
 import aiohttp_cors
 import click
 from aiohttp import web
-from src import apt_version
-from src import run as run_handler
-from src import run_py, ssl_context, status, upload, version
+
+from .apt_version import apt_version
+from .run import run as run_handler
+from .run_py import run_py
+from .upload import upload
+from .util.ssl_context import ssl_context
+from .version import __version__
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -33,6 +38,13 @@ def create_app():
             )
         },
     )
+
+    async def status(_):
+        return web.Response(text="OK")
+
+    async def version(_):
+        return web.Response(text=dumps({"version": __version__}))
+
     status_resource = cors.add(app.router.add_resource("/status"))
     cors.add(status_resource.add_route("GET", status))
 
