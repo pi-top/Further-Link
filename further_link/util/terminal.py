@@ -1,5 +1,5 @@
-import struct
 import fcntl
+import struct
 import termios
 
 

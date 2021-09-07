@@ -11,7 +11,7 @@ override_dh_auto_test:
 	# Don't run the tests!
 
 override_dh_auto_build:
-	echo "__version__ = '$(DEB_VERSION)'" > further_link/lib/further_link/version.py
+	echo "__version__ = '$(DEB_VERSION)'" > further_link/version.py
 	# Create extra files from env vars, removing ALL quotes
 	# https://stackoverflow.com/a/10430975
 	$(file > extra/fl.dat,$(subst $\",,$(DATA)))

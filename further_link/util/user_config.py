@@ -1,15 +1,14 @@
+import getpass
+import grp
 import os
 import pwd
-import grp
-import getpass
 
-
-DEFAULT_USER = 'pi'
-DEFAULT_DIR_NAME = 'further'
-CACHE_DIR_NAME = '.flcache'
-TEMP_DIR = '/tmp'
-FURTHER_LINK_WORK_DIR = 'FURTHER_LINK_WORK_DIR'
-FURTHER_LINK_TEMP_DIR = 'FURTHER_LINK_TEMP_DIR'
+DEFAULT_USER = "pi"
+DEFAULT_DIR_NAME = "further"
+CACHE_DIR_NAME = ".flcache"
+TEMP_DIR = "/tmp"
+FURTHER_LINK_WORK_DIR = "FURTHER_LINK_WORK_DIR"
+FURTHER_LINK_TEMP_DIR = "FURTHER_LINK_TEMP_DIR"
 
 
 def get_current_user():
@@ -80,9 +79,9 @@ def get_working_directory(user=None):
     return os.path.join(get_home_directory(user), DEFAULT_DIR_NAME)
 
 
-def get_absolute_path(path, root='/'):
+def get_absolute_path(path, root="/"):
     # path is absolute or relative to root
-    is_absolute = path[0] == '/'
+    is_absolute = path[0] == "/"
     if not is_absolute:
         return os.path.join(root, path)
     return path

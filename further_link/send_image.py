@@ -1,6 +1,7 @@
 from base64 import b64encode
-from PIL import Image
 from io import BytesIO
+
+from PIL import Image
 
 from .ipc import ipc_send
 
@@ -16,6 +17,7 @@ def _image_rgb_bgr_convert(image):
 
 def _pil_to_opencv(image):
     from numpy import array
+
     image_arr = array(image)
 
     if _image_has_3_channels(image_arr):
@@ -39,7 +41,9 @@ def _opencv_to_pil(image):
 
 def send_image(frame, format=None):
     if format is not None:
-        print("The 'format' parameter is no longer required in this function. Both PIL and OpenCV formats can be used without specifying which.")
+        print(
+            "The 'format' parameter is no longer required in this function. Both PIL and OpenCV formats can be used without specifying which."
+        )
 
     if not isinstance(frame, Image.Image):
         frame = _opencv_to_pil(frame)
@@ -48,6 +52,6 @@ def send_image(frame, format=None):
         buffered = BytesIO()
         frame.save(buffered, format="JPEG", optimize=True)
         encoded = b64encode(buffered.getvalue())
-        ipc_send('video', encoded)
+        ipc_send("video", encoded)
     except Exception:
         pass

@@ -1,8 +1,9 @@
-from threading import Thread
 import atexit
+from threading import Thread
+
 from pitop.common.singleton import Singleton
 
-from .ipc import start_ipc_server, ipc_send, ipc_cleanup
+from .ipc import ipc_cleanup, ipc_send, start_ipc_server
 
 
 class KeyboardButtonsListener(metaclass=Singleton):
@@ -11,24 +12,25 @@ class KeyboardButtonsListener(metaclass=Singleton):
 
         atexit.register(self.__clean_up)
 
-        self.listener_thread = Thread(target=start_ipc_server,
-                                      args=('keyevent', self.__on_key_event))
+        self.listener_thread = Thread(
+            target=start_ipc_server, args=("keyevent", self.__on_key_event)
+        )
         self.listener_thread.start()
 
     def add_button(self, key, button):
         self.buttons[key] = button
 
     def __on_key_event(self, ipc_message):
-        key, event = ipc_message.split(' ')
+        key, event = ipc_message.split(" ")
         button = self.buttons.get(key)
         if button:
-            if event == 'keydown':
+            if event == "keydown":
                 button._on_press()
-            elif event == 'keyup':
+            elif event == "keyup":
                 button._on_release()
 
     def __clean_up(self):
-        ipc_cleanup('keyevent')
+        ipc_cleanup("keyevent")
 
 
 class KeyboardButton:  # interface to match pitop.KeyboardButton
@@ -40,7 +42,7 @@ class KeyboardButton:  # interface to match pitop.KeyboardButton
 
         listener = KeyboardButtonsListener()
         listener.add_button(key, self)
-        ipc_send('keylisten', key)
+        ipc_send("keylisten", key)
 
     def _on_press(self):
         self.__key_pressed = True

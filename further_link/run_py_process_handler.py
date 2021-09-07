@@ -1,28 +1,30 @@
 import asyncio
 import os
-import signal
-import pty
 import pathlib
+import pty
+import signal
 from functools import partial
+
 import aiofiles
 from pitop.common.current_session_info import get_first_display
 
-from .lib.further_link import (
-    async_start_ipc_server,
-    async_ipc_send,
-    ipc_cleanup
-)
+from . import async_ipc_send, async_start_ipc_server, ipc_cleanup
 from .util.async_helpers import ringbuf_read
-from .util.user_config import default_user, get_current_user, user_exists, \
-    get_working_directory, get_temp_dir
+from .util.user_config import (
+    default_user,
+    get_current_user,
+    get_temp_dir,
+    get_working_directory,
+    user_exists,
+)
 
 SERVER_IPC_CHANNELS = [
-    'video',
-    'keylisten',
+    "video",
+    "keylisten",
 ]
 
 dirname = pathlib.Path(__file__).parent.absolute()
-further_link_module_path = os.path.join(dirname, 'lib')
+further_link_module_path = os.path.join(dirname, "lib")
 
 
 class InvalidOperation(Exception):
@@ -56,14 +58,14 @@ class RunPyProcessHandler:
         if self.pty:
             # communicate through a pty for terminal 'cooked mode' behaviour
             master, slave = pty.openpty()
-            self.pty_master = await aiofiles.open(master, 'w+b', 0)
-            self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
+            self.pty_master = await aiofiles.open(master, "w+b", 0)
+            self.pty_slave = await aiofiles.open(slave, "r+b", 0)
 
             stdio = self.pty_slave
 
-        cmd = 'python3 -u ' + entrypoint
+        cmd = "python3 -u " + entrypoint
         if self.user != get_current_user() and user_exists(self.user):
-            cmd = f'sudo -u {self.user} --preserve-env=PYTHONPATH {cmd}'
+            cmd = f"sudo -u {self.user} --preserve-env=PYTHONPATH {cmd}"
 
         process_env = os.environ.copy()
 
@@ -87,7 +89,8 @@ class RunPyProcessHandler:
             stderr=stdio,
             env=process_env,
             cwd=os.path.dirname(entrypoint),
-            preexec_fn=os.setsid)  # make a process group for this and children
+            preexec_fn=os.setsid,
+        )  # make a process group for this and children
 
         self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
 
@@ -98,7 +101,7 @@ class RunPyProcessHandler:
             await self.on_start()
 
     def is_running(self):
-        return hasattr(self, 'process') and self.process is not None
+        return hasattr(self, "process") and self.process is not None
 
     def stop(self):
         if not self.is_running():
@@ -113,7 +116,7 @@ class RunPyProcessHandler:
         if not self.is_running() or not isinstance(content, str):
             raise InvalidOperation()
 
-        content_bytes = content.encode('utf-8')
+        content_bytes = content.encode("utf-8")
 
         if self.pty:
             await self.pty_master.write(content_bytes)
@@ -129,18 +132,17 @@ class RunPyProcessHandler:
         ):
             raise InvalidOperation()
 
-        content_bytes = f'{key} {event}'.encode('utf-8')
-        await async_ipc_send('keyevent', content_bytes, pgid=self.pgid)
+        content_bytes = f"{key} {event}".encode("utf-8")
+        await async_ipc_send("keyevent", content_bytes, pgid=self.pgid)
 
     async def _get_entrypoint(self, script=None, path=None):
         if isinstance(path, str):
             # path is absolute or relative to work_dir
             first_char = path[0]
-            if first_char != '/':
+            if first_char != "/":
                 path = os.path.join(self.work_dir, path)
 
-            path_dirs = path if isinstance(
-                script, str) else os.path.dirname(path)
+            path_dirs = path if isinstance(script, str) else os.path.dirname(path)
 
             # if there's a script to create, create path dirs for it to go in
             if not os.path.exists(path_dirs) and isinstance(script, str):
@@ -149,7 +151,7 @@ class RunPyProcessHandler:
         if isinstance(script, str):
             # write script to file, at path if given, otherwise temp
             entrypoint = self._get_script_filename(path)
-            async with aiofiles.open(entrypoint, 'w+') as file:
+            async with aiofiles.open(entrypoint, "w+") as file:
                 await file.write(script)
 
             return entrypoint
@@ -161,30 +163,32 @@ class RunPyProcessHandler:
 
     def _get_script_filename(self, path=None):
         dir = path if isinstance(path, str) else self.temp_dir
-        return dir + '/' + self.id + '.py'
+        return dir + "/" + self.id + ".py"
 
     async def _ipc_communicate(self):
         self.ipc_tasks = []
         for channel in SERVER_IPC_CHANNELS:
-            self.ipc_tasks.append(asyncio.create_task(
-                async_start_ipc_server(channel,
-                                       partial(self.on_output, channel),
-                                       pgid=self.pgid)
-            ))
+            self.ipc_tasks.append(
+                asyncio.create_task(
+                    async_start_ipc_server(
+                        channel, partial(self.on_output, channel), pgid=self.pgid
+                    )
+                )
+            )
 
     async def _process_communicate(self):
         output_tasks = []
         if self.pty:
-            output_tasks.append(asyncio.create_task(
-                self._handle_output(self.pty_master, 'stdout')
-            ))
+            output_tasks.append(
+                asyncio.create_task(self._handle_output(self.pty_master, "stdout"))
+            )
         else:
-            output_tasks.append(asyncio.create_task(
-                self._handle_output(self.process.stdout, 'stdout')
-            ))
-            output_tasks.append(asyncio.create_task(
-                self._handle_output(self.process.stderr, 'stderr')
-            ))
+            output_tasks.append(
+                asyncio.create_task(self._handle_output(self.process.stdout, "stdout"))
+            )
+            output_tasks.append(
+                asyncio.create_task(self._handle_output(self.process.stderr, "stderr"))
+            )
 
         # wait for process to exit
         exit_code = await self.process.wait()
@@ -212,7 +216,7 @@ class RunPyProcessHandler:
             buffer_time=0.1,
             max_chunks=50,
             chunk_size=256,
-            done_condition=self.process.wait
+            done_condition=self.process.wait,
         )
 
     async def _clean_up(self):

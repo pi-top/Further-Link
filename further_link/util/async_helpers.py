@@ -8,10 +8,7 @@ async def loop_forever(*args, **kwargs):
 
 
 async def race(tasks):
-    done, pending = await asyncio.wait(
-        tasks,
-        return_when=asyncio.FIRST_COMPLETED
-    )
+    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
     for task in pending:
         task.cancel()
     if len(pending):
@@ -29,7 +26,7 @@ async def ringbuf_read(
     buffer_time=0.1,
     max_chunks=50,
     chunk_size=256,
-    done_condition=loop_forever
+    done_condition=loop_forever,
 ):
     # stream is read into a ring buffer so that if produces faster desired
     # limit the oldest data is dumped
@@ -48,7 +45,7 @@ async def ringbuf_read(
                 break
 
             result = read_data.result()
-            if result == b'':
+            if result == b"":
                 break
 
             ringbuf.append(read_data.result())
@@ -64,16 +61,13 @@ async def ringbuf_read(
             except asyncio.TimeoutError:
                 pass
 
-            data = b''.join(ringbuf)
+            data = b"".join(ringbuf)
             if data:
                 ringbuf.clear()
-                output = data.decode(encoding='utf-8')
+                output = data.decode(encoding="utf-8")
                 if output_callback:
                     await output_callback(output)
             if done:
                 break
 
-    await race([
-        asyncio.create_task(read()),
-        asyncio.create_task(write())
-    ])
+    await race([asyncio.create_task(read()), asyncio.create_task(write())])

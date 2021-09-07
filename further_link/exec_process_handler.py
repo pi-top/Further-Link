@@ -1,12 +1,13 @@
 import os
 import pathlib
+
 import aiofiles
 
 from .process_handler import ProcessHandler
-from .util.user_config import get_working_directory, get_absolute_path
+from .util.user_config import get_absolute_path, get_working_directory
 
 dirname = pathlib.Path(__file__).parent.absolute()
-further_link_module_path = os.path.join(dirname, 'lib')
+further_link_module_path = os.path.join(dirname, "lib")
 
 
 class ExecProcessHandler(ProcessHandler):
@@ -20,7 +21,7 @@ class ExecProcessHandler(ProcessHandler):
 
         # create a temporary file to execute if code is provided
         if code is not None:
-            async with aiofiles.open(entrypoint, 'w+') as file:
+            async with aiofiles.open(entrypoint, "w+") as file:
                 await file.write(code)
             self._remove_entrypoint = entrypoint
 

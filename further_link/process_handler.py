@@ -1,25 +1,29 @@
 import asyncio
 import os
 import signal
-from pty import openpty
 from functools import partial
-import aiofiles
-from pitop.common.current_session_info import get_first_display
+from pty import openpty
 from shlex import split
 
-from .lib.further_link import (
-    async_start_ipc_server,
-    async_ipc_send,
-    ipc_cleanup
-)
+import aiofiles
+from pitop.common.current_session_info import get_first_display
+
+from . import async_ipc_send, async_start_ipc_server, ipc_cleanup
 from .util.async_helpers import ringbuf_read, timeout
-from .util.user_config import user_exists, get_working_directory, \
-    get_home_directory, get_uid, get_gid, get_grp_ids, get_current_user
 from .util.terminal import set_winsize
+from .util.user_config import (
+    get_current_user,
+    get_gid,
+    get_grp_ids,
+    get_home_directory,
+    get_uid,
+    get_working_directory,
+    user_exists,
+)
 
 SERVER_IPC_CHANNELS = [
-    'video',
-    'keylisten',
+    "video",
+    "keylisten",
 ]
 
 
@@ -47,8 +51,8 @@ class ProcessHandler:
             # cannot set terminal process group (-1): Inappropriate ioctl for device
             os.chown(slave, get_uid(self.user), get_gid(self.user))
 
-            self.pty_master = await aiofiles.open(master, 'w+b', 0)
-            self.pty_slave = await aiofiles.open(slave, 'r+b', 0)
+            self.pty_master = await aiofiles.open(master, "w+b", 0)
+            self.pty_slave = await aiofiles.open(slave, "r+b", 0)
 
             # set terminal size to a minimum that we display in Further
             set_winsize(slave, 4, 60)
@@ -56,21 +60,21 @@ class ProcessHandler:
             stdio = self.pty_slave
 
         process_env = {**os.environ.copy(), **env}
-        process_env['TERM'] = 'xterm-256color'  # perhaps should be param
+        process_env["TERM"] = "xterm-256color"  # perhaps should be param
 
         if self.user:
-            process_env['HOME'] = get_home_directory(self.user)
-            process_env['LOGNAME'] = self.user
-            process_env['PWD'] = self.work_dir
-            process_env['USER'] = self.user
+            process_env["HOME"] = get_home_directory(self.user)
+            process_env["LOGNAME"] = self.user
+            process_env["PWD"] = self.work_dir
+            process_env["USER"] = self.user
 
         # Ensure that DISPLAY is set, so that user can open GUI windows
         display = get_first_display()
         if display is not None:
-            process_env['DISPLAY'] = display
+            process_env["DISPLAY"] = display
 
         def preexec():
-            if (self.user != get_current_user()):
+            if self.user != get_current_user():
                 # set the process group id for user
                 os.setgid(get_gid(self.user))
 
@@ -93,7 +97,8 @@ class ProcessHandler:
             stderr=stdio,
             env=process_env,
             cwd=self.work_dir,
-            preexec_fn=preexec)
+            preexec_fn=preexec,
+        )
 
         self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
 
@@ -104,7 +109,7 @@ class ProcessHandler:
             await self.on_start()
 
     def is_running(self):
-        return hasattr(self, 'process') and self.process is not None
+        return hasattr(self, "process") and self.process is not None
 
     async def stop(self):
         if not self.is_running():
@@ -125,7 +130,7 @@ class ProcessHandler:
         if not self.is_running() or not isinstance(content, str):
             raise InvalidOperation()
 
-        content_bytes = content.encode('utf-8')
+        content_bytes = content.encode("utf-8")
 
         if self.pty:
             await self.pty_master.write(content_bytes)
@@ -147,31 +152,33 @@ class ProcessHandler:
         ):
             raise InvalidOperation()
 
-        content_bytes = f'{key} {event}'.encode('utf-8')
-        await async_ipc_send('keyevent', content_bytes, pgid=self.pgid)
+        content_bytes = f"{key} {event}".encode("utf-8")
+        await async_ipc_send("keyevent", content_bytes, pgid=self.pgid)
 
     async def _ipc_communicate(self):
         self.ipc_tasks = []
         for channel in SERVER_IPC_CHANNELS:
-            self.ipc_tasks.append(asyncio.create_task(
-                async_start_ipc_server(channel,
-                                       partial(self.on_output, channel),
-                                       pgid=self.pgid)
-            ))
+            self.ipc_tasks.append(
+                asyncio.create_task(
+                    async_start_ipc_server(
+                        channel, partial(self.on_output, channel), pgid=self.pgid
+                    )
+                )
+            )
 
     async def _process_communicate(self):
         output_tasks = []
         if self.pty:
-            output_tasks.append(asyncio.create_task(
-                self._handle_output(self.pty_master, 'stdout')
-            ))
+            output_tasks.append(
+                asyncio.create_task(self._handle_output(self.pty_master, "stdout"))
+            )
         else:
-            output_tasks.append(asyncio.create_task(
-                self._handle_output(self.process.stdout, 'stdout')
-            ))
-            output_tasks.append(asyncio.create_task(
-                self._handle_output(self.process.stderr, 'stderr')
-            ))
+            output_tasks.append(
+                asyncio.create_task(self._handle_output(self.process.stdout, "stdout"))
+            )
+            output_tasks.append(
+                asyncio.create_task(self._handle_output(self.process.stderr, "stderr"))
+            )
 
         # wait for process to exit
         exit_code = await self.process.wait()
@@ -199,7 +206,7 @@ class ProcessHandler:
             buffer_time=0.1,
             max_chunks=50,
             chunk_size=256,
-            done_condition=self.process.wait
+            done_condition=self.process.wait,
         )
 
     async def _clean_up(self):
