@@ -7,6 +7,7 @@
 
 from glob import glob
 from os import environ
+from subprocess import run
 from typing import List, Optional
 
 
@@ -43,10 +44,12 @@ def get_user_using_display(display_no):
     Returns:
             user (str): String representing the user
     """
-    from pitop.common.command_runner import run_command
 
     user = None
-    for line in run_command("who", timeout=1).split("\n"):
+    proc = run("who", timeout=5, capture_output=True)
+    stdout = proc.stdout.decode("utf-8").strip()
+    lines = stdout.split("\n")
+    for line in lines:
         if "(%s)" % display_no in line:
             fields = line.split(" ")
             if len(fields) > 1:
