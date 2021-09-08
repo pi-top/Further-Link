@@ -19,7 +19,7 @@ def ssl_context():
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 
     file_dir = os.path.dirname(os.path.realpath(__file__))
-    cert_dir = os.path.join(file_dir, "../../extra")
+    cert_dir = os.path.join(file_dir, "../extra")
     cert = os.path.join(cert_dir, "cert.pem")
     own_key = os.path.join(cert_dir, "key.pem")
     encrypted_key = os.path.join(cert_dir, "key.aes.pem")
