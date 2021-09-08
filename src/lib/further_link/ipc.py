@@ -2,7 +2,7 @@ import os
 import socket
 import asyncio
 from time import sleep
-from pitopcommon.singleton import Singleton
+from pitop.common.singleton import Singleton
 
 
 class FurtherLinkIPCClientCache(metaclass=Singleton):

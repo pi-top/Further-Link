@@ -1,3 +1,17 @@
+further-link (4.5.1-1) bullseye; urgency=medium
+
+  * Add unit tests (#73)
+  * Bullseye release: rename package to `further-link` (#81)
+  * Update master workflow files
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 01 Sep 2021 20:48:05 +0000
+
+further-link (4.5.0) buster; urgency=medium
+
+  * Rename package
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 11 Aug 2021 14:39:33 +0000
+
 pt-further-link (4.4.5) buster; urgency=medium
 
   * Fix upload to delete files in dir but not dir itself (#70)
