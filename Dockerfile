@@ -3,7 +3,7 @@ FROM python:3.9-bullseye
 WORKDIR /tmp/further-link
 
 COPY . ./
-RUN python3 setup.py install
+RUN pip install -e .
 
 ENV FURTHER_LINK_NOSSL=true
 
