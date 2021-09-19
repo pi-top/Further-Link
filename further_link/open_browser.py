@@ -1,51 +1,28 @@
-import json
 from os import getenv
 
-from pitop.common.command_runner import run_command, run_command_background
-
-
-def get_serial_number_string(json_data):
-    try:
-        serial_number = json_data["primary"]
-    except KeyError:
-        return ""
-
-    return "serial_number=" + str(serial_number)
-
-
-def get_device_id_string(json_data):
-    try:
-        device_str = run_command(
-            "cat /etc/pi-top/pt-device-manager/device_version", 1000
-        )
-    except KeyError:
-        return ""
-
-    return "device=" + str(device_str).strip()
+from pitop.common.command_runner import run_command_background
 
 
 def get_further_url():
-    base_further_url = "https://further.pi-top.com/start"
+    further_url = "https://further.pi-top.com/start"
 
-    try:
-        with open("/etc/pi-top/device_serial_numbers.json") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        return base_further_url
+    with open("/run/pt_hub_serial", "r") as f:
+        serial = f.read().strip()
 
-    further_url = base_further_url
+    with open("/run/pt_device_type", "r") as f:
+        device = f.read().strip()
 
-    serial_string = get_serial_number_string(data)
-    device_string = get_device_id_string(data)
-    if serial_string != "" or device_string != "":
+    if serial or device:
         further_url += "?"
-        if serial_string != "":
-            further_url += serial_string
-            if device_string != "":
-                further_url += "&"
 
-        if device_string != "":
-            further_url += device_string
+        if serial:
+            further_url += f"serial_number={serial}"
+
+        if serial and device:
+            further_url += "&"
+
+        if device:
+            further_url += f"device={serial}"
 
     return further_url
 
