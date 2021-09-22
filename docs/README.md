@@ -1,11 +1,25 @@
+## Overview
+The core of this project is an `aiohttp` websocket server which uses `asyncio`
+subprocesses to run code or interactaive sessions for the user and provide
+access to their stdin/stdout/stderr streams. Files can be uploaded to an
+application-managed directory for use in the execution. There is also a system
+of additional IO streams, for uses such as video output and keyboard events,
+which can be used with a Python [package](../further_link/__init__.py) provided with
+the server.
+
 ## Development usage
-We are using Python 3.7 and managing dependencies with
-[pipenv](https://github.com/pypa/pipenv)
+The project requires Python 3.7+. The dependencies, command line tool and
+associated python package can be installed (optionally in a virtualenv) in a
+clone of the repo by running:
 ```
-pipenv shell
-pipenv sync
-FURTHER_LINK_NOSSL=1 python3 server.py
+pip3 install -e .
 ```
+
+Then run the server for development with:
+```
+FURTHER_LINK_NOSSL=1 python3 further_link/__main__.py
+```
+
 Confirm the server is running with:
 ```
 curl http://localhost:8028/status
@@ -34,7 +48,7 @@ For more information related to the `run-py` API see the options of the
 - Body should be a JSON object with `name` of directory to upload into and
   `files` object. Files are provided as `text` type, with the text content, or
   `url` type, with a url for the file to be downloaded from
-  ([example](tests/test_data/upload_data.py)). Responds after creating files is
+  ([example](../tests/test_data/upload_data.py)). Responds after creating files is
   complete with a simple 200 OK.
 
 ### Websocket Endpoint /run-py
@@ -133,7 +147,7 @@ Message and response details:
 - `upload` command is used to create a directory of files in the work dir.
     Files are provided in the data as `text` type, with the text content, or
     `url` type, with a url for the file to be downloaded from.
-    [Example](tests/test_data/upload_data.py)
+    [Example](..tests/test_data/upload_data.py)
 - `uploaded` response is sent after a successful upload , has no data.
 <br>
 
@@ -313,7 +327,7 @@ used instead.
 - https://github.com/replit/polygott
 
 ### Ideas
-- Other languages & environments (Shell, SonicPi, .NET interactive...)
+- Other languages & environments (SonicPi, .NET interactive...)
 - Connection security via login or codes displayed on OLED
 - Detaching, reattaching to long running programs
 - Device status endpoints eg battery
