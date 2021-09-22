@@ -4,6 +4,7 @@ on:
   push:
   release:
     types: [released]
+  workflow_dispatch:
 
 jobs:
   build-docker-image:
