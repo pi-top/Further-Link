@@ -3,9 +3,12 @@ import logging
 
 from aiohttp import web
 
-from .run_py_process_handler import InvalidOperation, RunPyProcessHandler
-from .upload import BadUpload, directory_is_valid, do_upload
-from .util.message import BadMessage, create_message, parse_message
+from further_link.runner.run_py_process_handler import (
+    InvalidOperation,
+    RunPyProcessHandler,
+)
+from further_link.util.message import BadMessage, create_message, parse_message
+from further_link.util.upload import BadUpload, directory_is_valid, do_upload
 
 
 async def handle_message(message, process_handler, socket):

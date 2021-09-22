@@ -7,11 +7,11 @@ from shlex import split
 
 import aiofiles
 
-from .ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
-from .sdk import get_first_display
-from .util.async_helpers import ringbuf_read, timeout
-from .util.terminal import set_winsize
-from .util.user_config import (
+from further_link.util.async_helpers import ringbuf_read, timeout
+from further_link.util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
+from further_link.util.sdk import get_first_display
+from further_link.util.terminal import set_winsize
+from further_link.util.user_config import (
     get_current_user,
     get_gid,
     get_grp_ids,

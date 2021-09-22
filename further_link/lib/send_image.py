@@ -3,7 +3,7 @@ from io import BytesIO
 
 from PIL import Image
 
-from .ipc import ipc_send
+from further_link.util.ipc import ipc_send
 
 
 # Taken from SDK, to avoid hard dependency

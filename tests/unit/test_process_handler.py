@@ -9,7 +9,7 @@ import pytest
 from aiofiles.threadpool.binary import AsyncFileIO
 from mock import AsyncMock
 
-from further_link.process_handler import ProcessHandler
+from further_link.runner.process_handler import ProcessHandler
 
 logging.basicConfig(
     stream=sys.stdout,

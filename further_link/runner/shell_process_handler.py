@@ -1,7 +1,11 @@
 import os
 
-from .process_handler import ProcessHandler
-from .util.user_config import get_absolute_path, get_shell, get_working_directory
+from further_link.runner.process_handler import ProcessHandler
+from further_link.util.user_config import (
+    get_absolute_path,
+    get_shell,
+    get_working_directory,
+)
 
 
 class ShellProcessHandler(ProcessHandler):

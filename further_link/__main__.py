@@ -7,12 +7,12 @@ import aiohttp_cors
 import click
 from aiohttp import web
 
-from .apt_version import apt_version
-from .run import run as run_handler
-from .run_py import run_py
-from .upload import upload
-from .util.ssl_context import ssl_context
-from .version import __version__
+from further_link.endpoint.apt_version import apt_version
+from further_link.endpoint.run import run as run_handler
+from further_link.endpoint.run_py import run_py
+from further_link.endpoint.upload import upload
+from further_link.util.ssl_context import ssl_context
+from further_link.version import __version__
 
 logging.basicConfig(
     stream=sys.stdout,
