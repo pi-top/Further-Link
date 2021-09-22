@@ -7,7 +7,6 @@ from further_link.runner.process_handler import ProcessHandler
 from further_link.util.user_config import get_absolute_path, get_working_directory
 
 dirname = pathlib.Path(__file__).parent.absolute()
-further_link_module_path = os.path.join(dirname, "lib")
 
 
 class PyProcessHandler(ProcessHandler):
@@ -29,17 +28,7 @@ class PyProcessHandler(ProcessHandler):
 
         work_dir = os.path.dirname(entrypoint)
 
-        # preserve PYTHONPATH and add further link lib to it
-        env = {}
-        python_path = (
-            ""
-            if not os.environ.get("PYTHONPATH")
-            else os.environ.get("PYTHONPATH") + os.pathsep
-        )
-
-        env["PYTHONPATH"] = python_path + further_link_module_path
-
-        await super().start(command, work_dir, env)
+        await super().start(command, work_dir)
 
     async def _clean_up(self):
         try:

@@ -24,7 +24,6 @@ SERVER_IPC_CHANNELS = [
 ]
 
 dirname = pathlib.Path(__file__).parent.absolute()
-further_link_module_path = os.path.join(dirname, "lib")
 
 
 class InvalidOperation(Exception):
@@ -65,22 +64,14 @@ class RunPyProcessHandler:
 
         cmd = "python3 -u " + entrypoint
         if self.user != get_current_user() and user_exists(self.user):
-            cmd = f"sudo -u {self.user} --preserve-env=PYTHONPATH {cmd}"
+            cmd = f"sudo -u {self.user} {cmd}"
 
         process_env = os.environ.copy()
 
         # Ensure that DISPLAY is set, so that user can open GUI windows
-        #
-        # TODO: review moving to running as current user so that this comes
-        # naturally from the user's environment
         display = get_first_display()
         if display is not None:
             process_env["DISPLAY"] = display
-
-        if process_env.get("PYTHONPATH"):
-            process_env["PYTHONPATH"] += os.pathsep + further_link_module_path
-        else:
-            process_env["PYTHONPATH"] = further_link_module_path
 
         self.process = await asyncio.create_subprocess_exec(
             *cmd.split(),
