@@ -21,7 +21,7 @@ jobs:
               apt-get install -y python3 python3-pip && \
               cd /${{ github.event.repository.name }} && \
               pip3 install .[test] && \
-              pytest -v --cov=src --timeout=5 && \
+              pytest -v --cov=further_link --timeout=5 && \
               coverage xml\
             "
 
