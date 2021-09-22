@@ -2,8 +2,9 @@ FROM python:3.9-bullseye
 
 WORKDIR /tmp/further-link
 
-COPY . ./
-RUN pip install -e .
+COPY pyproject.toml setup.py setup.cfg ./
+COPY further_link further_link
+RUN pip install .
 
 ENV FURTHER_LINK_NOSSL=true
 
