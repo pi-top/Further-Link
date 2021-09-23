@@ -7,6 +7,7 @@ from .process_handler import InvalidOperation
 from .py_process_handler import PyProcessHandler
 from .exec_process_handler import ExecProcessHandler
 from .shell_process_handler import ShellProcessHandler
+from .dotnet_process_handler import DotnetProcessHandler
 from .util.message import parse_message, create_message, BadMessage
 from .util.user_config import default_user, get_temp_dir
 
@@ -23,6 +24,7 @@ class RunManager:
             'exec': ExecProcessHandler,
             'python3': PyProcessHandler,
             'shell': ShellProcessHandler,
+            'dotnet': DotnetProcessHandler,
         }
 
     async def stop(self):

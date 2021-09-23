@@ -58,11 +58,10 @@ class ProcessHandler:
         process_env = {**os.environ.copy(), **env}
         process_env['TERM'] = 'xterm-256color'  # perhaps should be param
 
-        if self.user:
-            process_env['HOME'] = get_home_directory(self.user)
-            process_env['LOGNAME'] = self.user
-            process_env['PWD'] = self.work_dir
-            process_env['USER'] = self.user
+        process_env['HOME'] = get_home_directory(self.user)
+        process_env['LOGNAME'] = self.user
+        process_env['PWD'] = self.work_dir
+        process_env['USER'] = self.user
 
         # Ensure that DISPLAY is set, so that user can open GUI windows
         display = get_first_display()
