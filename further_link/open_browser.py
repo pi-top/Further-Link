@@ -1,6 +1,17 @@
-from os import getenv
+from os import environ, getenv
+from shlex import split
+from subprocess import DEVNULL, Popen
 
-from pitop.common.command_runner import run_command_background
+
+def run_command_background(command_str, print_output=False):
+    env = environ.copy()
+    env["DISPLAY"] = ":0"
+    return Popen(
+        split(command_str),
+        env=env,
+        stderr=None if print_output else DEVNULL,
+        stdout=None if print_output else DEVNULL,
+    )
 
 
 def get_further_url():
