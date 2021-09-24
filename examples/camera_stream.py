@@ -1,10 +1,9 @@
 from signal import pause
 
-from ptpma import PMACamera
+from pitop import Camera
 
 from further_link import send_image
 
-cam = PMACamera()
-
+cam = Camera()
 cam.start_handling_frames(send_image)
 pause()
