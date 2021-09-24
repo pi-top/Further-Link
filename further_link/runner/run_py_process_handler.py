@@ -7,10 +7,10 @@ from functools import partial
 
 import aiofiles
 
-from further_link.util.async_helpers import ringbuf_read
-from further_link.util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
-from further_link.util.sdk import get_first_display
-from further_link.util.user_config import (
+from ..util.async_helpers import ringbuf_read
+from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
+from ..util.sdk import get_first_display
+from ..util.user_config import (
     default_user,
     get_current_user,
     get_temp_dir,

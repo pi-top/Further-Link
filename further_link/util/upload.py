@@ -4,7 +4,7 @@ from shutil import rmtree
 import aiofiles
 from aiohttp import ClientSession
 
-from further_link.util.user_config import CACHE_DIR_NAME
+from .user_config import CACHE_DIR_NAME
 
 file_types = ["url", "text"]
 

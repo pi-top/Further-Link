@@ -3,7 +3,7 @@ import os
 import socket
 from time import sleep
 
-from further_link.util.sdk import Singleton
+from .sdk import Singleton
 
 
 class FurtherLinkIPCClientCache(metaclass=Singleton):

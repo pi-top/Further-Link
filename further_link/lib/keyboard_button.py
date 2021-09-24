@@ -1,8 +1,8 @@
 import atexit
 from threading import Thread
 
-from further_link.util.ipc import ipc_cleanup, ipc_send, start_ipc_server
-from further_link.util.sdk import Singleton
+from ..util.ipc import ipc_cleanup, ipc_send, start_ipc_server
+from ..util.sdk import Singleton
 
 
 class KeyboardButtonsListener(metaclass=Singleton):

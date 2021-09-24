@@ -2,8 +2,8 @@ import json
 
 from aiohttp import web
 
-from further_link.util.upload import BadUpload, directory_is_valid, do_upload
-from further_link.util.user_config import get_working_directory
+from ..util.upload import BadUpload, directory_is_valid, do_upload
+from ..util.user_config import get_working_directory
 
 
 async def upload(request):

@@ -3,12 +3,12 @@ import logging
 
 from aiohttp import web
 
-from further_link.runner.exec_process_handler import ExecProcessHandler
-from further_link.runner.process_handler import InvalidOperation
-from further_link.runner.py_process_handler import PyProcessHandler
-from further_link.runner.shell_process_handler import ShellProcessHandler
-from further_link.util.message import BadMessage, create_message, parse_message
-from further_link.util.user_config import default_user, get_temp_dir
+from ..runner.exec_process_handler import ExecProcessHandler
+from ..runner.process_handler import InvalidOperation
+from ..runner.py_process_handler import PyProcessHandler
+from ..runner.shell_process_handler import ShellProcessHandler
+from ..util.message import BadMessage, create_message, parse_message
+from ..util.user_config import default_user, get_temp_dir
 
 
 class RunManager:
