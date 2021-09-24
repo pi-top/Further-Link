@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from time import time
 
 import aiohttp
 import pytest
@@ -31,6 +32,45 @@ print(datetime.now().strftime("%A"))
 
     day = datetime.now().strftime("%A")
     await wait_for_data(run_ws_client, "stdout", "output", day + "\n", 0, "1")
+
+    await wait_for_data(run_ws_client, "stopped", "exitCode", 0, 0, "1")
+
+
+@pytest.mark.asyncio
+async def test_run_shell(run_ws_client):
+    code = """\
+date +%s # unix time in seconds
+"""
+    start_cmd = create_message("start", {"runner": "shell"}, "1")
+    await run_ws_client.send_str(start_cmd)
+
+    await receive_data(run_ws_client, "started", process="1")
+
+    commands = create_message("stdin", {"input": code}, "1")
+    await run_ws_client.send_str(commands)
+
+    seconds = str(int(time()))
+    await wait_for_data(run_ws_client, "stdout", "output", seconds + "\n", 0, "1")
+
+    stop_cmd = create_message("stop", None, "1")
+    await run_ws_client.send_str(stop_cmd)
+
+    await wait_for_data(run_ws_client, "stopped", "exitCode", -15, 0, "1")
+
+
+@pytest.mark.asyncio
+async def test_run_executable(run_ws_client):
+    code = """\
+#!/bin/bash
+date +%s # unix time in seconds
+"""
+    start_cmd = create_message("start", {"runner": "exec", "code": code}, "1")
+    await run_ws_client.send_str(start_cmd)
+
+    await receive_data(run_ws_client, "started", process="1")
+
+    seconds = str(int(time()))
+    await wait_for_data(run_ws_client, "stdout", "output", seconds + "\n", 0, "1")
 
     await wait_for_data(run_ws_client, "stopped", "exitCode", 0, 0, "1")
 
