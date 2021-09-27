@@ -35,7 +35,7 @@ def get_further_url():
             further_url += "&"
 
         if device:
-            further_url += f"device={serial}"
+            further_url += f"device={device}"
 
     return further_url
 
