@@ -2,6 +2,8 @@ from os import environ, getenv
 from shlex import split
 from subprocess import DEVNULL, Popen
 
+import click
+
 
 def run_command_background(command_str, print_output=False):
     env = environ.copy()
@@ -33,7 +35,7 @@ def get_further_url():
             further_url += "&"
 
         if device:
-            further_url += f"device={serial}"
+            further_url += f"device={device}"
 
     return further_url
 
@@ -47,5 +49,14 @@ def get_chromium_command(further_url):
     return cmd
 
 
-def open_further_in_background():
-    run_command_background(get_chromium_command(get_further_url()))
+@click.command()
+@click.option("--print-only", is_flag=True)
+@click.version_option()
+def start_further(print_only):
+    url = get_further_url()
+
+    if print_only:
+        print(url)
+        return
+
+    run_command_background(get_chromium_command(url))

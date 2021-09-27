@@ -1,3 +1,12 @@
+further-link (5.0.0-1) bullseye; urgency=medium
+
+  * Build package using `pybuild` (#84)
+  * Add epoch version 1 to numpy (#89)
+  * start-further: add --print-only (#88)
+  * Drop unused override_dh_installsystemd (#91)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Mon, 27 Sep 2021 18:02:17 +0000
+
 further-link (4.5.1-1) bullseye; urgency=medium
 
   * Add unit tests (#73)
