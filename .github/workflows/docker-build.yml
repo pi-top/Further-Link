@@ -4,6 +4,7 @@ on:
   push:
   release:
     types: [released]
+  workflow_dispatch:
 
 jobs:
   build-docker-image:
@@ -16,8 +17,8 @@ jobs:
 
       - name: Insert extra files
         run: |
-          echo ${{ secrets.DATA }} > extra/fl.dat
-          cat << EOF > extra/key.aes.pem
+          echo ${{ secrets.DATA }} > further_link/extra/fl.dat
+          cat << EOF > further_link/extra/key.aes.pem
           ${{ secrets.TLS_KEY }}
           EOF
 

@@ -1,11 +1,12 @@
-import pytest
 import urllib.parse
-import aiohttp
 
+import aiohttp
+import pytest
 from aioresponses import aioresponses as aioresponses_mock
 
-from . import RUN_URL, RUN_PY_URL
-from server import run_async
+from further_link.__main__ import run_async
+
+from . import RUN_PY_URL, RUN_URL
 
 
 @pytest.fixture(autouse=True)
@@ -18,15 +19,13 @@ async def start_server():
 @pytest.fixture()
 async def run_py_ws_client():
     async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(
-            RUN_PY_URL, receive_timeout=0.1
-        ) as client:
+        async with session.ws_connect(RUN_PY_URL, receive_timeout=0.1) as client:
             yield client
 
 
 @pytest.fixture()
 async def run_py_ws_client_query(query_params):
-    url = RUN_PY_URL + '?' + urllib.parse.urlencode(query_params)
+    url = RUN_PY_URL + "?" + urllib.parse.urlencode(query_params)
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url, receive_timeout=0.1) as client:
             yield client
@@ -35,15 +34,13 @@ async def run_py_ws_client_query(query_params):
 @pytest.fixture()
 async def run_ws_client():
     async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(
-            RUN_URL, receive_timeout=0.1
-        ) as client:
+        async with session.ws_connect(RUN_URL, receive_timeout=0.1) as client:
             yield client
 
 
 @pytest.fixture()
 async def run_ws_client_query(query_params):
-    url = RUN_URL + '?' + urllib.parse.urlencode(query_params)
+    url = RUN_URL + "?" + urllib.parse.urlencode(query_params)
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url, receive_timeout=0.1) as client:
             yield client
@@ -51,7 +48,7 @@ async def run_ws_client_query(query_params):
 
 @pytest.fixture()
 def aioresponses():
-    with aioresponses_mock(passthrough=['http://0.0.0.0']) as a:
+    with aioresponses_mock(passthrough=["http://0.0.0.0"]) as a:
         yield a
 
 
@@ -60,8 +57,9 @@ def clear_loggers():
     # https://github.com/pytest-dev/pytest/issues/5502#issuecomment-647157873
     """Remove handlers from all loggers"""
     import logging
+
     loggers = [logging.getLogger()] + list(logging.Logger.manager.loggerDict.values())
     for logger in loggers:
-        handlers = getattr(logger, 'handlers', [])
+        handlers = getattr(logger, "handlers", [])
         for handler in handlers:
             logger.removeHandler(handler)

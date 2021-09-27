@@ -1,5 +1,7 @@
 from signal import pause
-from pitop import Pitop, Camera, DriveController
+
+from pitop import Camera, DriveController, Pitop
+
 from further_link import KeyboardButton, send_image
 
 robot = Pitop()
@@ -8,10 +10,10 @@ robot.add_component(Camera())
 
 robot.camera.on_frame = send_image
 
-up = KeyboardButton('ArrowUp')
-down = KeyboardButton('ArrowDown')
-left = KeyboardButton('ArrowLeft')
-right = KeyboardButton('ArrowRight')
+up = KeyboardButton("ArrowUp")
+down = KeyboardButton("ArrowDown")
+left = KeyboardButton("ArrowLeft")
+right = KeyboardButton("ArrowRight")
 
 up.when_pressed = lambda: robot.drive.forward(1, hold=True)
 up.when_released = lambda: robot.drive.stop()

@@ -7,7 +7,7 @@ After=network.target
 Type=simple
 Environment="PYTHONUNBUFFERED=1"
 Environment="PYTHONDONTWRITEBYTECODE=1"
-ExecStart=/usr/lib/further-link/server.py
+ExecStart=/usr/bin/further-link
 
 [Install]
 WantedBy=multi-user.target
