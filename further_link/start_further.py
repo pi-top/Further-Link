@@ -50,7 +50,7 @@ def get_chromium_command(further_url):
 
 
 @click.command()
-@click.option("--print-only", default=False, show_default=True)
+@click.option("--print-only", is_flag=True)
 @click.version_option()
 def start_further(print_only):
     url = get_further_url()
