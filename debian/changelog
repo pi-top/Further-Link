@@ -1,17 +1,9 @@
 further-link (4.5.1-2) bullseye; urgency=medium
 
-  * Updated master workflow files
-  * Updated master workflow files
-  * Build and test on push, PR and dispatch
-  * Update examples
   * Build package using `pybuild` (#84)
-  * Relax Numpy Debian version dependency
   * Add epoch version 1 to numpy (#89)
-  * `start-further`: add `--print-only` (#88)
-  * [pre-commit.ci] pre-commit autoupdate (#90)
+  * start-further: add --print-only (#88)
   * Drop unused override_dh_installsystemd (#91)
-  * Set '--print-only' as flag
-  * Fix device type in URL
 
  -- pi-top <deb-maintainers@pi-top.com>  Mon, 27 Sep 2021 18:02:17 +0000
 
