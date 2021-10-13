@@ -50,7 +50,7 @@ check out the `Using pi-top Hardware with Raspberry Pi OS`_ page on the pi-top
 knowledge base.
 
 .. _pi-top.com: https://www.pi-top.com/products/os/
-.. _Using pi-top Hardware with Raspberry Pi OS: https://knowledgebase.pi-top.com/knowledge/pi-top-and-raspberry-pi-os
+.. _Using pi-top Hardware with Raspberry Pi OS: https://pi-top.com/pi-top-rpi-os
 
 ----------------
 More Information
