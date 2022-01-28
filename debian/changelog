@@ -1,11 +1,6 @@
-further-link (5.0.1-2) bullseye; urgency=medium
+further-link (5.0.2-1) bullseye; urgency=medium
 
-  * [pre-commit.ci] pre-commit autoupdate (#95)
-  * [pre-commit.ci] pre-commit autoupdate (#97)
-  * Updated master workflow files
-  * [pre-commit.ci] pre-commit autoupdate (#98)
-  * Add signing key and passphrase to deb_release workflow
-  * [pre-commit.ci] pre-commit autoupdate (#99)
+  * Sign deb release
   * Set language to english when running bash commands (#100)
 
  -- pi-top <deb-maintainers@pi-top.com>  Tue, 25 Jan 2022 12:48:07 +0000
