@@ -1,3 +1,10 @@
+further-link (5.0.2-1) bullseye; urgency=medium
+
+  * Sign deb release
+  * Set language to english when running bash commands (#100)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Tue, 25 Jan 2022 12:48:07 +0000
+
 further-link (5.0.1-1) bullseye; urgency=medium
 
   * Use short link
