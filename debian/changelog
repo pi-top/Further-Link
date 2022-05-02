@@ -1,3 +1,14 @@
+further-link (5.0.2-2) bullseye; urgency=medium
+
+  * [pre-commit.ci] pre-commit autoupdate (#102)
+  * Add pull request template
+  * Update PR template to track Github issues
+  * [pre-commit.ci] pre-commit autoupdate (#104)
+  * [pre-commit.ci] pre-commit autoupdate (#105)
+  * Add new cert (#107)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Mon, 02 May 2022 12:21:14 +0000
+
 further-link (5.0.2-1) bullseye; urgency=medium
 
   * Sign deb release
