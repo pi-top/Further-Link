@@ -1,3 +1,9 @@
+further-link (5.1.0-2) bullseye; urgency=medium
+
+  * fix: update forgotten version number file (#108)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Tue, 10 May 2022 11:47:14 +0000
+
 further-link (5.1.0-1) bullseye; urgency=medium
 
   * Renew certificate (#107)
