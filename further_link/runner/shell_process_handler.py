@@ -5,10 +5,10 @@ from .process_handler import ProcessHandler
 
 
 class ShellProcessHandler(ProcessHandler):
-    async def start(self, path, code=None):
+    async def start(self, path, code=None, novnc=False):
         work_dir = get_absolute_path(path, get_working_directory(self.user))
 
         # create work dir if it doesn't already exist
         os.makedirs(work_dir, exist_ok=True)
 
-        await super().start(get_shell(self.user), work_dir)
+        await super().start(get_shell(self.user), work_dir, novnc=novnc)

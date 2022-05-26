@@ -33,7 +33,7 @@ def get_list_of_displays() -> List[str]:
 
 
 def get_first_display() -> Optional[str]:
-    displays = get_list_of_displays()
+    displays = sorted(get_list_of_displays())
     first_display = displays[0] if len(displays) > 0 else None
     return first_display
 

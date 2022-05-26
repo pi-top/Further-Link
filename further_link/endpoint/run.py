@@ -3,6 +3,8 @@ import logging
 
 from aiohttp import web
 
+from further_link.util.vnc import VncConnectionDetails
+
 from ..runner.exec_process_handler import ExecProcessHandler
 from ..runner.process_handler import InvalidOperation
 from ..runner.py_process_handler import PyProcessHandler
@@ -57,7 +59,9 @@ class RunManager:
                 code = code if isinstance(code, str) else None
                 path = m_data.get("path")
                 path = path if isinstance(path, str) and len(path) else get_temp_dir()
-                await self.add_handler(m_process, m_data["runner"], path, code)
+                novnc = m_data.get("novnc")
+                novnc = novnc if isinstance(novnc, bool) else False
+                await self.add_handler(m_process, m_data["runner"], path, code, novnc)
 
             elif (
                 m_type == "stdin"
@@ -96,7 +100,7 @@ class RunManager:
             logging.exception(f"{self.id} Message Exception")
             await self.send("error", {"message": "Message Exception"})
 
-    async def add_handler(self, process_id, runner, path, code):
+    async def add_handler(self, process_id, runner, path, code, novnc):
         try:
             handler_class = self.handler_classes[runner]
         except KeyError:
@@ -116,11 +120,23 @@ class RunManager:
             await self.send(channel, {"output": output}, process_id)
             logging.debug(f"{self.id} Sending Output {process_id} {channel} {output}")
 
+        async def on_display_activity(connection_details: VncConnectionDetails):
+            logging.debug(f"{self.id} Sending display activity")
+            await self.send(
+                "novnc",
+                {
+                    "port": connection_details.port,
+                    "path": connection_details.path,
+                },
+                process_id,
+            )
+
         handler = handler_class(self.user, self.pty)
         handler.on_start = on_start
         handler.on_stop = on_stop
+        handler.on_display_activity = on_display_activity
         handler.on_output = on_output
-        await handler.start(path, code)
+        await handler.start(path, code, novnc=novnc)
 
         self.process_handlers[process_id] = handler
 
