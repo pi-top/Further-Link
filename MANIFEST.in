@@ -1,4 +1,5 @@
 recursive-include further_link *
+recursive-include scripts *
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

@@ -5,6 +5,7 @@ WORKDIR /tmp/further-link
 COPY pyproject.toml setup.py setup.cfg MANIFEST.in ./
 COPY LICENSE README.rst ./
 COPY further_link further_link
+COPY scripts scripts
 RUN pip install .
 
 ENV FURTHER_LINK_NOSSL=true
