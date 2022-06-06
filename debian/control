@@ -14,6 +14,16 @@ Package: further-link
 Architecture: all
 Depends: ${misc:Depends},
  ${python3:Depends},
+# To serve VNC over http
+ novnc,
+# net-tools includes netstat which is an undeclared dependency of novnc
+ net-tools,
+# procps includes ps which is an undeclared dependency of novnc
+ procps,
+# To create virtual display
+ xvfb,
+# VNC server
+ x11vnc,
 Suggests:
 # Used for device IDs in serial
  pi-topd,

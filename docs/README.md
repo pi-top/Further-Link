@@ -12,10 +12,16 @@ The project requires Python 3.7+. The dependencies, command line tool and
 associated python package can be installed (optionally in a virtualenv) in a
 clone of the repo by running:
 ```
-pip3 install -e .
+pip3 install -e ".[test]"
+sudo mk-build-deps -i
 ```
 
-Then run the server for development with:
+Run the tests with:
+```
+pytest
+```
+
+Run the server for development with:
 ```
 FURTHER_LINK_NOSSL=1 python3 further_link/__main__.py
 ```
