@@ -27,6 +27,8 @@ Depends: ${misc:Depends},
 Suggests:
 # Used for device IDs in serial
  pi-topd,
+# Required by OpenSSL
+ libffi7,
 Description: pi-top Further Link
  Connect to further.pi-top.com from a browser, allowing you to run
  your own Python projects on a pi-top remotely (as long as you are

@@ -1,11 +1,15 @@
 import asyncio
 import logging
+from pathlib import Path
 from typing import Callable
 from urllib.parse import urlparse
 
-from .display_activity_monitor import DisplayActivityMonitor
+from further_link.util.display_activity_monitor import DisplayActivityMonitor
+from further_link.util.ssl_context import SslFiles, cert, private_key
 
 display_activity_monitors = {}
+
+VNC_CERTIFICATE_PATH = "/tmp/.further_link.vnc_ssl.pem"
 
 
 class VncConnectionDetails:

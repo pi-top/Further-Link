@@ -11,6 +11,7 @@ from further_link.endpoint.apt_version import apt_version
 from further_link.endpoint.run import run as run_handler
 from further_link.endpoint.run_py import run_py
 from further_link.endpoint.upload import upload
+from further_link.util import vnc
 from further_link.util.ssl_context import ssl_context
 from further_link.version import __version__
 
@@ -66,6 +67,7 @@ def create_app():
 
 @click.command()
 def main():
+    vnc.create_ssl_certificate()
     return web.run_app(
         create_app(),
         port=port(),
