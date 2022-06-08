@@ -111,13 +111,19 @@ class ProcessHandler:
             preexec_fn=preexec,
         )
 
-        self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
-
-        asyncio.create_task(self._ipc_communicate())  # after exec as uses pgid
-        asyncio.create_task(self._process_communicate())
-
         if self.on_start:
             await self.on_start()
+
+        try:
+            self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
+
+            asyncio.create_task(self._ipc_communicate())  # after exec as uses pgid
+            asyncio.create_task(self._process_communicate())
+
+        except ProcessLookupError:
+            self.pgid = None
+            # return from start but since the process is gone trigger clean up
+            asyncio.create_task(self._handle_process_end())
 
     def is_running(self):
         return hasattr(self, "process") and self.process is not None
@@ -192,7 +198,7 @@ class ProcessHandler:
             )
 
         # wait for process to exit
-        exit_code = await self.process.wait()
+        await self.process.wait()
 
         # wait a little for the io tasks to complete to let them send
         # output produced right before the process stopped
@@ -200,8 +206,11 @@ class ProcessHandler:
         await timeout(output_tasks, 1)
         await timeout(self.ipc_tasks, 0.1)
 
-        await self._clean_up()
+        await self._handle_process_end()
 
+    async def _handle_process_end(self):
+        exit_code = await self.process.wait()
+        await self._clean_up()
         self.process = None
 
         if self.on_stop:
@@ -233,7 +242,8 @@ class ProcessHandler:
             except Exception:
                 pass
 
-        for channel in SERVER_IPC_CHANNELS:
-            ipc_cleanup(channel, pgid=self.pgid)
+        if self.pgid:
+            for channel in SERVER_IPC_CHANNELS:
+                ipc_cleanup(channel, pgid=self.pgid)
 
         id_generator.free(self.id)
