@@ -16,6 +16,8 @@ def _get_temp_dir():
     return os.environ.get("FURTHER_LINK_TEMP_DIR", "/tmp")
 
 
+# pgid is used to match up the ipc servers and clients, as it's something the
+# server knows about the process and the process can look up by itself
 def _get_ipc_channel_key(channel, pgid=None):
     if pgid is None:
         pgid = os.getpgid(os.getpid())
