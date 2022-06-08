@@ -96,8 +96,8 @@ class RunManager:
             logging.exception(f"{self.id} Bad Message")
             await self.send("error", {"message": "Bad message"})
 
-        except Exception:
-            logging.exception(f"{self.id} Message Exception")
+        except Exception as e:
+            logging.exception(f"{self.id} Message Exception: {e}")
             await self.send("error", {"message": "Message Exception"})
 
     async def add_handler(self, process_id, runner, path, code, novnc):
