@@ -2,12 +2,10 @@ import asyncio
 from datetime import datetime
 from time import time
 
-import aiohttp
 import pytest
 
 from further_link.util.message import create_message, parse_message
 
-from . import RUN_URL
 from .helpers import receive_data, wait_for_data
 
 
@@ -172,30 +170,26 @@ while "BYE" != s:
 
 
 @pytest.mark.asyncio
-async def test_two_clients(run_ws_client):
-    async with aiohttp.ClientSession() as session2:
-        async with session2.ws_connect(RUN_URL) as run_ws_client2:
-            code = "while True: pass"
-            start_cmd = create_message(
-                "start", {"runner": "python3", "code": code}, "1"
-            )
-            await run_ws_client.send_str(start_cmd)
+async def test_two_clients(run_ws_client, run_ws_client2):
+    code = "while True: pass"
+    start_cmd = create_message("start", {"runner": "python3", "code": code}, "1")
+    await run_ws_client.send_str(start_cmd)
 
-            await receive_data(run_ws_client, "started", process="1")
+    await receive_data(run_ws_client, "started", process="1")
 
-            await run_ws_client2.send_str(start_cmd)
+    await run_ws_client2.send_str(start_cmd)
 
-            await receive_data(run_ws_client2, "started", process="1")
+    await receive_data(run_ws_client2, "started", process="1")
 
-            stop_cmd = create_message("stop", None, "1")
-            await run_ws_client.send_str(stop_cmd)
+    stop_cmd = create_message("stop", None, "1")
+    await run_ws_client.send_str(stop_cmd)
 
-            await wait_for_data(run_ws_client, "stopped", "exitCode", -15, 100, "1")
+    await wait_for_data(run_ws_client, "stopped", "exitCode", -15, 100, "1")
 
-            stop_cmd = create_message("stop", None, "1")
-            await run_ws_client2.send_str(stop_cmd)
+    stop_cmd = create_message("stop", None, "1")
+    await run_ws_client2.send_str(stop_cmd)
 
-            await wait_for_data(run_ws_client2, "stopped", "exitCode", -15, 100, "1")
+    await wait_for_data(run_ws_client2, "stopped", "exitCode", -15, 100, "1")
 
 
 @pytest.mark.asyncio
