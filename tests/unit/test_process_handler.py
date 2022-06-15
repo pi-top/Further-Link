@@ -28,14 +28,9 @@ async def test_basic():
     p.on_stop = AsyncMock()
     p.on_output = AsyncMock()
 
-    # TODO this is too fast to even lookup the pgid?!
-    # await p.start("echo 'hello world'")
-
-    # TODO this is too fast to capture the output
-    # WIP fix on branch improve-output-handling setting up output before start
-    # await p.start("bash -c \"echo 'hello world'\"")
-
-    await p.start("python3 -c \"print('hello world')\"")
+    # this is fast, won't have time to get it's pgid and set up ipc, but we
+    # should get the output still
+    await p.start("echo 'hello world'")
 
     assert type(p.process) == Process
     p.on_start.assert_called()
