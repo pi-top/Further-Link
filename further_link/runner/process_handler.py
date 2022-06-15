@@ -114,16 +114,13 @@ class ProcessHandler:
         if self.on_start:
             await self.on_start()
 
+        asyncio.create_task(self._process_communicate())  # asap
         try:
             self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
-
-            asyncio.create_task(self._ipc_communicate())  # after exec as uses pgid
-            asyncio.create_task(self._process_communicate())
-
+            asyncio.create_task(self._ipc_communicate())  # after as uses pgid
         except ProcessLookupError:
+            # the process is done faster than we can look up gpid!
             self.pgid = None
-            # return from start but since the process is gone trigger clean up
-            asyncio.create_task(self._handle_process_end())
 
     def is_running(self):
         return hasattr(self, "process") and self.process is not None
@@ -204,7 +201,8 @@ class ProcessHandler:
         # output produced right before the process stopped
         # but cancel them after a timeout if they don't stop themselves
         await timeout(output_tasks, 1)
-        await timeout(self.ipc_tasks, 0.1)
+        if hasattr(self, "ipc_tasks"):
+            await timeout(self.ipc_tasks, 0.1)
 
         await self._handle_process_end()
 
