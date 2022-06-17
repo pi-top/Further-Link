@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import pytest
@@ -57,6 +58,9 @@ pause()
     await wait_for_data(run_ws_client, "started", process="1")
     await wait_for_data(run_ws_client, "keylisten", "output", "a", 0, "1")
     await wait_for_data(run_ws_client, "keylisten", "output", "b", 0, "1")
+
+    # keyevent ipc server can take a moment to start up
+    await asyncio.sleep(0.1)
 
     await run_ws_client.send_str(
         create_message("keyevent", {"key": "a", "event": "keydown"}, "1")

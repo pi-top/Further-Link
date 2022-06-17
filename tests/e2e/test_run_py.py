@@ -3,14 +3,13 @@ import os
 from datetime import datetime
 from shutil import copy
 
-import aiohttp
 import pytest
 
 from further_link import __version__
 from further_link.util.message import create_message, parse_message
 
 from ..dirs import WORKING_DIRECTORY
-from . import E2E_PATH, RUN_PY_URL
+from . import E2E_PATH
 from .helpers import receive_data, wait_for_data
 
 
@@ -133,7 +132,7 @@ async def test_bad_code(run_py_ws_client):
     lines = m_data["output"].split("\n")
     assert lines[0].startswith("  File")
     assert lines[1] == "    i'm not valid python"
-    assert lines[2] == "                       ^"
+    assert lines[2][-1] == "^"
     assert lines[3] == "SyntaxError: EOL while scanning string literal"
 
     await wait_for_data(run_py_ws_client, "stopped", "exitCode", 1)
@@ -211,28 +210,26 @@ while "BYE" != s:
 
 
 @pytest.mark.asyncio
-async def test_two_clients(run_py_ws_client):
-    async with aiohttp.ClientSession() as session2:
-        async with session2.ws_connect(RUN_PY_URL) as run_py_ws_client2:
-            code = "while True: pass"
-            start_cmd = create_message("start", {"sourceScript": code})
-            await run_py_ws_client.send_str(start_cmd)
+async def test_two_clients(run_py_ws_client, run_py_ws_client2):
+    code = "while True: pass"
+    start_cmd = create_message("start", {"sourceScript": code})
+    await run_py_ws_client.send_str(start_cmd)
 
-            await receive_data(run_py_ws_client, "started")
+    await receive_data(run_py_ws_client, "started")
 
-            await run_py_ws_client2.send_str(start_cmd)
+    await run_py_ws_client2.send_str(start_cmd)
 
-            await receive_data(run_py_ws_client2, "started")
+    await receive_data(run_py_ws_client2, "started")
 
-            stop_cmd = create_message("stop")
-            await run_py_ws_client.send_str(stop_cmd)
+    stop_cmd = create_message("stop")
+    await run_py_ws_client.send_str(stop_cmd)
 
-            await wait_for_data(run_py_ws_client, "stopped", "exitCode", -15, 100)
+    await wait_for_data(run_py_ws_client, "stopped", "exitCode", -15, 100)
 
-            stop_cmd = create_message("stop")
-            await run_py_ws_client2.send_str(stop_cmd)
+    stop_cmd = create_message("stop")
+    await run_py_ws_client2.send_str(stop_cmd)
 
-            await wait_for_data(run_py_ws_client2, "stopped", "exitCode", -15, 100)
+    await wait_for_data(run_py_ws_client2, "stopped", "exitCode", -15, 100)
 
 
 @pytest.mark.asyncio
@@ -359,6 +356,9 @@ pause()
     await wait_for_data(run_py_ws_client, "started")
     await wait_for_data(run_py_ws_client, "keylisten", "output", "a")
     await wait_for_data(run_py_ws_client, "keylisten", "output", "b")
+
+    # keyevent ipc server can take a moment to start up
+    await asyncio.sleep(0.1)
 
     await run_py_ws_client.send_str(
         create_message("keyevent", {"key": "a", "event": "keydown"})

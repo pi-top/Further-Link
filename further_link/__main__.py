@@ -64,14 +64,6 @@ def create_app():
     return app
 
 
-async def run_async():
-    runner = web.AppRunner(create_app())
-    await runner.setup()
-    site = web.TCPSite(runner, port=port(), ssl_context=ssl_context())
-    await site.start()
-    return runner
-
-
 @click.command()
 def main():
     return web.run_app(
