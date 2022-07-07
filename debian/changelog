@@ -1,24 +1,12 @@
-further-link (5.1.1-2) bullseye; urgency=medium
+further-link (5.2.0-1) bullseye; urgency=medium
 
-  * [pre-commit.ci] pre-commit autoupdate (#106)
-  * Updated master workflow files
-  * Update test config to support bullseye
-  * Update tests for python 3.9 compatibility
-  * Fix output handling race conditions during shutdown
-  * Fix ringbuf read sometimes dropping final output due to race condition
-  * Use pytest-aiohttp to simplify fixtures
-  * Add async_helpers unit tests
-  * [pre-commit.ci] pre-commit autoupdate (#112)
-  * Add bash script to manage virtual display and vnc server proxy
-  * Add novnc start option and novnc response message
-  * Update package dependencies
-  * Create VNC SSL certificate on app start
-  * Update tests and docs
-  * fix: handle case where process ends before we can communicate with it
-  * fix: entrypoint name for exec scripts
-  * fix: dropping output immediately after process start
-  * Update Dockerfile to support vnc option
-  * test: improve reliability of test_run_shell
+  * Add script to manage virtual display and vnc server proxy
+  * Add novnc start option, novnc response message, novnc certificate creation
+  * Update Dockerfile to support vnc option and use of display
+  * Dependency, build and test updates, including testing against python 3.9 and debian bullseye
+  * Fix sometimes dropping final output due to race conditions during shutdown
+  * Fix sometimes dropping output immediately after process start and handling of very short lifetime processes
+  * Fix entrypoint name for exec scripts
 
  -- pi-top <deb-maintainers@pi-top.com>  Thu, 07 Jul 2022 10:32:21 +0000
 
