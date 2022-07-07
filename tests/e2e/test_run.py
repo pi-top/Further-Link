@@ -36,8 +36,9 @@ print(datetime.now().strftime("%A"))
 
 @pytest.mark.asyncio
 async def test_run_shell(run_ws_client):
-    code = """\
-date +%s # unix time in seconds
+    output = "i run shell commands"
+    code = f"""\
+echo {output}
 """
     start_cmd = create_message("start", {"runner": "shell"}, "1")
     await run_ws_client.send_str(start_cmd)
@@ -47,8 +48,7 @@ date +%s # unix time in seconds
     commands = create_message("stdin", {"input": code}, "1")
     await run_ws_client.send_str(commands)
 
-    seconds = str(int(time()))
-    await wait_for_data(run_ws_client, "stdout", "output", seconds + "\n", 0, "1")
+    await wait_for_data(run_ws_client, "stdout", "output", output + "\n", 0, "1")
 
     stop_cmd = create_message("stop", None, "1")
     await run_ws_client.send_str(stop_cmd)
