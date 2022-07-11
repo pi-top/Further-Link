@@ -2,8 +2,7 @@ import asyncio
 import logging
 
 from aiohttp import web
-
-from further_link.util.vnc import VncConnectionDetails
+from pt_web_vnc.connection_details import VncConnectionDetails
 
 from ..runner.exec_process_handler import ExecProcessHandler
 from ..runner.process_handler import InvalidOperation

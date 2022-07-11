@@ -6,6 +6,7 @@ from pty import openpty
 from shlex import split
 
 import aiofiles
+from pt_web_vnc.vnc import async_start, async_stop
 
 from ..util.async_helpers import ringbuf_read, timeout
 from ..util.id_generator import IdGenerator
@@ -21,7 +22,7 @@ from ..util.user_config import (
     get_working_directory,
     user_exists,
 )
-from ..util.vnc import start_vnc, stop_vnc
+from ..util.vnc import VNC_CERTIFICATE_PATH
 
 SERVER_IPC_CHANNELS = [
     "video",
@@ -78,7 +79,11 @@ class ProcessHandler:
         # set $DISPLAY so that user can open GUI windows
         if self.novnc:
             process_env["DISPLAY"] = f":{self.id}"
-            await start_vnc(self.id, self.on_display_activity)
+            await async_start(
+                display_id=self.id,
+                on_display_activity=self.on_display_activity,
+                ssl_certificate=VNC_CERTIFICATE_PATH,
+            )
         else:
             default_display = get_first_display()
             if default_display:
@@ -236,7 +241,7 @@ class ProcessHandler:
 
         if self.novnc:
             try:
-                await stop_vnc(self.id)
+                await async_stop(self.id)
             except Exception:
                 pass
 
