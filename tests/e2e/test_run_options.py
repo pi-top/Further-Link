@@ -135,7 +135,9 @@ from time import sleep
 sleep(1) # activity monitor takes 1s to detect the window
 """
     start_cmd = create_message(
-        "start", {"runner": "python3", "code": code, "novnc": True}, "1"
+        "start",
+        {"runner": "python3", "code": code, "novncOptions": {"enabled": True}},
+        "1",
     )
     await run_ws_client.send_str(start_cmd)
 

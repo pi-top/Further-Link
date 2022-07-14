@@ -58,9 +58,18 @@ class RunManager:
                 code = code if isinstance(code, str) else None
                 path = m_data.get("path")
                 path = path if isinstance(path, str) and len(path) else get_temp_dir()
-                novnc = m_data.get("novnc")
-                novnc = novnc if isinstance(novnc, bool) else False
-                await self.add_handler(m_process, m_data["runner"], path, code, novnc)
+                novncOptions = m_data.get("novncOptions")
+                novncOptions = (
+                    novncOptions
+                    if (
+                        isinstance(novncOptions, dict)
+                        and isinstance(novncOptions.get("enabled"), bool)
+                    )
+                    else {"enabled": False}
+                )
+                await self.add_handler(
+                    m_process, m_data["runner"], path, code, novncOptions
+                )
 
             elif (
                 m_type == "stdin"
@@ -99,7 +108,7 @@ class RunManager:
             logging.exception(f"{self.id} Message Exception: {e}")
             await self.send("error", {"message": "Message Exception"})
 
-    async def add_handler(self, process_id, runner, path, code, novnc):
+    async def add_handler(self, process_id, runner, path, code, novncOptions):
         try:
             handler_class = self.handler_classes[runner]
         except KeyError:
@@ -135,7 +144,7 @@ class RunManager:
         handler.on_stop = on_stop
         handler.on_display_activity = on_display_activity
         handler.on_output = on_output
-        await handler.start(path, code, novnc=novnc)
+        await handler.start(path, code, novncOptions=novncOptions)
 
         self.process_handlers[process_id] = handler
 

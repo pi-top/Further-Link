@@ -11,7 +11,7 @@ further_link_module_path = os.path.join(dirname, "lib")
 
 
 class ExecProcessHandler(ProcessHandler):
-    async def start(self, path, code=None, novnc=False):
+    async def start(self, path, code=None, novncOptions={}):
         path = get_absolute_path(path, get_working_directory(self.user))
 
         # create path directories if they don't already exist
@@ -31,7 +31,7 @@ class ExecProcessHandler(ProcessHandler):
 
         work_dir = os.path.dirname(entrypoint)
 
-        await super().start(command, work_dir, novnc=novnc)
+        await super().start(command, work_dir, novncOptions=novncOptions)
 
     async def _clean_up(self):
         try:

@@ -260,7 +260,7 @@ Message types accepted by the server are:
 Message types sent from the server are:
 ```
 {
- "type":"[pong|error|started|stopped|stdout|stderr|novnc|video|keylisten]",
+ "type":"[pong|error|started|stopped|stdout|stderr|novncOptions|video|keylisten]",
  "data": {...},
  "process": "id"
 }
@@ -287,16 +287,18 @@ Basic:
     not absolute, it is assumed to be relative to the further link working
     directory described above.
 
-    A 'novnc' boolean option can also be passed in the start data to create a
+    A 'novncOptions' object can also be passed in the start data to configure a
     virtual display for the process, attach a vnc server to it and serve it via
     the novnc websocket proxy, for viewing from a browser. When a window is
     detected on the virtual display, a 'novnc' response will be sent to inform
-    the browser of the activity and how to view it.
+    the browser of the activity and provide a url to view it. 'novncOptions'
+    can include a boolean property 'enabled' and 'width' and 'height' integers
+    for the display dimensions.
 
     e.g.
     `data: {code:"print('hi')"}`
     `data: {code:"print('hi')", path: "myproject"}`
-    `data: {path: "myproject/run.py", novnc: true}`
+    `data: {path: "myproject/run.py", novncOptions: {enabled: true}}`
     `data: {path: "/home/pi/run.py"}`
 
 - `started` response is sent after a successful process `start`, has no data.
