@@ -45,9 +45,9 @@ class ProcessHandler:
         self.user = user
         self.on_display_activity = None
 
-    async def start(self, command, work_dir=None, env={}, novnc=False):
+    async def start(self, command, work_dir=None, env={}, novncOptions={}):
         self.work_dir = work_dir or get_working_directory(self.user)
-        self.novnc = novnc
+        self.novnc = novncOptions.get("enabled", False)
 
         stdio = asyncio.subprocess.PIPE
 
@@ -83,6 +83,9 @@ class ProcessHandler:
                 display_id=self.id,
                 on_display_activity=self.on_display_activity,
                 ssl_certificate=VNC_CERTIFICATE_PATH,
+                with_window_manager=True,
+                height=novncOptions.get("height"),
+                width=novncOptions.get("width"),
             )
         else:
             default_display = get_first_display()

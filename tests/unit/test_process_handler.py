@@ -4,13 +4,14 @@ import logging
 import os
 import sys
 from asyncio.subprocess import Process
+from unittest.mock import patch
 
 import pytest
 from aiofiles.threadpool.binary import AsyncFileIO
 from mock import AsyncMock
-from testpath import MockCommand
 
 from further_link.runner.process_handler import ProcessHandler
+from further_link.util.vnc import VNC_CERTIFICATE_PATH
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -36,7 +37,7 @@ async def test_basic():
     p.on_start.assert_called()
 
     await p.process.wait()
-    # takes some time to complete - 0.1s output buffer etc
+    # takes some time to flush - 0.1s output buffer etc
     await asyncio.sleep(0.2)
 
     p.on_output.assert_called_with("stdout", "hello world\n")
@@ -57,7 +58,6 @@ async def test_input():
     await p.send_input("hello\n")
 
     await p.process.wait()
-    # takes some time to complete - there's a 0.1 sleep in there
     await asyncio.sleep(0.2)
 
     p.on_output.assert_called_with("stdout", "hello\n")
@@ -83,7 +83,6 @@ async def test_pty():
     await p.send_input("hello\n")
 
     await p.process.wait()
-    # takes some time to complete - there's a 0.1 sleep in there
     await asyncio.sleep(0.2)
 
     p.on_output.assert_called_with("stdout", "hello\r\nhello\r\n")
@@ -104,32 +103,32 @@ from signal import pause
 print('doing fake graphics!')
 pause()
 """
+    novncOptions = {"enabled": True, "height": 620, "width": 780}
 
-    with MockCommand("further-link-vnc") as fl_vnc:
-        await p.start(f'python3 -u -c "{code}"', novnc=True)
+    with patch(
+        "further_link.runner.process_handler.async_start", AsyncMock()
+    ) as vnc_start:
+        await p.start(f'python3 -u -c "{code}"', novncOptions=novncOptions)
 
-    fl_vnc.assert_called(["start", str(p.id), "/tmp/.further_link.vnc_ssl.pem"])
+        vnc_start.assert_called_with(
+            display_id=p.id,
+            on_display_activity=p.on_display_activity,
+            ssl_certificate=VNC_CERTIFICATE_PATH,
+            with_window_manager=True,
+            height=novncOptions.get("height"),
+            width=novncOptions.get("width"),
+        )
+
     p.on_start.assert_called()
 
-    with MockCommand.fixed_output("xwininfo", "no window") as xwininfo:
-        await asyncio.sleep(0.2)  # wait for display monitor to find this
+    await asyncio.sleep(0.2)
+    p.on_output.assert_called_with("stdout", "doing fake graphics!\n")
 
-    xwininfo.assert_called()
-
-    with MockCommand.fixed_output("xwininfo", "new window") as xwininfo:
-        with MockCommand("further-link-vnc") as fl_vnc:
-            await asyncio.sleep(2)  # wait for display monitor to find this
-
-    xwininfo.assert_called()
-    fl_vnc.assert_called(["url", str(p.id)])
-    p.on_display_activity.assert_called()
-
-    with MockCommand("further-link-vnc") as fl_vnc:
+    with patch("further_link.runner.process_handler.async_stop") as vnc_stop:
         await p.stop()
         await p.process.wait()
-        # takes some time to complete - there's a 0.1 sleep in there
         await asyncio.sleep(0.2)
 
-    p.on_output.assert_called_with("stdout", "doing fake graphics!\n")
-    fl_vnc.assert_called(["stop", str(p.id)])
+        vnc_stop.assert_called_with(p.id)
+
     p.on_stop.assert_called_with(-15)
