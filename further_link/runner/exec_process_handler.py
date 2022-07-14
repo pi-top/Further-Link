@@ -11,13 +11,13 @@ further_link_module_path = os.path.join(dirname, "lib")
 
 
 class ExecProcessHandler(ProcessHandler):
-    async def start(self, path, code=None):
+    async def start(self, path, code=None, novnc=False):
         path = get_absolute_path(path, get_working_directory(self.user))
 
         # create path directories if they don't already exist
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        entrypoint = path if code is None else os.path.join(path, self.id)
+        entrypoint = path if code is None else os.path.join(path, f"exec-{self.id}")
 
         # create a temporary file to execute if code is provided
         if code is not None:
@@ -31,7 +31,7 @@ class ExecProcessHandler(ProcessHandler):
 
         work_dir = os.path.dirname(entrypoint)
 
-        await super().start(command, work_dir)
+        await super().start(command, work_dir, novnc=novnc)
 
     async def _clean_up(self):
         try:

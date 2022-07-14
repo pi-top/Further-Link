@@ -8,6 +8,7 @@ from shlex import split
 import aiofiles
 
 from ..util.async_helpers import ringbuf_read, timeout
+from ..util.id_generator import IdGenerator
 from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
 from ..util.sdk import get_first_display
 from ..util.terminal import set_winsize
@@ -20,6 +21,7 @@ from ..util.user_config import (
     get_working_directory,
     user_exists,
 )
+from ..util.vnc import start_vnc, stop_vnc
 
 SERVER_IPC_CHANNELS = [
     "video",
@@ -31,15 +33,20 @@ class InvalidOperation(Exception):
     pass
 
 
+id_generator = IdGenerator(max_value=999)
+
+
 class ProcessHandler:
     def __init__(self, user, pty=False):
         self.pty = pty
-        self.id = str(id(self))
+        self.id = id_generator.create()
         assert user_exists(user)
         self.user = user
+        self.on_display_activity = None
 
-    async def start(self, command, work_dir=None, env={}):
+    async def start(self, command, work_dir=None, env={}, novnc=False):
         self.work_dir = work_dir or get_working_directory(self.user)
+        self.novnc = novnc
 
         stdio = asyncio.subprocess.PIPE
 
@@ -68,10 +75,14 @@ class ProcessHandler:
             process_env["PWD"] = self.work_dir
             process_env["USER"] = self.user
 
-        # Ensure that DISPLAY is set, so that user can open GUI windows
-        display = get_first_display()
-        if display is not None:
-            process_env["DISPLAY"] = display
+        # set $DISPLAY so that user can open GUI windows
+        if self.novnc:
+            process_env["DISPLAY"] = f":{self.id}"
+            await start_vnc(self.id, self.on_display_activity)
+        else:
+            default_display = get_first_display()
+            if default_display:
+                process_env["DISPLAY"] = default_display
 
         def preexec():
             if self.user != get_current_user():
@@ -100,13 +111,16 @@ class ProcessHandler:
             preexec_fn=preexec,
         )
 
-        self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
-
-        asyncio.create_task(self._ipc_communicate())  # after exec as uses pgid
-        asyncio.create_task(self._process_communicate())
-
         if self.on_start:
             await self.on_start()
+
+        asyncio.create_task(self._process_communicate())  # asap
+        try:
+            self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
+            asyncio.create_task(self._ipc_communicate())  # after as uses pgid
+        except ProcessLookupError:
+            # the process is done faster than we can look up gpid!
+            self.pgid = None
 
     def is_running(self):
         return hasattr(self, "process") and self.process is not None
@@ -181,14 +195,19 @@ class ProcessHandler:
             )
 
         # wait for process to exit
-        exit_code = await self.process.wait()
+        await self.process.wait()
 
         # wait a little for the io tasks to complete to let them send
         # output produced right before the process stopped
         # but cancel them after a timeout if they don't stop themselves
         await timeout(output_tasks, 1)
-        await timeout(self.ipc_tasks, 0.1)
+        if hasattr(self, "ipc_tasks"):
+            await timeout(self.ipc_tasks, 0.1)
 
+        await self._handle_process_end()
+
+    async def _handle_process_end(self):
+        exit_code = await self.process.wait()
         await self._clean_up()
         self.process = None
 
@@ -206,14 +225,23 @@ class ProcessHandler:
         )
 
     async def _clean_up(self):
-        try:
-            if self.pty:
+        if self.pty:
+            try:
                 self.pty_master.close()
                 self.pty_slave.close()
                 os.remove(self.pty_master)
                 os.remove(self.pty_slave)
-        except Exception:
-            pass
+            except Exception:
+                pass
 
-        for channel in SERVER_IPC_CHANNELS:
-            ipc_cleanup(channel, pgid=self.pgid)
+        if self.novnc:
+            try:
+                await stop_vnc(self.id)
+            except Exception:
+                pass
+
+        if self.pgid:
+            for channel in SERVER_IPC_CHANNELS:
+                ipc_cleanup(channel, pgid=self.pgid)
+
+        id_generator.free(self.id)

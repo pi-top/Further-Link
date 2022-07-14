@@ -14,9 +14,21 @@ Package: further-link
 Architecture: all
 Depends: ${misc:Depends},
  ${python3:Depends},
+# To serve VNC over http
+ novnc,
+# net-tools includes netstat which is an undeclared dependency of novnc
+ net-tools,
+# procps includes ps which is an undeclared dependency of novnc
+ procps,
+# To create virtual display
+ xvfb,
+# VNC server
+ x11vnc,
 Suggests:
 # Used for device IDs in serial
  pi-topd,
+# Required by OpenSSL
+ libffi7,
 Description: pi-top Further Link
  Connect to further.pi-top.com from a browser, allowing you to run
  your own Python projects on a pi-top remotely (as long as you are

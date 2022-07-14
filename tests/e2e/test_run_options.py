@@ -1,3 +1,5 @@
+import asyncio
+import os
 from datetime import datetime
 from shutil import copy
 
@@ -121,3 +123,27 @@ while "BYE" != s:
     await wait_for_data(run_ws_client_query, "stdout", "output", "BYE\r\n", 0, "1")
 
     await wait_for_data(run_ws_client_query, "stopped", "exitCode", 0, 0, "1")
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif("DISPLAY" not in os.environ, reason="requires X11 display")
+async def test_novnc(run_ws_client):
+    code = """\
+import turtle
+turtle.color('red', 'yellow')
+from time import sleep
+sleep(1) # activity monitor takes 1s to detect the window
+"""
+    start_cmd = create_message(
+        "start", {"runner": "python3", "code": code, "novnc": True}, "1"
+    )
+    await run_ws_client.send_str(start_cmd)
+
+    await receive_data(run_ws_client, "started", process="1")
+
+    await wait_for_data(run_ws_client, "novnc", timeout=0, process="1")
+
+    await wait_for_data(run_ws_client, "stopped", "exitCode", 0, 0, "1")
+
+    # TODO sleep seems to be required for clean activity monitor shutdown
+    await asyncio.sleep(0.01)

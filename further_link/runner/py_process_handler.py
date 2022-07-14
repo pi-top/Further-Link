@@ -10,7 +10,7 @@ dirname = pathlib.Path(__file__).parent.absolute()
 
 
 class PyProcessHandler(ProcessHandler):
-    async def start(self, path, code=None):
+    async def start(self, path, code=None, novnc=False):
         path = get_absolute_path(path, get_working_directory(self.user))
 
         # create path directories if they don't already exist
@@ -28,7 +28,7 @@ class PyProcessHandler(ProcessHandler):
 
         work_dir = os.path.dirname(entrypoint)
 
-        await super().start(command, work_dir)
+        await super().start(command, work_dir, novnc=novnc)
 
     async def _clean_up(self):
         try:

@@ -339,7 +339,6 @@ color('red')
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Temporarily disabled - to be fixed")
 async def test_keyevent(run_py_ws_client):
     code = """\
 from further_link import KeyboardButton

@@ -23,6 +23,7 @@ jobs:
             /bin/bash -c " \
               apt-get update && \
               apt-get install -y python3 python3-pip && \
+              pip3 install -U pip && \
               cd /${{ github.event.repository.name }} && \
               pip3 install .[test] && \
               pytest -v --cov=further_link && \

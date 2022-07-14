@@ -1,3 +1,15 @@
+further-link (5.2.0-1) bullseye; urgency=medium
+
+  * Add script to manage virtual display and vnc server proxy
+  * Add novnc start option, novnc response message, novnc certificate creation
+  * Update Dockerfile to support vnc option and use of display
+  * Dependency, build and test updates, including testing against python 3.9 and debian bullseye
+  * Fix sometimes dropping final output due to race conditions during shutdown
+  * Fix sometimes dropping output immediately after process start and handling of very short lifetime processes
+  * Fix entrypoint name for exec scripts
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 07 Jul 2022 10:32:21 +0000
+
 further-link (5.1.1-1) bullseye; urgency=medium
 
   * fix: update version.txt used in PyPi and Docker releases (#108)
