@@ -34,7 +34,10 @@ class InvalidOperation(Exception):
     pass
 
 
-id_generator = IdGenerator(max_value=999)
+# each run will need a unique id
+# one use of the id is for the pt-web-vnc virtual display id and port numbers
+# so we must use +ve int < 1000, with 0-99 reserved for other uses
+id_generator = IdGenerator(min_value=100, max_value=999)
 
 
 class ProcessHandler:
