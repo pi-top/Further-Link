@@ -1,11 +1,9 @@
-further-link (5.2.0-2) bullseye; urgency=medium
+further-link (5.3.0-1) bullseye; urgency=medium
 
-  * [pre-commit.ci] pre-commit autoupdate (#114)
-  * Use pt-web-vnc over further-link-vnc
+  * Use pt-web-vnc over further-link-vnc script
   * Replace start option novnc with novncOptions which can set dimensions
-  * fix: docker container unbuffered output
+  * fix: docker container uses unbuffered output
   * fix: reserve display ids 0-99 for other uses
-  * [pre-commit.ci] pre-commit autoupdate
 
  -- pi-top <deb-maintainers@pi-top.com>  Tue, 26 Jul 2022 16:48:17 +0000
 
