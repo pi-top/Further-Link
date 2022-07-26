@@ -34,6 +34,7 @@ COPY further_link further_link
 RUN pip3 install .
 
 ENV FURTHER_LINK_NOSSL=true
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8028
 EXPOSE 60000-61000
