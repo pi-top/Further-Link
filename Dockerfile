@@ -26,6 +26,25 @@ RUN apt-get update && \
     apt-get install -y pt-web-vnc && \
     apt-get clean
 
+# Install pitop SDK prerequisites
+RUN apt-get update && \
+    apt-get install -y pkg-config libsystemd0 libsystemd-dev && \
+    pip3 install cmake && \
+    apt-get clean
+
+# Install pitop SDK
+# using pip for onnxruntime as there is only armhf debian build
+RUN pip3 install pitop==0.26.3.post1
+
+# Install useful extras from pt-os
+RUN apt-get update && \
+    # not installable apt-get install -y pt-os-ui-mods && \
+    apt-get install -y chromium && \
+    apt-get install -y vim && \
+    apt-get install -y python3-matplotlib && \
+    # no audio DEBIAN_FRONTEND='noninteractive' apt-get install -y sonic-pi python3-sonic && \
+    apt-get clean
+
 WORKDIR /further-link
 
 COPY pyproject.toml setup.py setup.cfg MANIFEST.in ./
