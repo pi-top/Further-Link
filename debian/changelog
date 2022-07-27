@@ -1,3 +1,9 @@
+further-link (5.3.0-2) bullseye; urgency=medium
+
+  * Fix docker build workflow to correctly identify when a release tag should be used
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 27 Jul 2022 11:36:54 +0000
+
 further-link (5.3.0-1) bullseye; urgency=medium
 
   * Use pt-web-vnc over further-link-vnc script
