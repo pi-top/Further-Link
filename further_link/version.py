@@ -1,6 +1,7 @@
-from os import path
+from pkg_resources import get_distribution
 
-HERE = path.abspath(path.dirname(__file__))
-
-with open(f"{HERE}/version.txt", "r+") as f:
-    __version__ = f.read().strip()
+__version__ = "N/A"
+try:
+    __version__ = get_distribution("further_link").version
+except Exception:
+    pass
