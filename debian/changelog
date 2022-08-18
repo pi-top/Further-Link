@@ -1,7 +1,5 @@
-further-link (5.3.0-3) bullseye; urgency=medium
+further-link (5.3.1-1) bullseye; urgency=medium
 
-  * [pre-commit.ci] pre-commit autoupdate (#120)
-  * [pre-commit.ci] pre-commit autoupdate (#122)
   * Set package version using environment variable (#123)
 
  -- pi-top <deb-maintainers@pi-top.com>  Thu, 18 Aug 2022 20:19:33 +0000
