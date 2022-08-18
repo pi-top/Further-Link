@@ -1,3 +1,9 @@
+further-link (5.3.1-1) bullseye; urgency=medium
+
+  * Set package version using environment variable (#123)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 18 Aug 2022 20:19:33 +0000
+
 further-link (5.3.0-2) bullseye; urgency=medium
 
   * Fix docker build workflow to correctly identify when a release tag should be used
