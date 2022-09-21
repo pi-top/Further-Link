@@ -65,17 +65,35 @@ async def test_run_code_absolute_path(run_ws_client):
     await wait_for_data(run_ws_client, "stopped", "exitCode", 0, 0, "1")
 
 
+import getpass
+import pwd
+
+current_user = getpass.getuser()
+users = [
+    p.pw_name
+    for p in pwd.getpwall()
+    if p.pw_shell != "/usr/sbin/nologin" and p.pw_name != current_user
+]
+user = users[-1] if len(users) and current_user == "root" else None
+
+
 @pytest.mark.asyncio
-@pytest.mark.parametrize("query_params", [{"user": "pi"}])
-@pytest.mark.skip(reason="Won't work unless run as root on rpi")
+@pytest.mark.skipif(user is None, reason="Cannot switch to a user")
+@pytest.mark.parametrize("query_params", [{"user": user}])
 async def test_run_as_user(run_ws_client_query):
-    code = "import getpass\nprint(getpass.getuser())"
-    start_cmd = create_message("start", {"runner": "python3", "code": code}, "1")
+    code = """\
+#!/bin/bash
+whoami
+echo $LOGNAME
+"""
+    start_cmd = create_message("start", {"runner": "exec", "code": code}, "1")
     await run_ws_client_query.send_str(start_cmd)
 
     await receive_data(run_ws_client_query, "started", process="1")
 
-    await wait_for_data(run_ws_client_query, "stdout", "output", "pi\n", 0, "1")
+    await wait_for_data(
+        run_ws_client_query, "stdout", "output", f"{user}\n{user}\n", 0, "1"
+    )
 
     await wait_for_data(run_ws_client_query, "stopped", "exitCode", 0, 0, "1")
 
