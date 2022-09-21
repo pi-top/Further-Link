@@ -79,6 +79,16 @@ def get_working_directory(user=None):
     return os.path.join(get_home_directory(user), DEFAULT_DIR_NAME)
 
 
+def get_xdg_runtime_dir(user=None):
+    uid = get_uid(user)
+    xdg_runtime_dir = f"/run/user/{uid}"
+
+    if os.path.exists(xdg_runtime_dir):
+        return xdg_runtime_dir
+
+    return None
+
+
 def get_absolute_path(path, root="/"):
     # path is absolute or relative to root
     is_absolute = path[0] == "/"

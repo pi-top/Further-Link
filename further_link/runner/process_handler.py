@@ -18,8 +18,10 @@ from ..util.user_config import (
     get_gid,
     get_grp_ids,
     get_home_directory,
+    get_shell,
     get_uid,
     get_working_directory,
+    get_xdg_runtime_dir,
     user_exists,
 )
 from ..util.vnc import VNC_CERTIFICATE_PATH
@@ -74,10 +76,14 @@ class ProcessHandler:
         process_env["TERM"] = "xterm-256color"  # perhaps should be param
 
         if self.user:
-            process_env["HOME"] = get_home_directory(self.user)
-            process_env["LOGNAME"] = self.user
-            process_env["PWD"] = self.work_dir
             process_env["USER"] = self.user
+            process_env["LOGNAME"] = self.user
+            process_env["HOME"] = get_home_directory(self.user)
+            process_env["XDG_RUNTIME_DIR"] = get_xdg_runtime_dir(self.user)
+            process_env["SHELL"] = get_shell(self.user)
+            process_env["PWD"] = self.work_dir
+            # remove None values
+            process_env = {k: v for k, v in process_env.items() if v is not None}
 
         # set $DISPLAY so that user can open GUI windows
         if self.novnc:
