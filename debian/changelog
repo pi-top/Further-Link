@@ -1,3 +1,12 @@
+further-link (5.3.1-2) bullseye; urgency=medium
+
+  * Fix workflow variable: PYTHON_PYTHON_PACKAGE_VERSION -> PYTHON_PACKAGE_VERSION
+  * Set XDG_RUNTIME_DIR and SHELL when switching user
+  * Conditionally enable switch user test and use exec over python3
+  * Upgrade pyOpenSSL due install error
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 22 Sep 2022 10:27:45 +0000
+
 further-link (5.3.1-1) bullseye; urgency=medium
 
   * Set package version using environment variable (#123)
