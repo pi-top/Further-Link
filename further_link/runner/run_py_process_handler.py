@@ -10,6 +10,7 @@ import aiofiles
 from ..util.async_helpers import ringbuf_read
 from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
 from ..util.sdk import get_first_display
+from ..util.upload import create_directory
 from ..util.user_config import (
     default_user,
     get_current_user,
@@ -137,7 +138,7 @@ class RunPyProcessHandler:
 
             # if there's a script to create, create path dirs for it to go in
             if not os.path.exists(path_dirs) and isinstance(script, str):
-                os.makedirs(path_dirs, exist_ok=True)
+                create_directory(path_dirs, self.user)
 
         if isinstance(script, str):
             # write script to file, at path if given, otherwise temp

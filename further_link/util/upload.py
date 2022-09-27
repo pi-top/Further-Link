@@ -4,6 +4,8 @@ from shutil import rmtree
 import aiofiles
 from aiohttp import ClientSession
 
+from ..util.sdk import get_user_using_first_display
+from ..util.user_config import get_gid, get_uid
 from .user_config import CACHE_DIR_NAME
 
 file_types = ["url", "text"]
@@ -30,6 +32,14 @@ def directory_is_valid(directory):
         and isinstance(directory["files"], object)
         and all(file_is_valid(file) for file in directory["files"].values())
     )
+
+
+def create_directory(directory_path: str, user: str = None):
+    if user is None:
+        user = get_user_using_first_display()
+
+    os.makedirs(directory_path, exist_ok=True)
+    os.chown(directory_path, uid=get_uid(user), gid=get_gid(user))
 
 
 def valid_url_content(content):
@@ -101,12 +111,15 @@ def is_sub_directory(sub_dir, from_dir):
     return os.path.realpath(sub_dir).startswith(os.path.realpath(from_dir))
 
 
-async def do_upload(directory, work_dir):
+async def do_upload(directory, work_dir, user=None):
     try:
+        if user is None:
+            user = get_user_using_first_display()
+
         directory_name = directory["name"]
         directory_path = get_directory_path(work_dir, directory_name)
 
-        os.makedirs(directory_path, exist_ok=True)
+        create_directory(directory_path, user)
 
         # clear the upload directory every time
         for filename in os.listdir(directory_path):
@@ -125,7 +138,7 @@ async def do_upload(directory, work_dir):
             # support for creating subdirs in alias name
             alias_dir = os.path.dirname(alias_path)
             if not os.path.exists(alias_dir):
-                os.makedirs(alias_dir)
+                create_directory(alias_dir, user)
 
             if file_info["type"] == "url":
                 content = file_info["content"]
@@ -140,11 +153,14 @@ async def do_upload(directory, work_dir):
                 # url type files have a cache dir to prevent repeat download
                 bucket_cache_path = get_bucket_cache_path(work_dir, bucket_name)
                 if not os.path.exists(bucket_cache_path):
-                    os.makedirs(bucket_cache_path)
+                    create_directory(bucket_cache_path, user)
                 cache_file_path = get_cache_file_path(bucket_cache_path, file_name)
                 # only download the file if it's not in the cache
                 if not os.path.exists(cache_file_path):
                     await download_file(url, cache_file_path)
+
+                # set ownership of file to the correct user
+                os.chown(cache_file_path, uid=get_uid(user), gid=get_gid(user))
 
                 # create a symlink pointing to the cached downloaded file
                 os.symlink(cache_file_path, alias_path)
@@ -157,6 +173,9 @@ async def do_upload(directory, work_dir):
 
                 async with aiofiles.open(alias_path, "w+") as file:
                     await file.write(content["text"])
+
+                # set ownership of file to the correct user
+                os.chown(alias_path, uid=get_uid(user), gid=get_gid(user))
 
     except Exception as e:
         raise BadUpload(e)

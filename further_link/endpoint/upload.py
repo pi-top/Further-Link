@@ -18,7 +18,7 @@ async def upload(request):
         if not directory_is_valid(directory):
             raise web.HTTPBadRequest()
 
-        await do_upload(directory, work_dir)
+        await do_upload(directory, work_dir, user)
 
     except (web.HTTPBadRequest, json.decoder.JSONDecodeError):
         raise web.HTTPBadRequest()
