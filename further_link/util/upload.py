@@ -35,11 +35,22 @@ def directory_is_valid(directory):
 
 
 def create_directory(directory_path: str, user: str = None):
+    """
+    Create the directories from the provided path level by level, making sure the folders have the correct owner
+    """
     if user is None:
         user = get_user_using_first_display()
 
-    os.makedirs(directory_path, exist_ok=True)
-    os.chown(directory_path, uid=get_uid(user), gid=get_gid(user))
+    splitted_path = directory_path.split("/")
+    subpaths = ["/".join(splitted_path[:i]) for i in range(2, len(splitted_path) + 1)]
+
+    for subpath in subpaths:
+        if not os.path.isdir(subpath):
+            os.mkdir(subpath)
+
+            # Update directory owner if on user home
+            if subpath.startswith(os.path.expanduser(f"~{user}")):
+                os.chown(subpath, uid=get_uid(user), gid=get_gid(user))
 
 
 def valid_url_content(content):
