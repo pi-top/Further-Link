@@ -49,7 +49,7 @@ def create_directory(directory_path: str, user: str = None):
             os.mkdir(subpath)
 
             # Update directory owner if on user home
-            if subpath.startswith(os.path.expanduser(f"~{user}")):
+            if user and subpath.startswith(os.path.expanduser(f"~{user}")):
                 os.chown(subpath, uid=get_uid(user), gid=get_gid(user))
 
 
@@ -171,7 +171,8 @@ async def do_upload(directory, work_dir, user=None):
                     await download_file(url, cache_file_path)
 
                 # set ownership of file to the correct user
-                os.chown(cache_file_path, uid=get_uid(user), gid=get_gid(user))
+                if user:
+                    os.chown(cache_file_path, uid=get_uid(user), gid=get_gid(user))
 
                 # create a symlink pointing to the cached downloaded file
                 os.symlink(cache_file_path, alias_path)
@@ -186,7 +187,8 @@ async def do_upload(directory, work_dir, user=None):
                     await file.write(content["text"])
 
                 # set ownership of file to the correct user
-                os.chown(alias_path, uid=get_uid(user), gid=get_gid(user))
+                if user:
+                    os.chown(alias_path, uid=get_uid(user), gid=get_gid(user))
 
     except Exception as e:
         raise BadUpload(e)
