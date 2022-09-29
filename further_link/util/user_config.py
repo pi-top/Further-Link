@@ -5,6 +5,7 @@ import pwd
 
 from .sdk import get_user_using_first_display
 
+DEFAULT_USER = "pi"
 DEFAULT_DIR_NAME = "further"
 CACHE_DIR_NAME = ".flcache"
 TEMP_DIR = "/tmp"
@@ -63,7 +64,14 @@ def get_grp_ids(user):
 
 def default_user():
     user = get_user_using_first_display()
-    return user if user else get_current_user()
+    if user:
+        return user
+
+    user = get_current_user()
+    if user:
+        return user
+
+    return DEFAULT_USER
 
 
 def get_temp_dir():
