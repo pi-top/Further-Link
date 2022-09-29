@@ -1,3 +1,10 @@
+further-link (5.3.2-2) bullseye; urgency=medium
+
+  * Remove PEP386 directive for pyopenssl in py3dist-overrides
+  * Set ownership of files & directories to correct user (#128)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 29 Sep 2022 16:58:07 +0000
+
 further-link (5.3.2-1) bullseye; urgency=medium
 
   * Fix workflow variable: PYTHON_PYTHON_PACKAGE_VERSION -> PYTHON_PACKAGE_VERSION
