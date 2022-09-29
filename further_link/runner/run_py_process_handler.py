@@ -14,7 +14,9 @@ from ..util.upload import create_directory
 from ..util.user_config import (
     default_user,
     get_current_user,
+    get_gid,
     get_temp_dir,
+    get_uid,
     get_working_directory,
     user_exists,
 )
@@ -145,6 +147,8 @@ class RunPyProcessHandler:
             entrypoint = self._get_script_filename(path)
             async with aiofiles.open(entrypoint, "w+") as file:
                 await file.write(script)
+
+            os.chown(entrypoint, uid=get_uid(self.user), gid=get_gid(self.user))
 
             return entrypoint
 
