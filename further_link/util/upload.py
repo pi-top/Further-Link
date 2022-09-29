@@ -4,8 +4,7 @@ from shutil import rmtree
 import aiofiles
 from aiohttp import ClientSession
 
-from ..util.sdk import get_user_using_first_display
-from ..util.user_config import get_gid, get_uid
+from ..util.user_config import default_user, get_gid, get_uid
 from .user_config import CACHE_DIR_NAME
 
 file_types = ["url", "text"]
@@ -39,7 +38,7 @@ def create_directory(directory_path: str, user: str = None):
     Create the directories from the provided path level by level, making sure the folders have the correct owner
     """
     if user is None:
-        user = get_user_using_first_display()
+        user = default_user()
 
     splitted_path = directory_path.split("/")
     subpaths = ["/".join(splitted_path[:i]) for i in range(2, len(splitted_path) + 1)]
@@ -125,7 +124,7 @@ def is_sub_directory(sub_dir, from_dir):
 async def do_upload(directory, work_dir, user=None):
     try:
         if user is None:
-            user = get_user_using_first_display()
+            user = default_user()
 
         directory_name = directory["name"]
         directory_path = get_directory_path(work_dir, directory_name)
