@@ -4,7 +4,12 @@ import pathlib
 import aiofiles
 
 from ..util.upload import create_directory
-from ..util.user_config import get_absolute_path, get_working_directory
+from ..util.user_config import (
+    get_absolute_path,
+    get_gid,
+    get_uid,
+    get_working_directory,
+)
 from .process_handler import ProcessHandler
 
 dirname = pathlib.Path(__file__).parent.absolute()
@@ -26,6 +31,7 @@ class ExecProcessHandler(ProcessHandler):
                 await file.write(code)
             self._remove_entrypoint = entrypoint
 
+        os.chown(entrypoint, uid=get_uid(self.user), gid=get_gid(self.user))
         os.chmod(entrypoint, 0o777)  # make it executable
 
         command = entrypoint
