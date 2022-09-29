@@ -43,7 +43,9 @@ async def handle_message(message, process_handler, socket):
         and "directory" in m_data
         and directory_is_valid(m_data.get("directory"))
     ):
-        await do_upload(m_data.get("directory"), process_handler.work_dir)
+        await do_upload(
+            m_data.get("directory"), process_handler.work_dir, m_data.get("user")
+        )
         await socket.send_str(create_message("uploaded"))
 
     elif (
