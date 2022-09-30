@@ -1,3 +1,9 @@
+further-link (5.3.3-2) bullseye; urgency=medium
+
+  * Set PYTHON_PACKAGE_VERSION when building docker image
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 30 Sep 2022 13:57:16 +0000
+
 further-link (5.3.3-1) bullseye; urgency=medium
 
   * Remove PEP386 directive for pyopenssl in py3dist-overrides
