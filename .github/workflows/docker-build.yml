@@ -28,16 +28,20 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
+      - name: Parse changelog version number
+        run: |
+          sudo apt install -y dpkg-dev
+          echo "VERSION=$(dpkg-parsechangelog -Sversion)" >> $GITHUB_ENV
+
       - name: Generate human-readable non-release tag
         if: github.event_name != 'release' || github.event.action != 'created'
         run: |
           echo "DOCKER_TAG=$(basename ${GITHUB_HEAD_REF:-$GITHUB_REF})-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
 
-      - name: Generate release tag
+      - name: Use version in release tag
         if: github.event_name == 'release' && github.event.action == 'created'
         run: |
-          sudo apt install -y dpkg-dev
-          echo "DOCKER_TAG=v$(dpkg-parsechangelog -Sversion)" >> $GITHUB_ENV
+          echo "DOCKER_TAG=v${{ env.VERSION }}" >> $GITHUB_ENV
 
       - name: Build and push
         id: docker_build_push
@@ -46,6 +50,8 @@ jobs:
           context: .
           push: true
           tags: "pitop/pt-further-link:${{ env.DOCKER_TAG }}"
+          build-args: |
+            PYTHON_PACKAGE_VERSION=${{ env.VERSION }}
 
       - name: Show image digest
         run: echo ${{ steps.docker_build_push.outputs.digest }}
