@@ -1,5 +1,7 @@
 FROM debian:bullseye
 
+ARG PYTHON_PACKAGE_VERSION
+
 # Install pip3 and python3 with tk graphics
 RUN apt-get update && \
     apt-get install -y python3-tk python3-pip && \
@@ -35,6 +37,7 @@ RUN pip3 install .
 
 ENV FURTHER_LINK_NOSSL=true
 ENV PYTHONUNBUFFERED=1
+ENV PYTHON_PACKAGE_VERSION=$PYTHON_PACKAGE_VERSION
 
 EXPOSE 8028
 EXPOSE 60100-60999
