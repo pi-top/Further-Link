@@ -40,7 +40,17 @@ class InvalidOperation(Exception):
 # each run will need a unique id
 # one use of the id is for the pt-web-vnc virtual display id and port numbers
 # so we must use +ve int < 1000, with 0-99 reserved for other uses
-id_generator = IdGenerator(min_value=100, max_value=999)
+# envvar FURTHER_LINK_MAX_PROCESSES can be used to limit the range
+var_max_processes = os.environ.get("FURTHER_LINK_MAX_PROCESSES")
+MAX = 900
+if isinstance(var_max_processes, str) and var_max_processes.isdigit():
+    max_processes = int(var_max_processes)
+else:
+    max_processes = MAX
+if 1 > max_processes > MAX:
+    max_processes = MAX
+
+id_generator = IdGenerator(min_value=100, max_value=99 + max_processes)
 
 
 class ProcessHandler:
