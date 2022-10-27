@@ -5,7 +5,7 @@ from aioresponses import aioresponses as aioresponses_mock
 
 from further_link.__main__ import create_app
 
-from . import RUN_PATH, RUN_PY_PATH
+from . import RUN_PATH
 
 
 @pytest.fixture
@@ -17,24 +17,6 @@ def loop(event_loop):
 async def http_client(aiohttp_client):
     client = await aiohttp_client(create_app())
     yield client
-
-
-@pytest.fixture()
-async def run_py_ws_client(aiohttp_client):
-    client = await aiohttp_client(create_app())
-    async with client.ws_connect(RUN_PY_PATH, receive_timeout=0.1) as client:
-        yield client
-
-
-run_py_ws_client2 = run_py_ws_client
-
-
-@pytest.fixture()
-async def run_py_ws_client_query(aiohttp_client, query_params):
-    url = RUN_PY_PATH + "?" + urllib.parse.urlencode(query_params)
-    client = await aiohttp_client(create_app())
-    async with client.ws_connect(url, receive_timeout=0.1) as client:
-        yield client
 
 
 @pytest.fixture()

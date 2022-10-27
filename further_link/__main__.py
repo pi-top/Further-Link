@@ -9,7 +9,6 @@ from aiohttp import web
 
 from further_link.endpoint.apt_version import apt_version
 from further_link.endpoint.run import run as run_handler
-from further_link.endpoint.run_py import run_py
 from further_link.endpoint.upload import upload
 from further_link.util import vnc
 from further_link.util.ssl_context import ssl_context
@@ -55,9 +54,6 @@ def create_app():
 
     status_resource = cors.add(app.router.add_resource("/upload"))
     cors.add(status_resource.add_route("POST", upload))
-
-    exec_resource = cors.add(app.router.add_resource("/run-py"))
-    cors.add(exec_resource.add_route("GET", run_py))
 
     exec_resource = cors.add(app.router.add_resource("/run"))
     cors.add(exec_resource.add_route("GET", run_handler))
