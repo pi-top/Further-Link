@@ -1,3 +1,4 @@
+import logging
 import os
 import pathlib
 
@@ -16,7 +17,7 @@ dirname = pathlib.Path(__file__).parent.absolute()
 
 
 class PyProcessHandler(ProcessHandler):
-    async def start(self, path, code=None, novncOptions={}):
+    async def _start(self, path, code=None, novncOptions={}):
         path = get_absolute_path(path, get_working_directory(self.user))
 
         # create path directories if they don't already exist
@@ -36,13 +37,13 @@ class PyProcessHandler(ProcessHandler):
 
         work_dir = os.path.dirname(entrypoint)
 
-        await super().start(command, work_dir, novncOptions=novncOptions)
+        await super()._start(command, work_dir, novncOptions=novncOptions)
 
     async def _clean_up(self):
         try:
-            if self._remove_entrypoint is not None:
+            if getattr(self, "_remove_entrypoint", None):
                 os.remove(self._remove_entrypoint)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.exception(f"{self.id} Entrypoint Cleanup error: {e}")
 
         await super()._clean_up()

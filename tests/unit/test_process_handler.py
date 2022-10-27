@@ -124,7 +124,9 @@ pause()
     await asyncio.sleep(0.2)
     p.on_output.assert_called_with("stdout", "doing fake graphics!\n")
 
-    with patch("further_link.runner.process_handler.async_stop") as vnc_stop:
+    with patch(
+        "further_link.runner.process_handler.async_stop", AsyncMock()
+    ) as vnc_stop:
         await p.stop()
         await p.process.wait()
         await asyncio.sleep(0.2)

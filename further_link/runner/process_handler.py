@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import signal
 from functools import partial
@@ -50,7 +51,14 @@ class ProcessHandler:
         self.user = user
         self.on_display_activity = None
 
-    async def start(self, command, work_dir=None, env={}, novncOptions={}):
+    async def start(self, *args, **kwargs):
+        try:
+            await self._start(*args, **kwargs)
+        except Exception as e:
+            logging.exception(f"{self.id} Start error: {e}")
+            await self._clean_up()
+
+    async def _start(self, command, work_dir=None, env={}, novncOptions={}):
         self.work_dir = work_dir or get_working_directory(self.user)
         self.novnc = novncOptions.get("enabled", False)
 
@@ -242,23 +250,30 @@ class ProcessHandler:
         )
 
     async def _clean_up(self):
-        if self.pty:
+        if getattr(self, "pty", None):
             try:
-                self.pty_master.close()
-                self.pty_slave.close()
-                os.remove(self.pty_master)
-                os.remove(self.pty_slave)
-            except Exception:
-                pass
+                if getattr(self, "pty_master", None):
+                    self.pty_master.close()
+                if getattr(self, "pty_slave", None):
+                    self.pty_slave.close()
+            except Exception as e:
+                logging.exception(f"{self.id} PTY Cleanup error: {e}")
 
-        if self.novnc:
+        if getattr(self, "novnc", None):
             try:
                 await async_stop(self.id)
-            except Exception:
-                pass
+            except Exception as e:
+                logging.exception(f"{self.id} NOVNC Cleanup error: {e}")
 
-        if self.pgid:
-            for channel in SERVER_IPC_CHANNELS:
-                ipc_cleanup(channel, pgid=self.pgid)
+        if getattr(self, "ipc_tasks", None):
+            try:
+                for channel in SERVER_IPC_CHANNELS:
+                    ipc_cleanup(channel, pgid=self.pgid)
+                ipc_servers = await asyncio.gather(*self.ipc_tasks)
+                for server in ipc_servers:
+                    server.close()
+            except Exception as e:
+                logging.exception(f"{self.id} IPC Cleanup error: {e}")
 
         id_generator.free(self.id)
+        logging.debug(f"{self.id} Cleanup complete")
