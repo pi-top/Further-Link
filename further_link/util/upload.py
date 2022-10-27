@@ -3,7 +3,6 @@ import os
 from functools import partial
 from shutil import rmtree
 
-import aiofiles
 from aiohttp import ClientSession
 
 from ..util.user_config import default_user, get_gid, get_uid
@@ -26,6 +25,15 @@ async def chown(path, uid, gid):
 
 async def symlink(src, dst):
     await asyncio.to_thread(partial(os.symlink, src, dst))
+
+
+async def write_file(path, content, mode="w+"):
+    # aiofiles.open would sometimes just hang
+    def sync_write_file(p, c):
+        with open(p, mode) as file:
+            file.write(c)
+
+    await asyncio.to_thread(partial(sync_write_file, path, content))
 
 
 def file_is_valid(file):
@@ -105,8 +113,7 @@ async def download_file(url, file_path):
         async with session.get(url) as response:
             assert response.status == 200
 
-            async with aiofiles.open(file_path, "wb") as file:
-                await file.write(await response.read())
+            await write_file(file_path, await response.read(), "wb")
 
 
 def get_directory_path(work_dir, directory_name):
@@ -209,8 +216,7 @@ async def do_upload(directory, work_dir, user=None):
                 if not valid_text_content(content):
                     raise Exception("Invalid text content")
 
-                async with aiofiles.open(alias_path, "w+") as file:
-                    await file.write(content["text"])
+                await write_file(alias_path, content["text"])
 
                 # set ownership of file to the correct user
                 if user:
