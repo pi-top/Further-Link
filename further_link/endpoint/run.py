@@ -27,7 +27,8 @@ class RunManager:
         }
 
     async def stop(self):
-        for p in self.process_handlers.values():
+        # the dictionary will be mutated so use list to make a copy
+        for p in list(self.process_handlers.values()):
             try:
                 await p.stop()
             except InvalidOperation:
@@ -172,3 +173,5 @@ async def run(request):
         await socket.close()
         logging.info(f"{run_manager.id} Closed connection")
         await run_manager.stop()
+
+    return socket

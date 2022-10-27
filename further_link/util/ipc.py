@@ -88,8 +88,9 @@ async def async_start_ipc_server(channel, handle_message=None, pgid=None):
                     await handle_message(c)
 
     ipc_filepath = _get_ipc_filepath(channel, pgid=pgid)
-    await asyncio.start_unix_server(handle_connection, path=ipc_filepath)
+    server = await asyncio.start_unix_server(handle_connection, path=ipc_filepath)
     os.chmod(ipc_filepath, 0o666)  # ensures pi user can use this too
+    return server
 
 
 def _connect_ipc_client(channel, retry=True, pgid=None):
@@ -167,7 +168,4 @@ async def async_ipc_send(channel, message, pgid=None):
 def ipc_cleanup(channel, pgid=None):
     # no async option - aiofiles.os.remove not released to debian buster
     # os.remove should not block significantly, just fires a single syscall
-    try:
-        os.remove(_get_ipc_filepath(channel, pgid=pgid))
-    except Exception:
-        pass
+    os.remove(_get_ipc_filepath(channel, pgid=pgid))
