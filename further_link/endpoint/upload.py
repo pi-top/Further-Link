@@ -1,4 +1,5 @@
 import json
+import logging
 
 from aiohttp import web
 
@@ -23,7 +24,8 @@ async def upload(request):
     except (web.HTTPBadRequest, json.decoder.JSONDecodeError):
         raise web.HTTPBadRequest()
 
-    except BadUpload:
+    except BadUpload as e:
+        logging.exception(f"Upload error: {e}")
         raise web.HTTPInternalServerError()
 
     return web.Response(text="OK")
