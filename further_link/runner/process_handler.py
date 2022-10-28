@@ -253,9 +253,9 @@ class ProcessHandler:
         if getattr(self, "pty", None):
             try:
                 if getattr(self, "pty_master", None):
-                    self.pty_master.close()
+                    await self.pty_master.close()
                 if getattr(self, "pty_slave", None):
-                    self.pty_slave.close()
+                    await self.pty_slave.close()
             except Exception as e:
                 logging.exception(f"{self.id} PTY Cleanup error: {e}")
 
