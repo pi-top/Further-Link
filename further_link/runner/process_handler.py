@@ -200,12 +200,21 @@ class ProcessHandler:
 
         if self.pty:
             logging.debug(f"{self.id} Receiving input via pty")
-            await self.pty_master.write(content_bytes)
+            write_task = asyncio.create_task(self.pty_master.write(content_bytes))
         else:
             logging.debug(f"{self.id} Receiving input via stdin")
-            self.process.stdin.write(content_bytes)
-            await self.process.stdin.drain()
-        logging.debug(f"{self.id} Received input")
+
+            async def write():
+                self.process.stdin.write(content_bytes)
+                await self.process.stdin.drain()
+
+            write_task = asyncio.create_task(write())
+
+        done = await timeout(write_task, 0.1)
+        if write_task not in done:
+            logging.debug(f"{self.id} Receiving input timed out")
+        else:
+            logging.debug(f"{self.id} Received input")
 
     async def resize_pty(self, rows, cols):
         if not self.is_running() or not self.pty:
