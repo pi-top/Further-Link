@@ -1,42 +1,21 @@
-import asyncio
 import os
-from functools import partial
-from shutil import rmtree
 
-from aiohttp import ClientSession
-
-from ..util.user_config import default_user, get_gid, get_uid
-from .user_config import CACHE_DIR_NAME
+from .async_files import (
+    chown,
+    create_directory,
+    create_empty_directory,
+    download_file,
+    exists,
+    symlink,
+    write_file,
+)
+from .user_config import CACHE_DIR_NAME, default_user, get_gid, get_uid
 
 file_types = ["url", "text"]
 
 
 class BadUpload(Exception):
     pass
-
-
-async def exists(path):
-    await asyncio.to_thread(partial(os.path.exists, path))
-
-
-async def chown(path, uid, gid):
-    await asyncio.to_thread(partial(os.chown, path, uid, gid))
-
-
-async def symlink(src, dst):
-    await asyncio.to_thread(partial(os.symlink, src, dst))
-
-
-async def write_file(path, content, mode="w+"):
-    # aiofiles.open would sometimes just hang
-    def sync_write_file(p, c):
-        print("opening file")
-        with open(p, mode) as file:
-            print("file open")
-            file.write(c)
-        print("file written")
-
-    await asyncio.to_thread(partial(sync_write_file, path, content))
 
 
 def file_is_valid(file):
@@ -58,44 +37,6 @@ def directory_is_valid(directory):
     )
 
 
-def create_directory(directory_path: str, user: str = None):
-    """
-    Create the directories from the provided path level by level, making sure the folders have the correct owner
-    """
-    if user is None:
-        user = default_user()
-
-    splitted_path = directory_path.split("/")
-    subpaths = ["/".join(splitted_path[:i]) for i in range(2, len(splitted_path) + 1)]
-
-    for subpath in subpaths:
-        if not os.path.isdir(subpath):
-            os.mkdir(subpath)
-
-            # Update directory owner if on user home
-            if user and subpath.startswith(os.path.expanduser(f"~{user}")):
-                os.chown(subpath, uid=get_uid(user), gid=get_gid(user))
-
-
-def clear_directory(directory_path: str):
-    # clear the upload directory every time
-    for filename in os.listdir(directory_path):
-        file_path = os.path.join(directory_path, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                rmtree(file_path)
-        except Exception:
-            pass
-
-
-def create_empty_directory(directory_path: str, user: str = None):
-    create_directory(directory_path, user)
-    # if the directory already existed, ensure it is empty
-    clear_directory(directory_path)
-
-
 def valid_url_content(content):
     return (
         "url" in content
@@ -111,12 +52,14 @@ def valid_text_content(content):
     return "text" in content and isinstance(content["text"], str)
 
 
-async def download_file(url, file_path):
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            assert response.status == 200
+def is_sub_directory(sub_dir, from_dir):
+    return os.path.realpath(sub_dir).startswith(os.path.realpath(from_dir))
 
-            await write_file(file_path, await response.read(), "wb")
+
+async def create_alias_subdirs(alias_path, user):
+    alias_dir = os.path.dirname(alias_path)
+    if not await exists(alias_dir):
+        await create_directory(alias_dir, user)
 
 
 def get_directory_path(work_dir, directory_name):
@@ -160,16 +103,6 @@ def get_cache_file_path(bucket_cache_path, file_name):
     return cache_file_path
 
 
-def is_sub_directory(sub_dir, from_dir):
-    return os.path.realpath(sub_dir).startswith(os.path.realpath(from_dir))
-
-
-def create_alias_subdirs(alias_path, user):
-    alias_dir = os.path.dirname(alias_path)
-    if not os.path.exists(alias_dir):
-        create_directory(alias_dir, user)
-
-
 async def do_upload(directory, work_dir, user=None):
     try:
         if user is None:
@@ -178,13 +111,13 @@ async def do_upload(directory, work_dir, user=None):
         directory_name = directory["name"]
         directory_path = get_directory_path(work_dir, directory_name)
 
-        await asyncio.to_thread(partial(create_empty_directory, directory_path, user))
+        await create_empty_directory(directory_path, user)
 
         for alias_name, file_info in directory["files"].items():
             alias_path = get_alias_path(directory_path, alias_name)
 
             # support for creating subdirs in alias name
-            await asyncio.to_thread(partial(create_alias_subdirs, alias_path, user))
+            await create_alias_subdirs(alias_path, user)
 
             if file_info["type"] == "url":
                 content = file_info["content"]
@@ -198,9 +131,7 @@ async def do_upload(directory, work_dir, user=None):
 
                 # url type files have a cache dir to prevent repeat download
                 bucket_cache_path = get_bucket_cache_path(work_dir, bucket_name)
-                await asyncio.to_thread(
-                    partial(create_directory, bucket_cache_path, user)
-                )
+                await create_directory(bucket_cache_path, user)
                 cache_file_path = get_cache_file_path(bucket_cache_path, file_name)
                 # only download the file if it's not in the cache
                 if not (await exists(cache_file_path)):

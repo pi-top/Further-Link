@@ -2,9 +2,7 @@ import logging
 import os
 import pathlib
 
-import aiofiles
-
-from ..util.upload import create_directory
+from ..util.async_files import chown, create_directory, write_file
 from ..util.user_config import (
     get_absolute_path,
     get_gid,
@@ -21,19 +19,18 @@ class PyProcessHandler(ProcessHandler):
         path = get_absolute_path(path, get_working_directory(self.user))
 
         # create path directories if they don't already exist
-        create_directory(os.path.dirname(path), self.user)
+        await create_directory(os.path.dirname(path), self.user)
 
         entrypoint = path if code is None else os.path.join(path, f"{self.id}.py")
 
         # create a temporary file to execute if code is provided
         if code is not None:
-            async with aiofiles.open(entrypoint, "w+") as file:
-                await file.write(code)
+            await write_file(entrypoint, code)
             self._remove_entrypoint = entrypoint
 
         command = "python3 -u " + entrypoint
 
-        os.chown(entrypoint, uid=get_uid(self.user), gid=get_gid(self.user))
+        await chown(entrypoint, uid=get_uid(self.user), gid=get_gid(self.user))
 
         work_dir = os.path.dirname(entrypoint)
 
