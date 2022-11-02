@@ -75,6 +75,7 @@ class ProcessHandler:
         stdio = asyncio.subprocess.PIPE
 
         if self.pty:
+            logging.debug(f"{self.id} Starting PTY")
             # communicate through a pty for terminal 'cooked mode' behaviour
             master, slave = openpty()
 
@@ -89,6 +90,8 @@ class ProcessHandler:
             set_winsize(slave, 4, 60)
 
             stdio = self.pty_slave
+
+            logging.debug(f"{self.id} Setup pty")
 
         process_env = {**os.environ.copy(), **env}
         process_env["TERM"] = "xterm-256color"  # perhaps should be param
@@ -105,6 +108,7 @@ class ProcessHandler:
 
         # set $DISPLAY so that user can open GUI windows
         if self.novnc:
+            logging.debug(f"{self.id} Starting NOVNC")
             process_env["DISPLAY"] = f":{self.id}"
             await async_start(
                 display_id=self.id,
@@ -114,6 +118,7 @@ class ProcessHandler:
                 height=novncOptions.get("height"),
                 width=novncOptions.get("width"),
             )
+            logging.debug(f"{self.id} Setup novnc")
         else:
             default_display = get_first_display()
             if default_display:
@@ -136,6 +141,7 @@ class ProcessHandler:
             # as allowing a shell process to be a 'controlling terminal'
             os.setsid()
 
+        logging.debug(f"{self.id} Starting process")
         self.process = await asyncio.create_subprocess_exec(
             *split(command),
             stdin=stdio,
@@ -145,6 +151,7 @@ class ProcessHandler:
             cwd=self.work_dir,
             preexec_fn=preexec,
         )
+        logging.debug(f"{self.id} Started process")
 
         if self.on_start:
             await self.on_start()
@@ -154,8 +161,11 @@ class ProcessHandler:
             self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
             asyncio.create_task(self._ipc_communicate())  # after as uses pgid
         except ProcessLookupError:
+            logging.debug(f"{self.id} Process lookup failed - running without IPC")
             # the process is done faster than we can look up gpid!
             self.pgid = None
+
+        logging.debug(f"{self.id} Start complete")
 
     def is_running(self):
         return hasattr(self, "process") and self.process is not None
@@ -165,27 +175,37 @@ class ProcessHandler:
             raise InvalidOperation()
         # send signal to process group in case we have child processes
         try:
+            logging.debug(f"{self.id} Stopping with SIGTERM")
             os.killpg(self.pgid, signal.SIGTERM)
             stopped = asyncio.create_task(self.process.wait())
             done = await timeout(stopped, 0.1)
 
             # if SIGTERM didn't stop the process already, send SIGKILL
             if stopped not in done:
+                logging.debug(f"{self.id} Stopping with SIGKILL")
                 os.killpg(self.pgid, signal.SIGKILL)
+
+            logging.debug(f"{self.id} Stop complete")
         except ProcessLookupError:
-            pass
+            logging.debug(f"{self.id} Could not stop - ProcessLookupError")
 
     async def send_input(self, content):
+        logging.debug(f"{self.id} Receiving input {content}")
+
         if not self.is_running() or not isinstance(content, str):
+            logging.debug(f"{self.id} Not receiving input as not running")
             raise InvalidOperation()
 
         content_bytes = content.encode("utf-8")
 
         if self.pty:
+            logging.debug(f"{self.id} Receiving input via pty")
             await self.pty_master.write(content_bytes)
         else:
+            logging.debug(f"{self.id} Receiving input via stdin")
             self.process.stdin.write(content_bytes)
             await self.process.stdin.drain()
+        logging.debug(f"{self.id} Received input")
 
     async def resize_pty(self, rows, cols):
         if not self.is_running() or not self.pty:
@@ -229,8 +249,12 @@ class ProcessHandler:
                 asyncio.create_task(self._handle_output(self.process.stderr, "stderr"))
             )
 
+        logging.debug(f"{self.id} Monitoring output")
+
         # wait for process to exit
         await self.process.wait()
+
+        logging.debug(f"{self.id} Process exited")
 
         # wait a little for the io tasks to complete to let them send
         # output produced right before the process stopped
@@ -260,7 +284,9 @@ class ProcessHandler:
         )
 
     async def _clean_up(self):
+        logging.debug(f"{self.id} Starting cleanup")
         if getattr(self, "pty", None):
+            logging.debug(f"{self.id} Cleaning up PTY")
             try:
                 if getattr(self, "pty_master", None):
                     await self.pty_master.close()
@@ -270,12 +296,14 @@ class ProcessHandler:
                 logging.exception(f"{self.id} PTY Cleanup error: {e}")
 
         if getattr(self, "novnc", None):
+            logging.debug(f"{self.id} Cleaning up NOVNC")
             try:
                 await async_stop(self.id)
             except Exception as e:
                 logging.exception(f"{self.id} NOVNC Cleanup error: {e}")
 
         if getattr(self, "ipc_tasks", None):
+            logging.debug(f"{self.id} Cleaning up IPC")
             try:
                 for channel in SERVER_IPC_CHANNELS:
                     ipc_cleanup(channel, pgid=self.pgid)
@@ -285,5 +313,6 @@ class ProcessHandler:
             except Exception as e:
                 logging.exception(f"{self.id} IPC Cleanup error: {e}")
 
+        logging.debug(f"{self.id} Releasing ID")
         id_generator.free(self.id)
         logging.debug(f"{self.id} Cleanup complete")
