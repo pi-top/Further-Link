@@ -14,6 +14,10 @@ from .user_config import default_user, get_gid, get_uid
 # manipulation or os.remove which blocks no more than starting a thread would
 
 
+async def close(fd):
+    return await asyncio.to_thread(partial(os.close, fd))
+
+
 async def exists(path):
     return await asyncio.to_thread(partial(os.path.exists, path))
 

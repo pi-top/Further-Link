@@ -7,7 +7,6 @@ from asyncio.subprocess import Process
 from unittest.mock import patch
 
 import pytest
-from aiofiles.threadpool.binary import AsyncFileIO
 from mock import AsyncMock
 
 from further_link.runner.process_handler import ProcessHandler
@@ -75,8 +74,6 @@ async def test_pty():
     await p.start('python3 -u -c "print(input())"')
     assert type(p.process) == Process
     assert p.pty
-    assert type(p.pty_master) == AsyncFileIO
-    assert type(p.pty_slave) == AsyncFileIO
 
     p.on_start.assert_called()
 

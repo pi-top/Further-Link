@@ -3,17 +3,15 @@ import logging
 import os
 import signal
 from functools import partial
-from pty import openpty
 from shlex import split
 
-import aiofiles
 from pt_web_vnc.vnc import async_start, async_stop
 
 from ..util.async_helpers import ringbuf_read, timeout
 from ..util.id_generator import IdGenerator
 from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
+from ..util.pty import Pty
 from ..util.sdk import get_first_display
-from ..util.terminal import set_winsize
 from ..util.user_config import (
     get_current_user,
     get_gid,
@@ -55,7 +53,7 @@ id_generator = IdGenerator(min_value=100, max_value=99 + max_processes)
 
 class ProcessHandler:
     def __init__(self, user, pty=False):
-        self.pty = pty
+        self.use_pty = pty
         self.id = id_generator.create()
         assert user_exists(user)
         self.user = user
@@ -74,22 +72,15 @@ class ProcessHandler:
 
         stdio = asyncio.subprocess.PIPE
 
-        if self.pty:
+        if self.use_pty:
             logging.debug(f"{self.id} Starting PTY")
             # communicate through a pty for terminal 'cooked mode' behaviour
-            master, slave = openpty()
-
-            # on some distros process user must own slave, otherwise you get:
-            # cannot set terminal process group (-1): Inappropriate ioctl for device
-            os.chown(slave, get_uid(self.user), get_gid(self.user))
-
-            self.pty_master = await aiofiles.open(master, "w+b", 0)
-            self.pty_slave = await aiofiles.open(slave, "r+b", 0)
+            self.pty = await Pty.create(self.user)
 
             # set terminal size to a minimum that we display in Further
-            set_winsize(slave, 4, 60)
+            self.pty.set_winsize(4, 60)
 
-            stdio = self.pty_slave
+            stdio = self.pty.back
 
             logging.debug(f"{self.id} Setup pty")
 
@@ -190,19 +181,15 @@ class ProcessHandler:
             logging.debug(f"{self.id} Could not stop - ProcessLookupError")
 
     async def send_input(self, content):
-        logging.debug(f"{self.id} Receiving input {content}")
-
         if not self.is_running() or not isinstance(content, str):
             logging.debug(f"{self.id} Not receiving input as not running")
             raise InvalidOperation()
 
         content_bytes = content.encode("utf-8")
 
-        if self.pty:
-            logging.debug(f"{self.id} Receiving input via pty")
-            write_task = asyncio.create_task(self.pty_master.write(content_bytes))
+        if self.use_pty:
+            write_task = asyncio.create_task(self.pty.front.write(content_bytes))
         else:
-            logging.debug(f"{self.id} Receiving input via stdin")
 
             async def write():
                 self.process.stdin.write(content_bytes)
@@ -213,14 +200,12 @@ class ProcessHandler:
         done = await timeout(write_task, 0.1)
         if write_task not in done:
             logging.debug(f"{self.id} Receiving input timed out")
-        else:
-            logging.debug(f"{self.id} Received input")
 
     async def resize_pty(self, rows, cols):
-        if not self.is_running() or not self.pty:
+        if not self.is_running() or not self.use_pty:
             raise InvalidOperation()
 
-        set_winsize(self.pty_slave.fileno(), rows, cols)
+        self.pty.set_winsize(rows, cols)
 
     async def send_key_event(self, key, event):
         if (
@@ -246,9 +231,9 @@ class ProcessHandler:
 
     async def _process_communicate(self):
         output_tasks = []
-        if self.pty:
+        if self.use_pty:
             output_tasks.append(
-                asyncio.create_task(self._handle_output(self.pty_master, "stdout"))
+                asyncio.create_task(self._handle_output(self.pty.front, "stdout"))
             )
         else:
             output_tasks.append(
@@ -297,17 +282,8 @@ class ProcessHandler:
         logging.debug(f"{self.id} Starting cleanup")
         if getattr(self, "pty", None):
             logging.debug(f"{self.id} Cleaning up PTY")
-            try:
-                if getattr(self, "pty_master", None):
-                    logging.debug(f"{self.id} Closing PTY master")
-                    await self.pty_master.close()
-                    logging.debug(f"{self.id} Closed PTY master")
-                if getattr(self, "pty_slave", None):
-                    logging.debug(f"{self.id} Closing PTY slave")
-                    await self.pty_slave.close()
-                    logging.debug(f"{self.id} Closed PTY slave")
-            except Exception as e:
-                logging.exception(f"{self.id} PTY Cleanup error: {e}")
+            await self.pty.clean_up()
+            self.pty = None
 
         if getattr(self, "novnc", None):
             logging.debug(f"{self.id} Cleaning up NOVNC")
