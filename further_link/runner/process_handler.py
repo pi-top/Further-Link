@@ -276,8 +276,9 @@ class ProcessHandler:
 
     async def _handle_process_end(self):
         exit_code = await self.process.wait()
-        await self._clean_up()
-        self.process = None
+
+        if self.process:
+            await self._clean_up()
 
         if self.on_stop:
             await self.on_stop(exit_code)
@@ -324,4 +325,6 @@ class ProcessHandler:
 
         logging.debug(f"{self.id} Releasing ID")
         id_generator.free(self.id)
+
+        self.process = None
         logging.debug(f"{self.id} Cleanup complete")
