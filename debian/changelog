@@ -1,3 +1,10 @@
+further-link (5.3.5-1) bullseye; urgency=medium
+
+  * Require aiohttp >= 3.8.3
+  * Improve process cleanup and add related logging
+
+ -- pi-top <deb-maintainers@pi-top.com>  Tue, 01 Nov 2022 14:42:53 +0000
+
 further-link (5.3.4-1) bullseye; urgency=medium
 
   * Set PYTHON_PACKAGE_VERSION when building docker image
