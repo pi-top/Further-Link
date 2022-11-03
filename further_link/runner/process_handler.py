@@ -188,28 +188,15 @@ class ProcessHandler:
         content_bytes = content.encode("utf-8")
 
         if self.use_pty:
-            logging.debug(
-                f"Debug PTY front: {self.pty.front}; closed: {self.pty.front.closed}"
-            )
-            fd = self.pty.front.fileno()
-            stat = None
+            # if fstat errors file is already closed and writing will hang
             try:
-                stat = os.fstat(fd)
-            except Exception as e:
-                logging.debug(f"fd exception: {fd}; e: {e}")
-            logging.debug(f"Debug fd: {fd}; stat: {stat}")
-            write_task = asyncio.create_task(self.pty.front.write(content_bytes))
+                os.fstat(self.pty.front.fileno())
+                await self.pty.front.write(content_bytes)
+            except OSError:
+                logging.debug(f"{self.id} Not receiving input as pty closed")
         else:
-
-            async def write():
-                self.process.stdin.write(content_bytes)
-                await self.process.stdin.drain()
-
-            write_task = asyncio.create_task(write())
-
-        done = await timeout(write_task, 0.1)
-        if write_task not in done:
-            logging.debug(f"{self.id} Receiving input timed out")
+            self.process.stdin.write(content_bytes)
+            await self.process.stdin.drain()
 
     async def resize_pty(self, rows, cols):
         if not self.is_running() or not self.use_pty:
