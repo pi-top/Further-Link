@@ -299,9 +299,13 @@ class ProcessHandler:
             logging.debug(f"{self.id} Cleaning up PTY")
             try:
                 if getattr(self, "pty_master", None):
+                    logging.debug(f"{self.id} Closing PTY master")
                     await self.pty_master.close()
+                    logging.debug(f"{self.id} Closed PTY master")
                 if getattr(self, "pty_slave", None):
+                    logging.debug(f"{self.id} Closing PTY slave")
                     await self.pty_slave.close()
+                    logging.debug(f"{self.id} Closed PTY slave")
             except Exception as e:
                 logging.exception(f"{self.id} PTY Cleanup error: {e}")
 

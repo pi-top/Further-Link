@@ -32,11 +32,8 @@ async def symlink(src, dst):
 
 async def write_file(path, content, mode="w+"):
     def sync_write_file(p, c):
-        print("opening file")
         with open(p, mode) as file:
-            print("file open")
             file.write(c)
-        print("file written")
 
     await asyncio.to_thread(partial(sync_write_file, path, content))
 

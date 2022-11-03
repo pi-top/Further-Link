@@ -20,12 +20,14 @@ class ExecProcessHandler(ProcessHandler):
         path = get_absolute_path(path, get_working_directory(self.user))
 
         # create path directories if they don't already exist
+        logging.debug(f"{self.id} Creating working directory for exec")
         await create_directory(os.path.dirname(path), self.user)
 
         entrypoint = path if code is None else os.path.join(path, f"exec-{self.id}")
 
         # create a temporary file to execute if code is provided
         if code is not None:
+            logging.debug(f"{self.id} Creating entrypoint for exec")
             await write_file(entrypoint, code)
             self._remove_entrypoint = entrypoint
 
