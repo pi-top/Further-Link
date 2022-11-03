@@ -167,7 +167,7 @@ async def run(request):
     user = query_params.get("user", None)
     pty = query_params.get("pty", "").lower() in ["1", "true"]
 
-    socket = web.WebSocketResponse()
+    socket = web.WebSocketResponse(autoclose=True)
     await socket.prepare(request)
 
     run_manager = RunManager(socket, user=user, pty=pty)
@@ -176,6 +176,9 @@ async def run(request):
     try:
         async for message in socket:
             logging.debug(f"{run_manager.id} Received Message {message.data}")
+            logging.debug(f"{run_manager.id} message: {message.type} {message}")
+            logging.debug(f"{run_manager.id} socket closing: {socket._closing}")
+            logging.debug(f"{run_manager.id} socket closed: {socket._closed}")
             await run_manager.handle_message(message.data)
             logging.debug(f"{run_manager.id} Handled Message {message.data}")
 
