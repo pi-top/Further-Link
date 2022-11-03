@@ -188,6 +188,16 @@ class ProcessHandler:
         content_bytes = content.encode("utf-8")
 
         if self.use_pty:
+            logging.debug(
+                f"Debug PTY front: {self.pty.front}; closed: {self.pty.front.closed}"
+            )
+            fd = self.pty.front.fileno()
+            stat = None
+            try:
+                stat = os.fstat(fd)
+            except Exception as e:
+                logging.debug(f"fd exception: {fd}; e: {e}")
+            logging.debug(f"Debug fd: {fd}; stat: {stat}")
             write_task = asyncio.create_task(self.pty.front.write(content_bytes))
         else:
 
