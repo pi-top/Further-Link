@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from functools import partial
 from shutil import rmtree
@@ -65,7 +66,9 @@ async def create_directory(directory_path: str, user: str = None):
 
         for subpath in subpaths:
             if not os.path.isdir(subpath):
+                logging.debug(f"Creating directory {subpath}")
                 os.mkdir(subpath)
+                logging.debug(f"Created directory {subpath}")
 
                 # Update directory owner if on user home
                 if user and subpath.startswith(os.path.expanduser(f"~{user}")):
