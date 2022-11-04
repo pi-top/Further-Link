@@ -8,7 +8,7 @@ from shlex import split
 from pt_web_vnc.vnc import async_start, async_stop
 
 from ..util.async_helpers import ringbuf_read, timeout
-from ..util.id_generator import IdGenerator
+from ..util.id_generator import id_generator
 from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
 from ..util.pty import Pty
 from ..util.sdk import get_first_display
@@ -33,22 +33,6 @@ SERVER_IPC_CHANNELS = [
 
 class InvalidOperation(Exception):
     pass
-
-
-# each run will need a unique id
-# one use of the id is for the pt-web-vnc virtual display id and port numbers
-# so we must use +ve int < 1000, with 0-99 reserved for other uses
-# envvar FURTHER_LINK_MAX_PROCESSES can be used to limit the range
-var_max_processes = os.environ.get("FURTHER_LINK_MAX_PROCESSES")
-MAX = 900
-if isinstance(var_max_processes, str) and var_max_processes.isdigit():
-    max_processes = int(var_max_processes)
-else:
-    max_processes = MAX
-if 1 > max_processes > MAX:
-    max_processes = MAX
-
-id_generator = IdGenerator(min_value=100, max_value=99 + max_processes)
 
 
 class ProcessHandler:
