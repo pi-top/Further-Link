@@ -34,7 +34,7 @@ RUN apt-get update && \
 
 # Install pitop SDK
 # using pip for onnxruntime as there is only armhf debian build
-RUN pip3 install pitop==0.26.3.post1
+RUN pip3 install pitop==0.30.0.post1
 
 # Install useful extras from pt-os
 RUN apt-get update && \
