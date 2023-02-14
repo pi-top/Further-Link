@@ -27,24 +27,29 @@ class RunManager:
         }
 
     async def stop(self):
+        logging.debug(f"{self.id} Stopping processes: {self.process_handlers}")
         # the dictionary will be mutated so use list to make a copy
         for p in list(self.process_handlers.values()):
             try:
                 await p.stop()
             except InvalidOperation:
-                pass
+                logging.debug(f"{self.id} Invalid operation stopping process: {p}")
 
     async def send(self, type, data=None, process_id=None):
         try:
             await self.socket.send_str(create_message(type, data, process_id))
         except ConnectionResetError:
-            pass  # already disconnected
+            logging.debug(f"{self.id} Send failed - client disconnected")
 
     async def handle_message(self, message):
         try:
             m_type, m_data, m_process = parse_message(message)
 
             process_handler = self.process_handlers.get(m_process)
+
+            logging.debug(
+                f"{self.id} Handling {m_type} message for handler {process_handler}"
+            )
 
             if m_type == "ping":
                 await self.send("pong")
@@ -99,7 +104,7 @@ class RunManager:
                 await process_handler.send_key_event(m_data["key"], m_data["event"])
 
             else:
-                raise BadMessage()
+                raise BadMessage(f"Bad {m_type} message for handler {process_handler}")
 
         except (BadMessage, InvalidOperation):
             logging.exception(f"{self.id} Bad Message")
@@ -117,7 +122,7 @@ class RunManager:
 
         async def on_start():
             await self.send("started", None, process_id)
-            logging.info(f"{self.id} Started {process_id}")
+            logging.info(f"{self.id} Sent started {process_id}")
 
         async def on_stop(exit_code):
             # process_id may be reused with other runners so clean up handler
@@ -141,11 +146,18 @@ class RunManager:
             )
 
         handler = handler_class(self.user, self.pty)
+        logging.debug(
+            f"{self.id} Created {runner} handler for {process_id}, ID {handler.id}"
+        )
+
         handler.on_start = on_start
         handler.on_stop = on_stop
         handler.on_display_activity = on_display_activity
         handler.on_output = on_output
+
+        logging.debug(f"{self.id} Starting handler {handler.id}")
         await handler.start(path, code, novncOptions=novncOptions)
+        logging.debug(f"{self.id} Started handler {handler.id}")
 
         self.process_handlers[process_id] = handler
 
@@ -155,7 +167,7 @@ async def run(request):
     user = query_params.get("user", None)
     pty = query_params.get("pty", "").lower() in ["1", "true"]
 
-    socket = web.WebSocketResponse()
+    socket = web.WebSocketResponse(autoclose=True)
     await socket.prepare(request)
 
     run_manager = RunManager(socket, user=user, pty=pty)
@@ -164,12 +176,20 @@ async def run(request):
     try:
         async for message in socket:
             logging.debug(f"{run_manager.id} Received Message {message.data}")
+            logging.debug(f"{run_manager.id} message: {message.type} {message}")
+            logging.debug(f"{run_manager.id} socket closing: {socket._closing}")
+            logging.debug(f"{run_manager.id} socket closed: {socket._closed}")
             await run_manager.handle_message(message.data)
+            logging.debug(f"{run_manager.id} Handled Message {message.data}")
 
     except asyncio.CancelledError:
-        pass
+        logging.debug(f"{run_manager.id} Run cancelled error")
+
+    except Exception as e:
+        logging.exception(f"{run_manager.id} Run error: {e}")
 
     finally:
+        logging.debug(f"{run_manager.id} Closing connection")
         await socket.close()
         logging.info(f"{run_manager.id} Closed connection")
         await run_manager.stop()

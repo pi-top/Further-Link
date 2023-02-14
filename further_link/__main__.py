@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from json import dumps
 
 import aiohttp_cors
 import click
@@ -9,11 +8,10 @@ from aiohttp import web
 
 from further_link.endpoint.apt_version import apt_version
 from further_link.endpoint.run import run as run_handler
-from further_link.endpoint.run_py import run_py
+from further_link.endpoint.status import live, status, version
 from further_link.endpoint.upload import upload
 from further_link.util import vnc
 from further_link.util.ssl_context import ssl_context
-from further_link.version import __version__
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -38,26 +36,20 @@ def create_app():
         },
     )
 
-    async def status(_):
-        return web.Response(text="OK")
-
-    async def version(_):
-        return web.Response(text=dumps({"version": __version__}))
-
     status_resource = cors.add(app.router.add_resource("/status"))
     cors.add(status_resource.add_route("GET", status))
-
-    status_resource = cors.add(app.router.add_resource("/version/apt/{pkg}"))
-    cors.add(status_resource.add_route("GET", apt_version))
 
     status_resource = cors.add(app.router.add_resource("/version"))
     cors.add(status_resource.add_route("GET", version))
 
+    status_resource = cors.add(app.router.add_resource("/live"))
+    cors.add(status_resource.add_route("GET", live))
+
+    status_resource = cors.add(app.router.add_resource("/version/apt/{pkg}"))
+    cors.add(status_resource.add_route("GET", apt_version))
+
     status_resource = cors.add(app.router.add_resource("/upload"))
     cors.add(status_resource.add_route("POST", upload))
-
-    exec_resource = cors.add(app.router.add_resource("/run-py"))
-    cors.add(exec_resource.add_route("GET", run_py))
 
     exec_resource = cors.add(app.router.add_resource("/run"))
     cors.add(exec_resource.add_route("GET", run_handler))

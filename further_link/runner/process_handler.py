@@ -3,17 +3,15 @@ import logging
 import os
 import signal
 from functools import partial
-from pty import openpty
 from shlex import split
 
-import aiofiles
 from pt_web_vnc.vnc import async_start, async_stop
 
 from ..util.async_helpers import ringbuf_read, timeout
-from ..util.id_generator import IdGenerator
+from ..util.id_generator import id_generator
 from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
+from ..util.pty import Pty
 from ..util.sdk import get_first_display
-from ..util.terminal import set_winsize
 from ..util.user_config import (
     get_current_user,
     get_gid,
@@ -37,15 +35,9 @@ class InvalidOperation(Exception):
     pass
 
 
-# each run will need a unique id
-# one use of the id is for the pt-web-vnc virtual display id and port numbers
-# so we must use +ve int < 1000, with 0-99 reserved for other uses
-id_generator = IdGenerator(min_value=100, max_value=999)
-
-
 class ProcessHandler:
     def __init__(self, user, pty=False):
-        self.pty = pty
+        self.use_pty = pty
         self.id = id_generator.create()
         assert user_exists(user)
         self.user = user
@@ -64,21 +56,17 @@ class ProcessHandler:
 
         stdio = asyncio.subprocess.PIPE
 
-        if self.pty:
+        if self.use_pty:
+            logging.debug(f"{self.id} Starting PTY")
             # communicate through a pty for terminal 'cooked mode' behaviour
-            master, slave = openpty()
-
-            # on some distros process user must own slave, otherwise you get:
-            # cannot set terminal process group (-1): Inappropriate ioctl for device
-            os.chown(slave, get_uid(self.user), get_gid(self.user))
-
-            self.pty_master = await aiofiles.open(master, "w+b", 0)
-            self.pty_slave = await aiofiles.open(slave, "r+b", 0)
+            self.pty = await Pty.create(self.user)
 
             # set terminal size to a minimum that we display in Further
-            set_winsize(slave, 4, 60)
+            self.pty.set_winsize(4, 60)
 
-            stdio = self.pty_slave
+            stdio = self.pty.back
+
+            logging.debug(f"{self.id} Setup pty")
 
         process_env = {**os.environ.copy(), **env}
         process_env["TERM"] = "xterm-256color"  # perhaps should be param
@@ -95,6 +83,7 @@ class ProcessHandler:
 
         # set $DISPLAY so that user can open GUI windows
         if self.novnc:
+            logging.debug(f"{self.id} Starting NOVNC")
             process_env["DISPLAY"] = f":{self.id}"
             await async_start(
                 display_id=self.id,
@@ -104,6 +93,7 @@ class ProcessHandler:
                 height=novncOptions.get("height"),
                 width=novncOptions.get("width"),
             )
+            logging.debug(f"{self.id} Setup novnc")
         else:
             default_display = get_first_display()
             if default_display:
@@ -126,6 +116,7 @@ class ProcessHandler:
             # as allowing a shell process to be a 'controlling terminal'
             os.setsid()
 
+        logging.debug(f"{self.id} Starting process")
         self.process = await asyncio.create_subprocess_exec(
             *split(command),
             stdin=stdio,
@@ -135,6 +126,7 @@ class ProcessHandler:
             cwd=self.work_dir,
             preexec_fn=preexec,
         )
+        logging.debug(f"{self.id} Started process")
 
         if self.on_start:
             await self.on_start()
@@ -144,8 +136,11 @@ class ProcessHandler:
             self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
             asyncio.create_task(self._ipc_communicate())  # after as uses pgid
         except ProcessLookupError:
+            logging.debug(f"{self.id} Process lookup failed - running without IPC")
             # the process is done faster than we can look up gpid!
             self.pgid = None
+
+        logging.debug(f"{self.id} Start complete")
 
     def is_running(self):
         return hasattr(self, "process") and self.process is not None
@@ -155,33 +150,56 @@ class ProcessHandler:
             raise InvalidOperation()
         # send signal to process group in case we have child processes
         try:
+            logging.debug(f"{self.id} Stopping with SIGTERM")
             os.killpg(self.pgid, signal.SIGTERM)
             stopped = asyncio.create_task(self.process.wait())
             done = await timeout(stopped, 0.1)
 
             # if SIGTERM didn't stop the process already, send SIGKILL
             if stopped not in done:
+                logging.debug(f"{self.id} Stopping with SIGKILL")
                 os.killpg(self.pgid, signal.SIGKILL)
+
+            logging.debug(f"{self.id} Stop complete")
         except ProcessLookupError:
-            pass
+            logging.debug(f"{self.id} Could not stop - ProcessLookupError")
 
     async def send_input(self, content):
         if not self.is_running() or not isinstance(content, str):
+            logging.debug(f"{self.id} Not receiving input as not running")
             raise InvalidOperation()
 
         content_bytes = content.encode("utf-8")
 
-        if self.pty:
-            await self.pty_master.write(content_bytes)
+        if self.use_pty:
+            logging.debug(
+                f"Debug PTY front: {self.pty.front}; closed: {self.pty.front.closed}"
+            )
+            fd = self.pty.front.fileno()
+            stat = None
+            try:
+                stat = os.fstat(fd)
+            except Exception as e:
+                logging.debug(f"fd exception: {fd}; e: {e}")
+            logging.debug(f"Debug fd: {fd}; stat: {stat}")
+            write_task = asyncio.create_task(self.pty.front.write(content_bytes))
         else:
-            self.process.stdin.write(content_bytes)
-            await self.process.stdin.drain()
+
+            async def write():
+                self.process.stdin.write(content_bytes)
+                await self.process.stdin.drain()
+
+            write_task = asyncio.create_task(write())
+
+        done = await timeout(write_task, 0.1)
+        if write_task not in done:
+            logging.debug(f"{self.id} Receiving input timed out")
 
     async def resize_pty(self, rows, cols):
-        if not self.is_running() or not self.pty:
+        if not self.is_running() or not self.use_pty:
             raise InvalidOperation()
 
-        set_winsize(self.pty_slave.fileno(), rows, cols)
+        self.pty.set_winsize(rows, cols)
 
     async def send_key_event(self, key, event):
         if (
@@ -207,9 +225,9 @@ class ProcessHandler:
 
     async def _process_communicate(self):
         output_tasks = []
-        if self.pty:
+        if self.use_pty:
             output_tasks.append(
-                asyncio.create_task(self._handle_output(self.pty_master, "stdout"))
+                asyncio.create_task(self._handle_output(self.pty.front, "stdout"))
             )
         else:
             output_tasks.append(
@@ -219,8 +237,12 @@ class ProcessHandler:
                 asyncio.create_task(self._handle_output(self.process.stderr, "stderr"))
             )
 
+        logging.debug(f"{self.id} Monitoring output")
+
         # wait for process to exit
         await self.process.wait()
+
+        logging.debug(f"{self.id} Process exited")
 
         # wait a little for the io tasks to complete to let them send
         # output produced right before the process stopped
@@ -233,8 +255,9 @@ class ProcessHandler:
 
     async def _handle_process_end(self):
         exit_code = await self.process.wait()
-        await self._clean_up()
-        self.process = None
+
+        if self.process:
+            await self._clean_up()
 
         if self.on_stop:
             await self.on_stop(exit_code)
@@ -250,22 +273,21 @@ class ProcessHandler:
         )
 
     async def _clean_up(self):
+        logging.debug(f"{self.id} Starting cleanup")
         if getattr(self, "pty", None):
-            try:
-                if getattr(self, "pty_master", None):
-                    await self.pty_master.close()
-                if getattr(self, "pty_slave", None):
-                    await self.pty_slave.close()
-            except Exception as e:
-                logging.exception(f"{self.id} PTY Cleanup error: {e}")
+            logging.debug(f"{self.id} Cleaning up PTY")
+            await self.pty.clean_up()
+            self.pty = None
 
         if getattr(self, "novnc", None):
+            logging.debug(f"{self.id} Cleaning up NOVNC")
             try:
                 await async_stop(self.id)
             except Exception as e:
                 logging.exception(f"{self.id} NOVNC Cleanup error: {e}")
 
         if getattr(self, "ipc_tasks", None):
+            logging.debug(f"{self.id} Cleaning up IPC")
             try:
                 for channel in SERVER_IPC_CHANNELS:
                     ipc_cleanup(channel, pgid=self.pgid)
@@ -275,5 +297,8 @@ class ProcessHandler:
             except Exception as e:
                 logging.exception(f"{self.id} IPC Cleanup error: {e}")
 
+        logging.debug(f"{self.id} Releasing ID")
         id_generator.free(self.id)
+
+        self.process = None
         logging.debug(f"{self.id} Cleanup complete")
