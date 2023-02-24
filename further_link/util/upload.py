@@ -67,13 +67,17 @@ def valid_text_content(content):
     return "text" in content and isinstance(content["text"], str)
 
 
-async def download_file(url, file_path):
+async def download_file(url, file_path, user=None):
     async with ClientSession() as session:
         async with session.get(url) as response:
             assert response.status == 200
 
             async with aiofiles.open(file_path, "wb") as file:
                 await file.write(await response.read())
+
+    # set ownership of file to user
+    if user:
+        os.chown(file_path, uid=get_uid(user), gid=get_gid(user))
 
 
 def get_directory_path(work_dir, directory_name):
@@ -121,7 +125,7 @@ def is_sub_directory(sub_dir, from_dir):
     return os.path.realpath(sub_dir).startswith(os.path.realpath(from_dir))
 
 
-async def do_upload(directory, work_dir, user=None):
+async def do_upload(directory, work_dir, user=None, use_cache=True):
     try:
         if user is None:
             user = default_user()
@@ -160,18 +164,19 @@ async def do_upload(directory, work_dir, user=None):
                 file_name = content["fileName"]
                 url = content["url"]
 
+                if not use_cache:
+                    await download_file(url, f"{alias_dir}/{file_name}", user)
+                    continue
+
                 # url type files have a cache dir to prevent repeat download
                 bucket_cache_path = get_bucket_cache_path(work_dir, bucket_name)
                 if not os.path.exists(bucket_cache_path):
                     create_directory(bucket_cache_path, user)
+
                 cache_file_path = get_cache_file_path(bucket_cache_path, file_name)
                 # only download the file if it's not in the cache
                 if not os.path.exists(cache_file_path):
-                    await download_file(url, cache_file_path)
-
-                # set ownership of file to the correct user
-                if user:
-                    os.chown(cache_file_path, uid=get_uid(user), gid=get_gid(user))
+                    await download_file(url, cache_file_path, user)
 
                 # create a symlink pointing to the cached downloaded file
                 os.symlink(cache_file_path, alias_path)
