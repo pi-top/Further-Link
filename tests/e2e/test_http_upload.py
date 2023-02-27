@@ -8,7 +8,7 @@ from further_link.util.upload import get_bucket_cache_path, get_directory_path
 
 from ..dirs import WORKING_DIRECTORY
 from . import UPLOAD_PATH
-from .test_data.upload_data import directory
+from .test_data.upload_data import directory, directory_with_project
 
 
 @pytest.mark.asyncio
@@ -28,6 +28,7 @@ async def test_upload(http_client):
     assert body == "OK"
 
     directory_path = get_directory_path(WORKING_DIRECTORY, directory["name"])
+    projects_base_path = f"/root/Desktop/Projects/{directory['name']}"
 
     for alias_name, file_info in directory["files"].items():
         alias_path = os.path.join(directory_path, alias_name)
@@ -42,10 +43,58 @@ async def test_upload(http_client):
             file_path = os.path.join(bucket_cache_path, file_name)
             assert os.path.isfile(file_path)
 
+            assert not os.path.isfile(
+                f"{projects_base_path}/{os.path.dirname(alias_name)}/{file_name}"
+            )
+
         elif file_info["type"] == "url":
             async with aiofiles.open(file_path) as file:
                 content = await file.read()
                 assert content == file_info["content"]["text"]
+
+            assert not os.path.isfile(
+                f"{projects_base_path}/{file_info['content']['filename']}"
+            )
+
+
+@pytest.mark.asyncio
+async def test_upload_with_miniscreen_project(http_client):
+    upload_data = json.dumps(directory_with_project).encode()
+    response = await http_client.post(UPLOAD_PATH, data=upload_data)
+    assert response.status == 200
+    body = await response.text()
+    assert body == "OK"
+
+    directory_path = get_directory_path(
+        WORKING_DIRECTORY, directory_with_project["name"]
+    )
+    projects_base_path = f"/root/Desktop/Projects/{directory_with_project['name']}"
+
+    for alias_name, file_info in directory_with_project["files"].items():
+        alias_path = os.path.join(directory_path, alias_name)
+
+        assert os.path.isfile(alias_path)
+
+        if file_info["type"] == "url":
+            content = file_info["content"]
+            bucket_name = content["bucketName"]
+            file_name = content["fileName"]
+            bucket_cache_path = get_bucket_cache_path(WORKING_DIRECTORY, bucket_name)
+            file_path = os.path.join(bucket_cache_path, file_name)
+            assert os.path.isfile(file_path)
+
+            assert os.path.isfile(
+                f"{projects_base_path}/{os.path.dirname(alias_name)}/{file_name}"
+            )
+
+        elif file_info["type"] == "url":
+            async with aiofiles.open(file_path) as file:
+                content = await file.read()
+                assert content == file_info["content"]["text"]
+
+            assert os.path.isfile(
+                f"{projects_base_path}/{file_info['content']['filename']}"
+            )
 
 
 @pytest.mark.asyncio
