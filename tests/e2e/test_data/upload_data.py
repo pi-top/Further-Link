@@ -1,5 +1,6 @@
 directory = {
     "name": "5f3542eec089508fd258e631",
+    "username": "pi",
     "files": {
         "cereal.csv": {
             "type": "url",
@@ -35,6 +36,7 @@ directory = {
 }
 
 directory_with_project = {
+    "username": "pi",
     "name": "5e3542aad119508fd258a504",
     "files": {
         "cereal.csv": {

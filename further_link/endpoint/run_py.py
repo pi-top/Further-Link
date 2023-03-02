@@ -46,6 +46,7 @@ async def handle_message(message, process_handler, socket):
         await do_upload(
             m_data.get("directory"), process_handler.work_dir, m_data.get("user")
         )
+
         await socket.send_str(create_message("uploaded"))
 
     elif (

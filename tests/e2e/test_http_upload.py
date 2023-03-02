@@ -5,6 +5,7 @@ import aiofiles
 import pytest
 
 from further_link.util.upload import get_bucket_cache_path, get_directory_path
+from further_link.util.user_config import get_miniscreen_projects_directory
 
 from ..dirs import WORKING_DIRECTORY
 from . import UPLOAD_PATH
@@ -28,7 +29,9 @@ async def test_upload(http_client):
     assert body == "OK"
 
     directory_path = get_directory_path(WORKING_DIRECTORY, directory["name"])
-    projects_base_path = f"/root/Desktop/Projects/{directory['name']}"
+    projects_base_path = get_miniscreen_projects_directory(
+        directory["name"], None, directory["username"]
+    )
 
     for alias_name, file_info in directory["files"].items():
         alias_path = os.path.join(directory_path, alias_name)
@@ -43,18 +46,14 @@ async def test_upload(http_client):
             file_path = os.path.join(bucket_cache_path, file_name)
             assert os.path.isfile(file_path)
 
-            assert not os.path.isfile(
-                f"{projects_base_path}/{os.path.dirname(alias_name)}/{file_name}"
-            )
+            assert not os.path.isfile(f"{projects_base_path}/{alias_name}")
 
         elif file_info["type"] == "url":
             async with aiofiles.open(file_path) as file:
                 content = await file.read()
                 assert content == file_info["content"]["text"]
 
-            assert not os.path.isfile(
-                f"{projects_base_path}/{file_info['content']['filename']}"
-            )
+            assert not os.path.isfile(f"{projects_base_path}/{alias_name}")
 
 
 @pytest.mark.asyncio
@@ -68,7 +67,9 @@ async def test_upload_with_miniscreen_project(http_client):
     directory_path = get_directory_path(
         WORKING_DIRECTORY, directory_with_project["name"]
     )
-    projects_base_path = f"/root/Desktop/Projects/{directory_with_project['name']}"
+    projects_base_path = get_miniscreen_projects_directory(
+        directory_with_project["name"], None, directory_with_project["username"]
+    )
 
     for alias_name, file_info in directory_with_project["files"].items():
         alias_path = os.path.join(directory_path, alias_name)
@@ -83,18 +84,14 @@ async def test_upload_with_miniscreen_project(http_client):
             file_path = os.path.join(bucket_cache_path, file_name)
             assert os.path.isfile(file_path)
 
-            assert os.path.isfile(
-                f"{projects_base_path}/{os.path.dirname(alias_name)}/{file_name}"
-            )
+            assert os.path.isfile(f"{projects_base_path}/{alias_name}")
 
         elif file_info["type"] == "url":
             async with aiofiles.open(file_path) as file:
                 content = await file.read()
                 assert content == file_info["content"]["text"]
 
-            assert os.path.isfile(
-                f"{projects_base_path}/{file_info['content']['filename']}"
-            )
+            assert os.path.isfile(f"{projects_base_path}/{alias_name}")
 
 
 @pytest.mark.asyncio
