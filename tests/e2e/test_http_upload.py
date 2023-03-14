@@ -1,11 +1,12 @@
 import json
 import os
+from pathlib import Path
 
 import aiofiles
 import pytest
 
 from further_link.util.upload import get_bucket_cache_path, get_directory_path
-from further_link.util.user_config import get_miniscreen_projects_directory
+from further_link.util.user_config import get_miniscreen_projects_directory, default_user
 
 from ..dirs import WORKING_DIRECTORY
 from . import UPLOAD_PATH
@@ -84,14 +85,18 @@ async def test_upload_with_miniscreen_project(http_client):
             file_path = os.path.join(bucket_cache_path, file_name)
             assert os.path.isfile(file_path)
 
-            assert os.path.isfile(f"{projects_base_path}/{alias_name}")
+            path = Path(f"{projects_base_path}/{alias_name}")
+            assert path.is_file()
+            assert path.owner() == default_user()
 
         elif file_info["type"] == "url":
             async with aiofiles.open(file_path) as file:
                 content = await file.read()
                 assert content == file_info["content"]["text"]
 
-            assert os.path.isfile(f"{projects_base_path}/{alias_name}")
+            path = Path(f"{projects_base_path}/{alias_name}")
+            assert path.is_file()
+            assert path.owner() == default_user()
 
 
 @pytest.mark.asyncio
