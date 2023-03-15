@@ -9,7 +9,7 @@ from ..util.user_config import get_working_directory
 
 def is_miniscreen_project(files):
     for filename in files:
-        if filename.endswith(".cfg"):
+        if filename == "project.cfg":
             return True
     return False
 
