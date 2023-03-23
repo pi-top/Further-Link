@@ -11,6 +11,7 @@ from pt_web_vnc.vnc import async_start, async_stop
 
 from ..util.async_helpers import ringbuf_read, timeout
 from ..util.id_generator import IdGenerator
+from ..util.images import base64_encode
 from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
 from ..util.sdk import get_first_display
 from ..util.terminal import set_winsize
@@ -94,16 +95,19 @@ class ProcessHandler:
             process_env = {k: v for k, v in process_env.items() if v is not None}
 
         # set $DISPLAY so that user can open GUI windows
+        self.screenshot_manager = None
         if self.novnc:
             process_env["DISPLAY"] = f":{self.id}"
-            await async_start(
+            self.screenshot_manager = await async_start(
                 display_id=self.id,
                 on_display_activity=self.on_display_activity,
                 ssl_certificate=VNC_CERTIFICATE_PATH,
                 with_window_manager=True,
                 height=novncOptions.get("height"),
                 width=novncOptions.get("width"),
+                screenshot_timeout=1,
             )
+
         else:
             default_display = get_first_display()
             if default_display:
@@ -232,6 +236,10 @@ class ProcessHandler:
         await self._handle_process_end()
 
     async def _handle_process_end(self):
+        if self.screenshot_manager and self.screenshot_manager.image:
+            b64_screenshot = base64_encode(self.screenshot_manager.image)
+            await self.on_output("video", b64_screenshot.decode("utf-8"))
+
         exit_code = await self.process.wait()
         await self._clean_up()
         self.process = None
