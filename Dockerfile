@@ -22,8 +22,9 @@ RUN git clone https://github.com/pi-top/pi-topOS-Apt-Source.git && \
     rm -rf /pi-topOS-Apt-Source
 
 # Install pt-web-vnc
+COPY pt-web-vnc_0.3.1-3~8.gbpfbf64b_all.deb /tmp/
 RUN apt-get update && \
-    apt-get install -y pt-web-vnc && \
+    apt-get install -y /tmp/pt-web-vnc_0.3.1-3~8.gbpfbf64b_all.deb && \
     apt-get clean
 
 WORKDIR /further-link
