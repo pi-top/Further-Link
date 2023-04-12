@@ -103,6 +103,7 @@ def get_miniscreen_projects_directory(name, user, username):
     if from_env is not None:
         base_dir = from_env
 
+    # Username might be an email address, so we only want the first part
     return os.path.join(base_dir, username.split("@")[0], name)
 
 

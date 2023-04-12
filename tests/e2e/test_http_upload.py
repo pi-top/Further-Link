@@ -49,8 +49,8 @@ async def test_upload(http_client):
 
             assert not os.path.isfile(f"{projects_base_path}/{alias_name}")
 
-        elif file_info["type"] == "url":
-            async with aiofiles.open(file_path) as file:
+        elif file_info["type"] == "text":
+            async with aiofiles.open(alias_path) as file:
                 content = await file.read()
                 assert content == file_info["content"]["text"]
 
@@ -89,8 +89,8 @@ async def test_upload_with_miniscreen_project(http_client):
             assert path.is_file()
             assert path.owner() == default_user()
 
-        elif file_info["type"] == "url":
-            async with aiofiles.open(file_path) as file:
+        elif file_info["type"] == "text":
+            async with aiofiles.open(alias_path) as file:
                 content = await file.read()
                 assert content == file_info["content"]["text"]
 
