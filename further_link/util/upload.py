@@ -1,5 +1,6 @@
 import os
 from shutil import rmtree
+from typing import Optional
 
 import aiofiles
 from aiohttp import ClientSession
@@ -33,7 +34,7 @@ def directory_is_valid(directory):
     )
 
 
-def create_directory(directory_path: str, user: str = None):
+def create_directory(directory_path: str, user: Optional[str] = None):
     """
     Create the directories from the provided path level by level, making sure the folders have the correct owner
     """
