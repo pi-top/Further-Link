@@ -8,7 +8,6 @@ class IdGenerator:
     MAX_VALUE: int
 
     def __init__(self, max_value: int, min_value: int = 1) -> None:
-
         self.used_ids = []
         self.MIN_VALUE = min_value
         self.MAX_VALUE = max_value
