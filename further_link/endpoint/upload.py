@@ -2,8 +2,16 @@ import json
 
 from aiohttp import web
 
-from ..util.upload import BadUpload, directory_is_valid, do_upload
+from ..util.copy import do_copy_files_to_projects_directory
+from ..util.upload import BadUpload, directory_is_valid, do_upload, get_directory_path
 from ..util.user_config import get_working_directory
+
+
+def is_miniscreen_project(files):
+    for filename in files:
+        if filename == "project.cfg":
+            return True
+    return False
 
 
 async def upload(request):
@@ -19,6 +27,13 @@ async def upload(request):
             raise web.HTTPBadRequest()
 
         await do_upload(directory, work_dir, user)
+
+        if is_miniscreen_project(directory.get("files", {})):
+            await do_copy_files_to_projects_directory(
+                get_directory_path(work_dir, directory.get("name")),
+                directory,
+                user,
+            )
 
     except (web.HTTPBadRequest, json.decoder.JSONDecodeError):
         raise web.HTTPBadRequest()

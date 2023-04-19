@@ -3,11 +3,12 @@ from shutil import rmtree
 
 import pytest
 
-from .dirs import WORKING_DIRECTORY
+from .dirs import PROJECTS_DIR, WORKING_DIRECTORY
 
 os.environ["FURTHER_LINK_PORT"] = "8028"
 os.environ["FURTHER_LINK_NOSSL"] = "true"
 os.environ["FURTHER_LINK_WORK_DIR"] = WORKING_DIRECTORY
+os.environ["FURTHER_LINK_MINISCREEN_PROJECTS_DIR"] = PROJECTS_DIR
 
 
 @pytest.fixture(autouse=True)
