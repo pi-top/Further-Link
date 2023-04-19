@@ -2,7 +2,12 @@ import logging
 import os
 from shutil import copytree, rmtree
 
-from .user_config import default_user, get_miniscreen_projects_directory, get_gid, get_uid
+from .user_config import (
+    default_user,
+    get_gid,
+    get_miniscreen_projects_directory,
+    get_uid,
+)
 
 
 def set_directory_ownership(directory, user, recurse=True):
@@ -21,7 +26,7 @@ def set_directory_ownership(directory, user, recurse=True):
 async def do_copy_files_to_projects_directory(src_directory, directory, user=None):
     if user is None:
         user = default_user()
-    
+
     dst_directory = get_miniscreen_projects_directory(
         directory.get("name"), user, directory.get("username")
     )

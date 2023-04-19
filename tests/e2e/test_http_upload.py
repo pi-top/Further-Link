@@ -6,7 +6,10 @@ import aiofiles
 import pytest
 
 from further_link.util.upload import get_bucket_cache_path, get_directory_path
-from further_link.util.user_config import get_miniscreen_projects_directory, default_user
+from further_link.util.user_config import (
+    default_user,
+    get_miniscreen_projects_directory,
+)
 
 from ..dirs import WORKING_DIRECTORY
 from . import UPLOAD_PATH
