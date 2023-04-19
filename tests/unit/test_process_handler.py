@@ -117,6 +117,7 @@ pause()
             with_window_manager=True,
             height=novncOptions.get("height"),
             width=novncOptions.get("width"),
+            screenshot_timeout=1,
         )
 
     p.on_start.assert_called()
