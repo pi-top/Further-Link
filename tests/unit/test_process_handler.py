@@ -4,11 +4,14 @@ import logging
 import os
 import sys
 from asyncio.subprocess import Process
+from base64 import b64decode
+from io import BytesIO
 from unittest.mock import patch
 
 import pytest
 from aiofiles.threadpool.binary import AsyncFileIO
 from mock import AsyncMock
+from PIL import Image
 
 from further_link.runner.process_handler import ProcessHandler
 from further_link.util.vnc import VNC_CERTIFICATE_PATH
@@ -108,6 +111,9 @@ pause()
     with patch(
         "further_link.runner.process_handler.async_start", AsyncMock()
     ) as vnc_start:
+        jpeg_pixel_b64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z"  # noqa: E501
+        vnc_start.return_value.image = Image.open(BytesIO(b64decode(jpeg_pixel_b64)))
+
         await p.start(f'python3 -u -c "{code}"', novncOptions=novncOptions)
 
         vnc_start.assert_called_with(
@@ -133,5 +139,7 @@ pause()
         await asyncio.sleep(0.2)
 
         vnc_stop.assert_called_with(p.id)
+
+    p.on_output.assert_called_with("video", jpeg_pixel_b64)
 
     p.on_stop.assert_called_with(-15)
