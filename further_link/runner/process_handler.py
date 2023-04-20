@@ -236,9 +236,16 @@ class ProcessHandler:
         await self._handle_process_end()
 
     async def _handle_process_end(self):
-        if self.screenshot_manager and self.screenshot_manager.image:
-            b64_screenshot = base64_encode(self.screenshot_manager.image)
-            await self.on_output("video", b64_screenshot.decode("utf-8"))
+        if (
+            getattr(self, "screenshot_manager", None)
+            and hasattr(self.screenshot_manager, "image")
+            and self.screenshot_manager.image
+        ):
+            try:
+                b64_screenshot = base64_encode(self.screenshot_manager.image)
+                await self.on_output("video", b64_screenshot.decode("utf-8"))
+            except Exception as e:
+                logging.exception(f"{self.id} Screenshot handling error: {e}")
 
         exit_code = await self.process.wait()
         await self._clean_up()
