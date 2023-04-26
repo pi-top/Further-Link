@@ -163,6 +163,9 @@ sleep(1) # activity monitor takes 1s to detect the window
 
     await wait_for_data(run_ws_client, "novnc", timeout=0, process="1")
 
+    jpeg_pixel_b64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z"  # noqa: E501
+    await wait_for_data(run_ws_client, "video", "output", jpeg_pixel_b64, 0, "1")
+
     await wait_for_data(run_ws_client, "stopped", "exitCode", 0, 0, "1")
 
     # TODO sleep seems to be required for clean activity monitor shutdown
