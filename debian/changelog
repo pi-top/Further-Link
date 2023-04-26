@@ -1,3 +1,12 @@
+further-link (5.4.0-1) bullseye; urgency=medium
+
+  * Handle upload of miniscreen projects (#138)
+  * Send screenshot when stopping VNC (#139)
+  * build: include arm64 when building docker image
+  * build: ignore .github in codecov reporting
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 26 Apr 2023 14:05:45 +0000
+
 further-link (5.3.5-1) bullseye; urgency=medium
 
   * Require aiohttp >= 3.8.3
