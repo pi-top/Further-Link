@@ -1,8 +1,5 @@
 further-link (5.4.0-1) bullseye; urgency=medium
 
-  * Updated master workflow files
-  * Updated master workflow files
-  * [pre-commit.ci] pre-commit autoupdate (#124)
   * Handle upload of miniscreen projects (#138)
   * Send screenshot when stopping VNC (#139)
   * build: include arm64 when building docker image
