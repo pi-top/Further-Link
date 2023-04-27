@@ -52,6 +52,7 @@ class ProcessHandler:
         self.user = user
         self.had_display_activity = False
         self.on_display_activity = None
+        self.background_tasks = set()
 
     async def start(self, *args, **kwargs):
         try:
@@ -144,10 +145,12 @@ class ProcessHandler:
         if self.on_start:
             await self.on_start()
 
-        asyncio.create_task(self._process_communicate())  # asap
+        proc_com = asyncio.create_task(self._process_communicate())  # asap
+        self.background_tasks.add(proc_com)
         try:
             self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
-            asyncio.create_task(self._ipc_communicate())  # after as uses pgid
+            ipc_com = asyncio.create_task(self._ipc_communicate())  # after as uses pgid
+            self.background_tasks.add(ipc_com)
         except ProcessLookupError:
             # the process is done faster than we can look up gpid!
             self.pgid = None
@@ -272,6 +275,10 @@ class ProcessHandler:
         )
 
     async def _clean_up(self):
+        try:
+            self.background_tasks.clear()
+        except Exception as e:
+            logging.exception(f"{self.id} Background Tasks Cleanup error: {e}")
         if getattr(self, "pty", None):
             try:
                 if getattr(self, "pty_master", None):
