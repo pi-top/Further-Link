@@ -274,6 +274,12 @@ class ProcessHandler:
             except Exception as e:
                 logging.exception(f"{self.id} PTY Cleanup error: {e}")
 
+        if getattr(self, "screenshot_manager", None) and self.screenshot_manager:
+            try:
+                await self.screenshot_manager.stop()
+            except Exception as e:
+                logging.exception(f"{self.id} Screenshot Manager Cleanup error: {e}")
+
         if getattr(self, "novnc", None):
             try:
                 await async_stop(self.id)
