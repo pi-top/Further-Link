@@ -50,6 +50,7 @@ class ProcessHandler:
         self.id = id_generator.create()
         assert user_exists(user)
         self.user = user
+        self.had_display_activity = False
         self.on_display_activity = None
 
     async def start(self, *args, **kwargs):
@@ -100,7 +101,7 @@ class ProcessHandler:
             process_env["DISPLAY"] = f":{self.id}"
             self.screenshot_manager = await async_start(
                 display_id=self.id,
-                on_display_activity=self.on_display_activity,
+                on_display_activity=self.handle_display_activity,
                 ssl_certificate=VNC_CERTIFICATE_PATH,
                 with_window_manager=True,
                 height=novncOptions.get("height"),
@@ -150,6 +151,11 @@ class ProcessHandler:
         except ProcessLookupError:
             # the process is done faster than we can look up gpid!
             self.pgid = None
+
+    async def handle_display_activity(self, connection_details):
+        self.had_display_activity = True
+        if self.on_display_activity:
+            await self.on_display_activity(connection_details)
 
     def is_running(self):
         return hasattr(self, "process") and self.process is not None
@@ -240,6 +246,7 @@ class ProcessHandler:
             getattr(self, "screenshot_manager", None)
             and hasattr(self.screenshot_manager, "image")
             and self.screenshot_manager.image
+            and self.had_display_activity
         ):
             try:
                 b64_screenshot = base64_encode(self.screenshot_manager.image)
