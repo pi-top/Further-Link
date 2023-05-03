@@ -1,3 +1,11 @@
+further-link (5.4.0-2) bullseye; urgency=medium
+
+  * Send screenshot only if there was display activity (#142)
+  * add new further-link cert (#143)
+  * fix: keep references to background tasks to prevent early garbage collection
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 03 May 2023 08:39:15 +0000
+
 further-link (5.4.0-1) bullseye; urgency=medium
 
   * Handle upload of miniscreen projects (#138)
