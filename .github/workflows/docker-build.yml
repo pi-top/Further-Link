@@ -19,7 +19,7 @@ jobs:
         run: |
           echo ${{ secrets.DATA }} > further_link/extra/fl.dat
           cat << EOF > further_link/extra/key.aes.pem
-          ${{ secrets.TLS_KEY }}
+          ${{ secrets.CERT_PRIVATE_KEY }}
           EOF
 
       - name: Parse changelog version number
