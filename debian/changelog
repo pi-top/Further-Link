@@ -1,3 +1,10 @@
+further-link (5.5.0-2) bullseye; urgency=medium
+
+  * Add CodeQL workflow for GitHub code scanning (#136)
+  * Release job uses correct secret (#146)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 11 May 2023 17:31:42 +0000
+
 further-link (5.5.0-1) bullseye; urgency=medium
 
   * Send screenshot only if there was display activity (#142)
