@@ -11,6 +11,7 @@ from pt_web_vnc.vnc import async_start, async_stop
 
 from ..util.async_helpers import ringbuf_read, timeout
 from ..util.id_generator import IdGenerator
+from ..util.images import base64_encode
 from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
 from ..util.sdk import get_first_display
 from ..util.terminal import set_winsize
@@ -49,7 +50,9 @@ class ProcessHandler:
         self.id = id_generator.create()
         assert user_exists(user)
         self.user = user
+        self.had_display_activity = False
         self.on_display_activity = None
+        self.background_tasks = set()
 
     async def start(self, *args, **kwargs):
         try:
@@ -94,16 +97,19 @@ class ProcessHandler:
             process_env = {k: v for k, v in process_env.items() if v is not None}
 
         # set $DISPLAY so that user can open GUI windows
+        self.screenshot_manager = None
         if self.novnc:
             process_env["DISPLAY"] = f":{self.id}"
-            await async_start(
+            self.screenshot_manager = await async_start(
                 display_id=self.id,
-                on_display_activity=self.on_display_activity,
+                on_display_activity=self.handle_display_activity,
                 ssl_certificate=VNC_CERTIFICATE_PATH,
                 with_window_manager=True,
                 height=novncOptions.get("height"),
                 width=novncOptions.get("width"),
+                screenshot_timeout=1,
             )
+
         else:
             default_display = get_first_display()
             if default_display:
@@ -139,13 +145,20 @@ class ProcessHandler:
         if self.on_start:
             await self.on_start()
 
-        asyncio.create_task(self._process_communicate())  # asap
+        proc_com = asyncio.create_task(self._process_communicate())  # asap
+        self.background_tasks.add(proc_com)
         try:
             self.pgid = os.getpgid(self.process.pid)  # retain for cleanup
-            asyncio.create_task(self._ipc_communicate())  # after as uses pgid
+            ipc_com = asyncio.create_task(self._ipc_communicate())  # after as uses pgid
+            self.background_tasks.add(ipc_com)
         except ProcessLookupError:
             # the process is done faster than we can look up gpid!
             self.pgid = None
+
+    async def handle_display_activity(self, connection_details):
+        self.had_display_activity = True
+        if self.on_display_activity:
+            await self.on_display_activity(connection_details)
 
     def is_running(self):
         return hasattr(self, "process") and self.process is not None
@@ -232,6 +245,18 @@ class ProcessHandler:
         await self._handle_process_end()
 
     async def _handle_process_end(self):
+        if (
+            getattr(self, "screenshot_manager", None)
+            and hasattr(self.screenshot_manager, "image")
+            and self.screenshot_manager.image
+            and self.had_display_activity
+        ):
+            try:
+                b64_screenshot = base64_encode(self.screenshot_manager.image)
+                await self.on_output("video", b64_screenshot.decode("utf-8"))
+            except Exception as e:
+                logging.exception(f"{self.id} Screenshot handling error: {e}")
+
         exit_code = await self.process.wait()
         await self._clean_up()
         self.process = None
@@ -250,6 +275,10 @@ class ProcessHandler:
         )
 
     async def _clean_up(self):
+        try:
+            self.background_tasks.clear()
+        except Exception as e:
+            logging.exception(f"{self.id} Background Tasks Cleanup error: {e}")
         if getattr(self, "pty", None):
             try:
                 if getattr(self, "pty_master", None):
