@@ -13,8 +13,9 @@ from ..util.user_config import default_user, get_temp_dir
 
 
 class RunManager:
-    def __init__(self, socket, user=None, pty=False):
+    def __init__(self, socket, bluetooth, user=None, pty=False):
         self.socket = socket
+        self.bluetooth = bluetooth
         self.user = default_user() if user is None else user
         self.pty = pty
 
@@ -35,10 +36,17 @@ class RunManager:
                 pass
 
     async def send(self, type, data=None, process_id=None):
+        message = create_message(type, data, process_id)
+
         try:
-            await self.socket.send_str(create_message(type, data, process_id))
+            await self.socket.send_str(message)
         except ConnectionResetError:
             pass  # already disconnected
+
+        try:
+            self.bluetooth.send(message)
+        except Exception:
+            pass
 
     async def handle_message(self, message):
         try:
@@ -158,15 +166,24 @@ async def run(request):
     socket = web.WebSocketResponse()
     await socket.prepare(request)
 
-    run_manager = RunManager(socket, user=user, pty=pty)
+    bluetooth = request.app["bluetooth_device"]
+
+    run_manager = RunManager(socket, bluetooth, user=user, pty=pty)
     logging.info(f"{run_manager.id} New connection")
 
     try:
         async for message in socket:
             logging.debug(f"{run_manager.id} Received Message {message.data}")
             await run_manager.handle_message(message.data)
-
     except asyncio.CancelledError:
+        pass
+
+    try:
+        while bluetooth.has_messages():
+            message = bluetooth.read()
+            logging.debug(f"{run_manager.id} Received Bluetooth Message {message}")
+            await run_manager.handle_message(message)
+    except Exception:
         pass
 
     finally:

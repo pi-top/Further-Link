@@ -8,7 +8,11 @@ from ..util.message import BadMessage, create_message, parse_message
 from ..util.upload import BadUpload, directory_is_valid, do_upload
 
 
-async def handle_message(message, process_handler, socket):
+async def handle_message(message, process_handler, socket, bluetooth):
+    async def send(message):
+        await socket.send_str(message)
+        await bluetooth.send(message)
+
     m_type, m_data, m_process = parse_message(message)
 
     if (
@@ -46,7 +50,7 @@ async def handle_message(message, process_handler, socket):
         await do_upload(
             m_data.get("directory"), process_handler.work_dir, m_data.get("user")
         )
-        await socket.send_str(create_message("uploaded"))
+        await send(create_message("uploaded"))
 
     elif (
         m_type == "stdin" and "input" in m_data and isinstance(m_data.get("input"), str)
@@ -54,7 +58,7 @@ async def handle_message(message, process_handler, socket):
         await process_handler.send_input(m_data["input"])
 
     elif m_type == "ping":
-        await socket.send_str(create_message("pong"))
+        await send(create_message("pong"))
 
     elif m_type == "stop":
         process_handler.stop()
@@ -80,20 +84,26 @@ async def run_py(request):
     socket = web.WebSocketResponse()
     await socket.prepare(request)
 
+    bluetooth = request.app["bluetooth_device"]
+
+    async def send(message):
+        await socket.send_str(message)
+        bluetooth.send(message)
+
     async def on_start():
-        await socket.send_str(create_message("started"))
+        await send(create_message("started"))
         logging.info(f"{process_handler.id} Started")
 
     async def on_stop(exit_code):
         try:
-            await socket.send_str(create_message("stopped", {"exitCode": exit_code}))
+            await send(create_message("stopped", {"exitCode": exit_code}))
         except ConnectionResetError:
             pass  # already disconnected
         logging.info(f"{process_handler.id} Stopped")
 
     async def on_output(channel, output):
         logging.debug(f"{process_handler.id} Sending Output {channel} {output}")
-        await socket.send_str(create_message(channel, {"output": output}))
+        await send(create_message(channel, {"output": output}))
 
     process_handler = RunPyProcessHandler(user=user, pty=pty)
     process_handler.on_start = on_start
@@ -101,30 +111,29 @@ async def run_py(request):
     process_handler.on_output = on_output
     logging.info(f"{process_handler.id} New connection")
 
+    async def handle(message, process_handler):
+        logging.debug(f"{process_handler.id} Received Message {message.data}")
+        try:
+            await handle_message(message.data, process_handler, socket, bluetooth)
+
+        except BadUpload:
+            logging.exception(f"{process_handler.id} Bad Upload")
+            await send(create_message("error", {"message": "Bad upload"}))
+
+        except (BadMessage, InvalidOperation):
+            logging.exception(f"{process_handler.id} Bad Message")
+            await send(create_message("error", {"message": "Bad message"}))
+
+        except Exception:
+            logging.exception(f"{process_handler.id} Message Exception")
+            await send(create_message("error", {"message": "Message Exception"}))
+
     try:
         async for message in socket:
-            logging.debug(f"{process_handler.id} Received Message {message.data}")
-            try:
-                await handle_message(message.data, process_handler, socket)
+            await handle(message, process_handler)
 
-            except BadUpload:
-                logging.exception(f"{process_handler.id} Bad Upload")
-                await socket.send_str(
-                    create_message("error", {"message": "Bad upload"})
-                )
-
-            except (BadMessage, InvalidOperation):
-                logging.exception(f"{process_handler.id} Bad Message")
-                await socket.send_str(
-                    create_message("error", {"message": "Bad message"})
-                )
-
-            except Exception:
-                logging.exception(f"{process_handler.id} Message Exception")
-                await socket.send_str(
-                    create_message("error", {"message": "Message Exception"})
-                )
-
+        while bluetooth.has_messages():
+            await handle(bluetooth.read(), process_handler)
     except asyncio.CancelledError:
         pass
     finally:
