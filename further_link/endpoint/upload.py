@@ -1,4 +1,5 @@
 import json
+import logging
 
 from aiohttp import web
 
@@ -24,7 +25,7 @@ async def upload(request):
         directory = await request.json()
 
         if not directory_is_valid(directory):
-            raise web.HTTPBadRequest()
+            raise web.HTTPBadRequest(reason=f"Invalid upload directory: {directory}")
 
         await do_upload(directory, work_dir, user)
 
@@ -35,10 +36,12 @@ async def upload(request):
                 user,
             )
 
-    except (web.HTTPBadRequest, json.decoder.JSONDecodeError):
+    except (web.HTTPBadRequest, json.decoder.JSONDecodeError) as e:
+        logging.exception(e)
         raise web.HTTPBadRequest()
 
-    except BadUpload:
+    except BadUpload as e:
+        logging.exception(e)
         raise web.HTTPInternalServerError()
 
     return web.Response(text="OK")
