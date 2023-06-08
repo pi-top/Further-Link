@@ -1,3 +1,10 @@
+further-link (5.5.0-3) bullseye; urgency=medium
+
+  * Updated master workflow files
+  * Log errors in the upload endpoint
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 08 Jun 2023 15:48:44 +0000
+
 further-link (5.5.0-2) bullseye; urgency=medium
 
   * Add CodeQL workflow for GitHub code scanning (#136)
