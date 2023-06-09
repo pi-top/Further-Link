@@ -93,6 +93,7 @@ print(call_some_lib())
 
 @pytest.mark.asyncio
 async def test_upload_bad_file(run_py_ws_client, aioresponses):
+    aioresponses.head("https://google.com", status=200)
     aioresponses.add("https://placekitten.com/50/50", status=500)
 
     upload_cmd = create_message("upload", {"directory": directory})

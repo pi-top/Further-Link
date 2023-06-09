@@ -54,8 +54,10 @@ For more information related to the `run-py` API see the options of the
 - Body should be a JSON object with `name` of directory to upload into and
   `files` object. Files are provided as `text` type, with the text content, or
   `url` type, with a url for the file to be downloaded from
-  ([example](../tests/test_data/upload_data.py)). Responds after creating files is
-  complete with a simple 200 OK.
+  ([example](../tests/test_data/upload_data.py)). If the server does not have
+  internet access then url type files will be ignored. Reponse is a json
+  which includes whether the url type files were downloaded:
+  `{ "success": true, "fetched_urls": true }`.
 
 ### Websocket Endpoint /run-py
 Each websocket client connected on `/run-py` can manage a single python process

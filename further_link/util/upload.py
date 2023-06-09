@@ -3,7 +3,7 @@ from shutil import rmtree
 from typing import Optional
 
 import aiofiles
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 from ..util.user_config import default_user, get_gid, get_uid
 from .user_config import CACHE_DIR_NAME
@@ -13,6 +13,16 @@ file_types = ["url", "text"]
 
 class BadUpload(Exception):
     pass
+
+
+async def have_internet():
+    timeout = ClientTimeout(total=3)
+    try:
+        async with ClientSession(timeout=timeout) as session:
+            async with session.head("https://google.com") as response:
+                return response is not None
+    except Exception:
+        return False
 
 
 def file_is_valid(file):
@@ -143,6 +153,8 @@ async def do_upload(directory, work_dir, user=None):
             except Exception:
                 pass
 
+        fetch_urls = await have_internet()
+
         for alias_name, file_info in directory["files"].items():
             alias_path = get_alias_path(directory_path, alias_name)
 
@@ -151,7 +163,7 @@ async def do_upload(directory, work_dir, user=None):
             if not os.path.exists(alias_dir):
                 create_directory(alias_dir, user)
 
-            if file_info["type"] == "url":
+            if file_info["type"] == "url" and fetch_urls:
                 content = file_info["content"]
 
                 if not valid_url_content(content):
@@ -189,6 +201,8 @@ async def do_upload(directory, work_dir, user=None):
                 # set ownership of file to the correct user
                 if user:
                     os.chown(alias_path, uid=get_uid(user), gid=get_gid(user))
+
+        return fetch_urls
 
     except Exception as e:
         raise BadUpload(e)

@@ -27,7 +27,7 @@ async def upload(request):
         if not directory_is_valid(directory):
             raise web.HTTPBadRequest(reason=f"Invalid upload directory: {directory}")
 
-        await do_upload(directory, work_dir, user)
+        fetched_urls = await do_upload(directory, work_dir, user)
 
         if is_miniscreen_project(directory.get("files", {})):
             await do_copy_files_to_projects_directory(
@@ -44,4 +44,6 @@ async def upload(request):
         logging.exception(e)
         raise web.HTTPInternalServerError()
 
-    return web.Response(text="OK")
+    return web.Response(
+        text=json.dumps({"success": True, "fetched_urls": fetched_urls})
+    )
