@@ -1,6 +1,5 @@
-further-link (5.5.1-2) bullseye; urgency=medium
+further-link (5.6.0-1) bullseye; urgency=medium
 
-  * New changelog entry: v5.5.1-1 (#151)
   * feat: upload endpoint skips downloading urls when offline
 
  -- pi-top <deb-maintainers@pi-top.com>  Fri, 09 Jun 2023 16:40:00 +0000
