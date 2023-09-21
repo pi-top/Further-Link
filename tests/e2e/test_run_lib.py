@@ -7,6 +7,7 @@ from further_link import __version__
 from further_link.util.message import create_message
 
 from .helpers import receive_data, wait_for_data
+from .test_data.image import jpeg_pixel_b64
 
 
 @pytest.mark.asyncio
@@ -76,9 +77,6 @@ pause()
     await run_ws_client.send_str(create_message("stop", None, "1"))
 
     await wait_for_data(run_ws_client, "stopped", "exitCode", -15, 0, "1")
-
-
-jpeg_pixel_b64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z"  # noqa: E501
 
 
 @pytest.mark.asyncio

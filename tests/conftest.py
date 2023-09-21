@@ -1,7 +1,11 @@
 import os
 from shutil import rmtree
+from unittest.mock import MagicMock
 
 import pytest
+from mock import AsyncMock
+
+from further_link.__main__ import create_bluetooth_app
 
 from .dirs import PROJECTS_DIR, WORKING_DIRECTORY
 
@@ -30,3 +34,33 @@ def clear_loggers():
         handlers = getattr(logger, "handlers", [])
         for handler in handlers:
             logger.removeHandler(handler)
+
+
+@pytest.fixture(autouse=True)
+def mock_bluez_peripheral(mocker):
+    from .mocks.bluetooth.characteristic import characteristicMock
+    from .mocks.bluetooth.service import ServiceMock
+
+    mocker.patch("further_link.util.bluetooth.service.Service", ServiceMock)
+    mocker.patch(
+        "further_link.util.bluetooth.service.characteristic", characteristicMock
+    )
+
+    mocker.patch("further_link.util.bluetooth.server.NoIoAgent", AsyncMock)
+    mocker.patch("further_link.util.bluetooth.server.Advertisement", AsyncMock)
+
+    adapter = AsyncMock()
+    adapter.get_first.return_value = MagicMock()
+    mocker.patch("further_link.util.bluetooth.server.Adapter", adapter)
+
+    async def get_bus():
+        return MagicMock()
+
+    mocker.patch("further_link.util.bluetooth.server.get_message_bus", get_bus)
+
+
+@pytest.fixture()
+async def bluetooth_server():
+    server = await create_bluetooth_app()
+    yield server
+    server.stop()

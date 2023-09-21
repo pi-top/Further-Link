@@ -1,2 +1,3 @@
 further-link: no-manual-page usr/bin/further-link
 further-link: no-manual-page usr/bin/start-further
+further-link: no-manual-page usr/bin/further-link-bluetooth-pairing

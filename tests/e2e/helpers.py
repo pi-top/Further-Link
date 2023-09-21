@@ -1,7 +1,10 @@
 import asyncio
+import json
 from concurrent.futures import TimeoutError
 from time import time
 
+from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
+from further_link.util.bluetooth.messages.format import PtMessageFormat
 from further_link.util.message import parse_message
 
 
@@ -69,3 +72,40 @@ async def wait_for_data(
         except (TimeoutError, asyncio.TimeoutError):
             continue
     raise TimeoutError
+
+
+async def send_formatted_bluetooth_message(
+    service, characteristic, message, assert_characteristic_value=True
+):
+    if not isinstance(message, str):
+        message = json.dumps(message)
+    chunked_message = ChunkedMessage.from_string(
+        id=0, message=message, format=PtMessageFormat
+    )
+
+    for i in range(chunked_message.received_chunks):
+        chunk = chunked_message.get_chunk(i)
+
+        # write chunk to characteristic
+        await characteristic.WriteValue(chunk.message, {})
+
+        # read characteristic value and confirm it's the same message as the one sent
+        if assert_characteristic_value:
+            assert characteristic._value == chunk.message
+
+
+async def wait_until(condition, timeout=5.0):
+    t = 0.0
+    delta_t = 0.1
+    while not condition() and t < timeout:
+        await asyncio.sleep(delta_t)
+        t += delta_t
+    if t >= timeout:
+        raise TimeoutError(f"Timed out waiting for condition {condition}")
+
+
+async def wait_until_characteristic_value_endswith(characteristic, value, timeout=5):
+    def read_and_check():
+        return characteristic._value.endswith(value)
+
+    await wait_until(read_and_check, timeout)

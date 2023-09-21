@@ -1,7 +1,6 @@
 import logging
 import os
-import sys
-from json import dumps
+from typing import Optional
 
 import aiohttp_cors
 import click
@@ -9,14 +8,15 @@ from aiohttp import web
 
 from further_link.endpoint.apt_version import apt_version
 from further_link.endpoint.run import run as run_handler
+from further_link.endpoint.status import status, version
 from further_link.endpoint.upload import upload
 from further_link.util import vnc
+from further_link.util.bluetooth.server import BluetoothServer
 from further_link.util.ssl_context import ssl_context
-from further_link.version import __version__
 
-logging.basicConfig(
-    stream=sys.stdout,
-    level=(logging.DEBUG if os.environ.get("FURTHER_LINK_DEBUG") else logging.INFO),
+logging.basicConfig()
+logging.getLogger().setLevel(
+    logging.DEBUG if os.environ.get("FURTHER_LINK_DEBUG") else logging.INFO
 )
 
 
@@ -24,8 +24,25 @@ def port():
     return int(os.environ.get("FURTHER_LINK_PORT", 8028))
 
 
-def create_app():
+async def create_bluetooth_app() -> Optional[BluetoothServer]:
+    if os.environ.get("FURTHER_LINK_SKIP_BLUETOOTH", "0").lower() in (
+        "1",
+        "true",
+    ):
+        return None
+
+    bluetooth_server = None
+    try:
+        bluetooth_server = BluetoothServer()
+        await bluetooth_server.start()
+    except Exception as e:
+        logging.error(f"Error creating bluetooth device: {e}")
+    return bluetooth_server
+
+
+async def create_web_app():
     app = web.Application()
+
     cors = aiohttp_cors.setup(
         app,
         defaults={
@@ -36,12 +53,6 @@ def create_app():
             )
         },
     )
-
-    async def status(_):
-        return web.Response(text="OK")
-
-    async def version(_):
-        return web.Response(text=dumps({"version": __version__}))
 
     status_resource = cors.add(app.router.add_resource("/status"))
     cors.add(status_resource.add_route("GET", status))
@@ -58,6 +69,12 @@ def create_app():
     exec_resource = cors.add(app.router.add_resource("/run"))
     cors.add(exec_resource.add_route("GET", run_handler))
 
+    return app
+
+
+async def create_app():
+    await create_bluetooth_app()
+    app = await create_web_app()
     return app
 
 

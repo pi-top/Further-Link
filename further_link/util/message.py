@@ -1,4 +1,5 @@
 import json
+from typing import Dict
 
 
 class BadMessage(Exception):
@@ -7,6 +8,12 @@ class BadMessage(Exception):
 
 def create_message(msg_type, msg_data=None, msg_process=""):
     return json.dumps({"type": msg_type, "data": msg_data, "process": msg_process})
+
+
+def append_to_message(message_str: str, dict_to_append: Dict) -> str:
+    message_dict = json.loads(message_str)
+    message_dict.update(dict_to_append)
+    return json.dumps(message_dict)
 
 
 def parse_message(message):

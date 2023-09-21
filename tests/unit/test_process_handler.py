@@ -16,6 +16,8 @@ from PIL import Image
 from further_link.runner.process_handler import ProcessHandler
 from further_link.util.vnc import VNC_CERTIFICATE_PATH
 
+from ..e2e.test_data.image import jpeg_pixel_b64
+
 logging.basicConfig(
     stream=sys.stdout,
     level=(logging.DEBUG if os.environ.get("FURTHER_LINK_DEBUG") else logging.INFO),
@@ -111,7 +113,6 @@ pause()
     with patch(
         "further_link.runner.process_handler.async_start", AsyncMock()
     ) as vnc_start:
-        jpeg_pixel_b64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z"  # noqa: E501
         vnc_start.return_value.image = Image.open(BytesIO(b64decode(jpeg_pixel_b64)))
 
         await p.start(f'python3 -u -c "{code}"', novncOptions=novncOptions)
