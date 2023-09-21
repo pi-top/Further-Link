@@ -8,13 +8,34 @@ from ..runner.exec_process_handler import ExecProcessHandler
 from ..runner.process_handler import InvalidOperation
 from ..runner.py_process_handler import PyProcessHandler
 from ..runner.shell_process_handler import ShellProcessHandler
+from ..util.bluetooth.gatt import PT_RUN_CHARACTERISTIC_UUID
+from ..util.bluetooth.utils import bytearray_to_dict
 from ..util.message import BadMessage, create_message, parse_message
 from ..util.user_config import default_user, get_temp_dir
 
 
+class Iface:
+    def __init__(self, obj) -> None:
+        self.obj = obj
+
+    async def send(self, message):
+        logging.warning(f"Iface send: {message}")
+        if isinstance(self.obj, web.WebSocketResponse):
+            try:
+                await self.obj.send_str(message)
+            except ConnectionResetError:
+                pass  # already disconnected
+        else:
+            try:
+                self.obj.write_value(message, PT_RUN_CHARACTERISTIC_UUID)
+            except Exception as e:
+                logging.error(f"Error sending message: {e}")
+                pass
+
+
 class RunManager:
-    def __init__(self, socket, user=None, pty=False):
-        self.socket = socket
+    def __init__(self, interface, user=None, pty=False):
+        self.iface = Iface(interface)
         self.user = default_user() if user is None else user
         self.pty = pty
 
@@ -35,10 +56,7 @@ class RunManager:
                 pass
 
     async def send(self, type, data=None, process_id=None):
-        try:
-            await self.socket.send_str(create_message(type, data, process_id))
-        except ConnectionResetError:
-            pass  # already disconnected
+        await self.iface.send(create_message(type, data, process_id))
 
     async def handle_message(self, message):
         try:
@@ -150,6 +168,30 @@ class RunManager:
         self.process_handlers[process_id] = handler
 
 
+bt_run_manager = None
+
+
+async def bt_run_handler(interface, uuid, message):
+    message_dict = bytearray_to_dict(message)
+
+    user = message_dict.get("user", None)
+    pty = message_dict.get("pty", "").lower() in ["1", "true"]
+
+    # TODO: handle multiple 'run' connections
+    global bt_run_manager
+    if bt_run_manager is None:
+        bt_run_manager = RunManager(interface, user=user, pty=pty)
+        logging.info(f"{bt_run_manager.id} New connection")
+
+    logging.debug(f"{bt_run_manager.id} Received Message {message_dict}")
+    try:
+        await bt_run_manager.handle_message(message)
+    except Exception as e:
+        logging.exception(f"{bt_run_manager.id} Message Exception: {e}")
+        await bt_run_manager.stop()
+        bt_run_manager = None
+
+
 async def run(request):
     query_params = request.query
     user = query_params.get("user", None)
@@ -165,7 +207,6 @@ async def run(request):
         async for message in socket:
             logging.debug(f"{run_manager.id} Received Message {message.data}")
             await run_manager.handle_message(message.data)
-
     except asyncio.CancelledError:
         pass
 

@@ -15,13 +15,13 @@ def loop(event_loop):
 
 @pytest.fixture()
 async def http_client(aiohttp_client):
-    client = await aiohttp_client(create_app())
+    client = await aiohttp_client(await create_app())
     yield client
 
 
 @pytest.fixture()
 async def run_py_ws_client(aiohttp_client):
-    client = await aiohttp_client(create_app())
+    client = await aiohttp_client(await create_app())
     async with client.ws_connect(RUN_PY_PATH, receive_timeout=0.1) as client:
         yield client
 
@@ -32,14 +32,14 @@ run_py_ws_client2 = run_py_ws_client
 @pytest.fixture()
 async def run_py_ws_client_query(aiohttp_client, query_params):
     url = RUN_PY_PATH + "?" + urllib.parse.urlencode(query_params)
-    client = await aiohttp_client(create_app())
+    client = await aiohttp_client(await create_app())
     async with client.ws_connect(url, receive_timeout=0.1) as client:
         yield client
 
 
 @pytest.fixture()
 async def run_ws_client(aiohttp_client):
-    client = await aiohttp_client(create_app())
+    client = await aiohttp_client(await create_app())
     async with client.ws_connect(RUN_PATH, receive_timeout=0.1) as client:
         yield client
 
@@ -50,7 +50,7 @@ run_ws_client2 = run_ws_client
 @pytest.fixture()
 async def run_ws_client_query(aiohttp_client, query_params):
     url = RUN_PATH + "?" + urllib.parse.urlencode(query_params)
-    client = await aiohttp_client(create_app())
+    client = await aiohttp_client(await create_app())
     async with client.ws_connect(url, receive_timeout=0.1) as client:
         yield client
 
