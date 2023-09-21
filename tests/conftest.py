@@ -30,3 +30,16 @@ def clear_loggers():
         handlers = getattr(logger, "handlers", [])
         for handler in handlers:
             logger.removeHandler(handler)
+
+
+@pytest.fixture(autouse=True)
+def mock_bless(mocker):
+    # from .mocks.bluetooth.service import BlessGATTServiceMock
+    from .mocks.bluetooth.characteristic import BlessGATTCharacteristicMock
+    from .mocks.bluetooth.server import BlessServerMock
+
+    mocker.patch(
+        "further_link.util.bluetooth.device.BlessGATTCharacteristic",
+        BlessGATTCharacteristicMock,
+    )
+    mocker.patch("further_link.util.bluetooth.device.BlessServer", BlessServerMock)

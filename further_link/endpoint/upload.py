@@ -56,27 +56,26 @@ async def upload(request):
 
 
 async def bt_upload(interface, uuid, message: bytearray):
-    message_dict = bytearray_to_dict(message)
-
-    user = message_dict.get("user", None)
-    work_dir = get_working_directory(user)
+    try:
+        message_dict = bytearray_to_dict(message)
+    except json.decoder.JSONDecodeError as e:
+        logging.exception(f"Error: {e}")
+        interface.write_value(b"Error: invalid format", uuid)
+        return
 
     try:
+        user = message_dict.get("user", None)
+        work_dir = get_working_directory(user)
+
         if not directory_is_valid(message_dict):
             msg = f"Invalid upload directory: {message_dict}"
-            interface.write_message(msg, uuid)
-            raise Exception(msg)
+            interface.write_value(msg, uuid)
+            return
         fetched_urls = await handle_upload(message_dict, work_dir, user)
-    except json.decoder.JSONDecodeError as e:
-        logging.exception(e)
-        interface.write_message(f"Error: {e}", uuid)
-        raise
+    except Exception as e:
+        logging.exception(f"{e}")
+        interface.write_value(f"Error: {e}", uuid)
 
-    except BadUpload as e:
-        logging.exception(e)
-        interface.write_message(f"Error: {e}", uuid)
-        raise
-
-    return interface.write_value(
+    interface.write_value(
         json.dumps({"success": True, "fetched_urls": fetched_urls}), uuid
     )

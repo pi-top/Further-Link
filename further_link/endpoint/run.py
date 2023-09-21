@@ -207,6 +207,7 @@ async def run(request):
         async for message in socket:
             logging.debug(f"{run_manager.id} Received Message {message.data}")
             await run_manager.handle_message(message.data)
+
     except asyncio.CancelledError:
         pass
 

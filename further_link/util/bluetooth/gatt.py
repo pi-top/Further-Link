@@ -7,6 +7,7 @@ PT_RUN_SERVICE_UUID = "12341000-1234-1234-1234-123456789abc"
 PT_RUN_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789abd"
 PT_STATUS_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789abe"
 PT_VERSION_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789abf"
+PT_APT_VERSION_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789adf"
 PT_UPLOAD_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789acf"
 
 FURTHER_GATT_CONFIG = {
@@ -34,6 +35,17 @@ FURTHER_GATT_CONFIG = {
                 GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify
             ),
             "Permissions": (GATTAttributePermissions.readable),
+            "Value": None,
+        },
+        PT_APT_VERSION_CHARACTERISTIC_UUID: {
+            "Properties": (
+                GATTCharacteristicProperties.write
+                | GATTCharacteristicProperties.read
+                | GATTCharacteristicProperties.notify
+            ),
+            "Permissions": (
+                GATTAttributePermissions.readable | GATTAttributePermissions.writeable
+            ),
             "Value": None,
         },
         PT_UPLOAD_CHARACTERISTIC_UUID: {

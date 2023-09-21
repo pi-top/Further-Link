@@ -43,7 +43,7 @@ class BluetoothDevice:
     async def stop(self) -> None:
         if self.server:
             logging.info("Stopping bluetooth server")
-            self.server.stop()
+            await self.server.stop()
 
     def _get_service_uuid(self, characteristic_uuid) -> str:
         if self.server is None:
@@ -72,6 +72,16 @@ class BluetoothDevice:
 
         # Notify subscribers
         self.server.update_value(self._get_service_uuid(uuid), uuid)
+
+    def read_value(self, uuid: str):
+        if self.server is None:
+            raise Exception("Bluetooth server not started")
+
+        service_uuid = self._get_service_uuid(uuid)
+        service = self.server.services.get(service_uuid)
+        if service:
+            char = service.get_characteristic(uuid)
+            return self._read_request(char)
 
     def _read_request(self, characteristic: BlessGATTCharacteristic, **kwargs):
         logging.warning(f"Read request for characteristc {characteristic}")
@@ -103,7 +113,7 @@ class BluetoothDevice:
         self, characteristic: BlessGATTCharacteristic, value: bytearray, **kwargs
     ):
         logging.warning(
-            f"Write request for characteristic {characteristic} with value '{value}'"
+            f"Write request for characteristic {characteristic.uuid} with value '{value}'"
         )
         # if handling a 'ChunkedMessage', callback is executed only when the message is complete
         should_execute_callback = False

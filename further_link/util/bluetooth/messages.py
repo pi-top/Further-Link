@@ -10,8 +10,10 @@ class ChunkedMessageFormat:
 
 
 class Message:
-    def __init__(self, data: bytearray) -> None:
-        self._message = data
+    def __init__(self, data: Optional[bytearray] = None) -> None:
+        self._message = bytearray()
+        if data:
+            self.append(data)
 
     @classmethod
     def from_string(cls, message: str):
@@ -38,7 +40,7 @@ class ChunkedMessage(Message):
     }
 
     def __init__(self, data: Optional[bytearray] = None) -> None:
-        super().__init__(bytearray())
+        super().__init__()
         if data:
             self.append(data)
 
@@ -46,7 +48,28 @@ class ChunkedMessage(Message):
     def total_chunks(self) -> int:
         return (
             len(self.as_bytearray()) // ChunkedMessageFormat.CHUNK_DATA_SIZE + 1
-        ) + 1
+        ) + 2
+
+    @classmethod
+    def from_long_message(cls, message: str):
+        msg = Message.from_string(message)
+        chunked = cls()
+        total_chunks = (
+            len(msg.as_bytearray()) // ChunkedMessageFormat.CHUNK_DATA_SIZE + 1
+        )
+        for i in range(total_chunks):
+            chunk = bytearray(
+                i.to_bytes(ChunkedMessageFormat.CHUNK_NUMBER_SIZE, byteorder="big")
+            )
+            chunk += bytearray(
+                msg.as_bytearray()[
+                    i
+                    * ChunkedMessageFormat.CHUNK_DATA_SIZE : ChunkedMessageFormat.CHUNK_DATA_SIZE
+                    * (i + 1)
+                ]
+            )
+            chunked.append(chunk)
+        return chunked
 
     @classmethod
     def is_start_message(cls, message: bytearray) -> bool:
@@ -67,16 +90,21 @@ class ChunkedMessage(Message):
             return bytearray(self.headers["STOP"])
 
         index -= 1
-        return self.as_bytearray()[
-            index
-            * ChunkedMessageFormat.CHUNK_DATA_SIZE : (index + 1)
-            * ChunkedMessageFormat.CHUNK_DATA_SIZE
-        ]
+        return (
+            bytearray(
+                index.to_bytes(ChunkedMessageFormat.CHUNK_NUMBER_SIZE, byteorder="big")
+            )
+            + self.as_bytearray()[
+                index
+                * ChunkedMessageFormat.CHUNK_DATA_SIZE : (index + 1)
+                * ChunkedMessageFormat.CHUNK_DATA_SIZE
+            ]
+        )
 
     def append(self, data: bytearray):
-        if data.startswith(bytearray(ChunkedMessageFormat.START)):
+        if self.is_start_message(data):
             self.headers["START"] = data
-        elif data.startswith(bytearray(ChunkedMessageFormat.STOP)):
+        elif self.is_stop_message(data):
             self.headers["STOP"] = data
         else:
             super().append(data[ChunkedMessageFormat.CHUNK_NUMBER_SIZE :])

@@ -3,7 +3,7 @@ import urllib.parse
 import pytest
 from aioresponses import aioresponses as aioresponses_mock
 
-from further_link.__main__ import create_app
+from further_link.__main__ import create_web_app
 
 from . import RUN_PATH, RUN_PY_PATH
 
@@ -15,14 +15,15 @@ def loop(event_loop):
 
 @pytest.fixture()
 async def http_client(aiohttp_client):
-    client = await aiohttp_client(await create_app())
+    client = await aiohttp_client(await create_web_app())
     yield client
+    await client.close()
 
 
 @pytest.fixture()
 async def run_py_ws_client(aiohttp_client):
-    client = await aiohttp_client(await create_app())
-    async with client.ws_connect(RUN_PY_PATH, receive_timeout=0.1) as client:
+    wclient = await aiohttp_client(await create_web_app())
+    async with wclient.ws_connect(RUN_PY_PATH, receive_timeout=0.1) as client:
         yield client
 
 
@@ -32,15 +33,15 @@ run_py_ws_client2 = run_py_ws_client
 @pytest.fixture()
 async def run_py_ws_client_query(aiohttp_client, query_params):
     url = RUN_PY_PATH + "?" + urllib.parse.urlencode(query_params)
-    client = await aiohttp_client(await create_app())
-    async with client.ws_connect(url, receive_timeout=0.1) as client:
+    wclient = await aiohttp_client(await create_web_app())
+    async with wclient.ws_connect(url, receive_timeout=0.1) as client:
         yield client
 
 
 @pytest.fixture()
 async def run_ws_client(aiohttp_client):
-    client = await aiohttp_client(await create_app())
-    async with client.ws_connect(RUN_PATH, receive_timeout=0.1) as client:
+    wclient = await aiohttp_client(await create_web_app())
+    async with wclient.ws_connect(RUN_PATH, receive_timeout=0.1) as client:
         yield client
 
 
@@ -50,7 +51,7 @@ run_ws_client2 = run_ws_client
 @pytest.fixture()
 async def run_ws_client_query(aiohttp_client, query_params):
     url = RUN_PATH + "?" + urllib.parse.urlencode(query_params)
-    client = await aiohttp_client(await create_app())
+    client = await aiohttp_client(await create_web_app())
     async with client.ws_connect(url, receive_timeout=0.1) as client:
         yield client
 
@@ -72,3 +73,12 @@ def clear_loggers():
         handlers = getattr(logger, "handlers", [])
         for handler in handlers:
             logger.removeHandler(handler)
+
+
+@pytest.fixture()
+async def bluetooth_client():
+    from further_link.__main__ import create_bluetooth_app
+
+    client = await create_bluetooth_app()
+    yield client
+    await client.stop()

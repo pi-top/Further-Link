@@ -9,7 +9,7 @@ import aiohttp_cors
 import click
 from aiohttp import web
 
-from further_link.endpoint.apt_version import apt_version
+from further_link.endpoint.apt_version import apt_version, apt_version_bt
 from further_link.endpoint.run import bt_run_handler
 from further_link.endpoint.run import run as run_handler
 from further_link.endpoint.run_py import run_py
@@ -18,6 +18,7 @@ from further_link.util import vnc
 from further_link.util.bluetooth.device import BluetoothDevice, GattConfig
 from further_link.util.bluetooth.gatt import (
     FURTHER_GATT_CONFIG,
+    PT_APT_VERSION_CHARACTERISTIC_UUID,
     PT_RUN_CHARACTERISTIC_UUID,
     PT_RUN_SERVICE_UUID,
     PT_STATUS_CHARACTERISTIC_UUID,
@@ -63,20 +64,23 @@ async def create_bluetooth_app():
             PT_RUN_SERVICE_UUID, PT_VERSION_CHARACTERISTIC_UUID, _version
         )
         gatt_config.register_write_handler(
+            PT_RUN_SERVICE_UUID, PT_APT_VERSION_CHARACTERISTIC_UUID, apt_version_bt
+        )
+        gatt_config.register_write_handler(
             PT_RUN_SERVICE_UUID, PT_RUN_CHARACTERISTIC_UUID, bt_run_handler
         )
         gatt_config.register_write_handler(
             PT_RUN_SERVICE_UUID, PT_UPLOAD_CHARACTERISTIC_UUID, bt_upload
         )
 
-        bt_iface = BluetoothDevice(gatt_config)
-        await bt_iface.start()
-        return bt_iface
+        bt = BluetoothDevice(gatt_config)
+        await bt.start()
+        return bt
     except Exception as e:
         logging.error(f"Error creating bluetooth device: {e}")
 
 
-async def create_app():
+async def create_web_app():
     app = web.Application()
 
     cors = aiohttp_cors.setup(
@@ -119,14 +123,10 @@ def make_synchronous(func):
     return wrapper
 
 
-@click.command()
-@make_synchronous
-async def main():
-    vnc.create_ssl_certificate()
-
+async def create_app():
     await create_bluetooth_app()
 
-    app = await create_app()
+    app = await create_web_app()
     # Default handle_signals=True will ignore sigterm signals whilst there
     # are requests that are not complete. This isn't appropriate for our
     # indefinitely running websockets and can cause device shutdown to hang
@@ -134,6 +134,14 @@ async def main():
     await runner.setup()
     site = web.TCPSite(runner, port=port(), ssl_context=ssl_context())
     await site.start()
+
+
+@click.command()
+@make_synchronous
+async def main():
+    vnc.create_ssl_certificate()
+
+    await create_app()
     await asyncio.Event().wait()
 
 
