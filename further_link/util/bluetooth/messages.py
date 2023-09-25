@@ -11,9 +11,9 @@ class ChunkedMessageFormat:
 
 class Message:
     def __init__(self, data: Optional[bytearray] = None) -> None:
-        self._message = bytearray()
-        if data:
-            self.append(data)
+        if data is None:
+            data = bytearray()
+        self._message = data
 
     @classmethod
     def from_string(cls, message: str):

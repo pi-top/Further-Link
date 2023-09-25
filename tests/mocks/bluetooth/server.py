@@ -1,6 +1,6 @@
 import logging
 from asyncio import AbstractEventLoop
-from typing import Optional
+from typing import Callable, Dict, Optional
 from uuid import UUID
 
 from bless.backends.characteristic import (
@@ -19,6 +19,8 @@ class BlessServerMock(BaseBlessServer):
         self.name: str = name
         self._adapter: Optional[str] = kwargs.get("adapter", None)
 
+        self._char_observer: Dict = {}
+
     async def setup(self):
         pass
 
@@ -36,7 +38,7 @@ class BlessServerMock(BaseBlessServer):
 
     async def add_new_service(self, uuid: str):
         if uuid not in self.services:
-            logging.info(f"Adding new service with {uuid}")
+            logging.debug(f"Adding new service with {uuid}")
             self.services[uuid] = BlessGATTServiceMock(uuid)
 
     async def add_new_characteristic(
@@ -53,9 +55,7 @@ class BlessServerMock(BaseBlessServer):
         )
         await characteristic.init(service)
 
-        import logging
-
-        logging.info(
+        logging.debug(
             f"Adding new characteristic with uuid {char_uuid} to service {service_uuid}"
         )
 
@@ -69,12 +69,19 @@ class BlessServerMock(BaseBlessServer):
         if service is None:
             return False
 
-        # characteristic = service.get_characteristic(char_uuid)
-        # current_value = characteristic.value
+        characteristic = service.get_characteristic(char_uuid)
+        value = characteristic.value
 
-        # TODO: notify subscribers
+        # this handles subscribers, which is done using dbus in bless
+        for callback in self._char_observer.get(char_uuid, []):
+            callback(value)
 
         return True
+
+    def _subscribe_to_characteristic(self, char_uuid: str, callback: Callable):
+        if char_uuid not in self._char_observer:
+            self._char_observer[char_uuid] = []
+        self._char_observer[char_uuid].append(callback)
 
     def read(self, char: BlessGATTCharacteristicMock) -> bytes:
         return bytes(self.read_request(char.uuid))

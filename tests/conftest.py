@@ -34,12 +34,11 @@ def clear_loggers():
 
 @pytest.fixture(autouse=True)
 def mock_bless(mocker):
-    # from .mocks.bluetooth.service import BlessGATTServiceMock
     from .mocks.bluetooth.characteristic import BlessGATTCharacteristicMock
     from .mocks.bluetooth.server import BlessServerMock
 
     mocker.patch(
-        "further_link.util.bluetooth.device.BlessGATTCharacteristic",
+        "further_link.util.bluetooth.server.BlessGATTCharacteristic",
         BlessGATTCharacteristicMock,
     )
-    mocker.patch("further_link.util.bluetooth.device.BlessServer", BlessServerMock)
+    mocker.patch("further_link.util.bluetooth.server.BlessServer", BlessServerMock)

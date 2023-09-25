@@ -18,7 +18,7 @@ def decode_value(value) -> str:
     return value
 
 
-class BluetoothDevice:
+class BluetoothServer:
     def __init__(
         self,
         config: GattConfig,
@@ -42,21 +42,23 @@ class BluetoothDevice:
 
     async def stop(self) -> None:
         if self.server:
-            logging.info("Stopping bluetooth server")
+            logging.debug("Stopping bluetooth server")
             await self.server.stop()
 
-    def _get_service_uuid(self, characteristic_uuid) -> str:
+    def _get_service_uuid(self, characteristic_uuid: str) -> Optional[str]:
         if self.server is None:
             raise Exception("Bluetooth server not started")
-
+        uuid = ""
         try:
             for service_uuid in self.server.services:
                 service = self.server.services[service_uuid]
                 if service.get_characteristic(characteristic_uuid):
-                    return str(service.uuid)
-        except KeyError:
-            pass
-        raise Exception(f"Unknown characteristic uuid: {characteristic_uuid}")
+                    uuid = str(service.uuid)
+                    break
+        except Exception:
+            raise Exception(f"Unknown characteristic uuid: {characteristic_uuid}")
+
+        return uuid
 
     def write_value(self, value: Union[str, bytearray], uuid: str) -> None:
         """Write a characteristic value, notifying subscribers"""
@@ -66,25 +68,29 @@ class BluetoothDevice:
         if isinstance(value, str):
             value = to_byte_array(value)
 
-        logging.warning(f"Writing '{value}' to characteristic {uuid}")
+        logging.debug(f"Writing '{value}' to characteristic {uuid}")
         characteristic = self.server.get_characteristic(uuid)
         characteristic.value = value
 
         # Notify subscribers
         self.server.update_value(self._get_service_uuid(uuid), uuid)
 
-    def read_value(self, uuid: str):
+    def read_value(self, uuid: str) -> Optional[bytearray]:
         if self.server is None:
             raise Exception("Bluetooth server not started")
 
+        value = bytearray()
         service_uuid = self._get_service_uuid(uuid)
         service = self.server.services.get(service_uuid)
         if service:
             char = service.get_characteristic(uuid)
-            return self._read_request(char)
+            value = self._read_request(char)
+        return value
 
     def _read_request(self, characteristic: BlessGATTCharacteristic, **kwargs):
-        logging.warning(f"Read request for characteristc {characteristic}")
+        """method required by bless to handle read requests"""
+
+        logging.debug(f"Read request for characteristc {characteristic}")
         value = decode_value(characteristic.value)
 
         # callback on read requests will update the value of the characteristic before returning
@@ -94,7 +100,7 @@ class BluetoothDevice:
             .get("ReadHandler")
         )
         if callback and callable(callback):
-            logging.warning(f"Executing ReadHandler callback for {characteristic.uuid}")
+            logging.debug(f"Executing ReadHandler callback for {characteristic.uuid}")
             try:
                 value = str(callback())
                 # TODO: handle long messages using ChunkedMessage
@@ -103,7 +109,7 @@ class BluetoothDevice:
                 logging.exception(f"Error executing callback: '{e}' - returning ''")
                 value = ""
 
-        logging.warning(
+        logging.debug(
             f"Read request for characteristc {characteristic}; returning '{value}'"
         )
 
@@ -112,7 +118,9 @@ class BluetoothDevice:
     def _write_request(
         self, characteristic: BlessGATTCharacteristic, value: bytearray, **kwargs
     ):
-        logging.warning(
+        """method required by bless to handle write requests"""
+
+        logging.debug(
             f"Write request for characteristic {characteristic.uuid} with value '{value}'"
         )
         # if handling a 'ChunkedMessage', callback is executed only when the message is complete
@@ -143,7 +151,7 @@ class BluetoothDevice:
             .get("WriteHandler")
         )
         if callable(callback):
-            logging.warning(
+            logging.debug(
                 f"Executing WriteHandler callback for {characteristic.uuid}: {callback}"
             )
 
@@ -152,5 +160,7 @@ class BluetoothDevice:
                     await callback(self, characteristic.uuid, value)
                 except Exception as e:
                     logging.exception(f"Error executing callback: {e}")
+                    raise
 
+            # '_write_request' method is synchronous; callback is executed as a task
             asyncio.create_task(run_callback())

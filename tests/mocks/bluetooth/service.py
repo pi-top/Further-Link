@@ -29,16 +29,10 @@ class BlessGATTServiceMock(BlessGATTService):
         return self._uuid
 
     @property
-    def characteristics(self) -> List[BlessGATTCharacteristicMock]:  # type: ignore
+    def characteristics(self) -> List[BlessGATTCharacteristicMock]:
         return self.__characteristics
 
-    def add_characteristic(  # type: ignore
-        self, characteristic: BlessGATTCharacteristicMock
-    ):
-        import logging
-
-        logging.info(f"Adding characteristic {characteristic} to service {self}")
-
+    def add_characteristic(self, characteristic: BlessGATTCharacteristicMock):
         self.__characteristics.append(characteristic)
 
     @property

@@ -3,26 +3,22 @@ from typing import Callable, Dict
 
 from bless import GATTAttributePermissions, GATTCharacteristicProperties
 
-PT_RUN_SERVICE_UUID = "12341000-1234-1234-1234-123456789abc"
-PT_RUN_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789abd"
-PT_STATUS_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789abe"
-PT_VERSION_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789abf"
-PT_APT_VERSION_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789adf"
-PT_UPLOAD_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789acf"
+PT_SERVICE_UUID = "12341000-1234-1234-1234-123456789aaa"
+PT_STATUS_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789aba"
+PT_VERSION_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789aca"
+PT_APT_VERSION_READ_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789ada"
+PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789adb"
+
+
+# TODO: upload & run characteristics should run in a separate service (not supported by bless apparently)
+PT_UPLOAD_READ_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789bba"
+PT_UPLOAD_WRITE_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789bca"
+PT_RUN_READ_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789cba"
+PT_RUN_WRITE_CHARACTERISTIC_UUID = "12341000-1234-1234-1234-123456789cca"
+
 
 FURTHER_GATT_CONFIG = {
-    PT_RUN_SERVICE_UUID: {
-        PT_RUN_CHARACTERISTIC_UUID: {
-            "Properties": (
-                GATTCharacteristicProperties.write
-                | GATTCharacteristicProperties.read
-                | GATTCharacteristicProperties.notify
-            ),
-            "Permissions": (
-                GATTAttributePermissions.readable | GATTAttributePermissions.writeable
-            ),
-            "Value": None,
-        },
+    PT_SERVICE_UUID: {
         PT_STATUS_CHARACTERISTIC_UUID: {
             "Properties": (
                 GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify
@@ -37,26 +33,40 @@ FURTHER_GATT_CONFIG = {
             "Permissions": (GATTAttributePermissions.readable),
             "Value": None,
         },
-        PT_APT_VERSION_CHARACTERISTIC_UUID: {
+        PT_APT_VERSION_READ_CHARACTERISTIC_UUID: {
             "Properties": (
-                GATTCharacteristicProperties.write
-                | GATTCharacteristicProperties.read
-                | GATTCharacteristicProperties.notify
+                GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify
             ),
-            "Permissions": (
-                GATTAttributePermissions.readable | GATTAttributePermissions.writeable
-            ),
+            "Permissions": (GATTAttributePermissions.readable),
             "Value": None,
         },
-        PT_UPLOAD_CHARACTERISTIC_UUID: {
+        PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID: {
+            "Properties": (GATTCharacteristicProperties.write),
+            "Permissions": (GATTAttributePermissions.writeable),
+            "Value": None,
+        },
+        PT_UPLOAD_READ_CHARACTERISTIC_UUID: {
             "Properties": (
-                GATTCharacteristicProperties.write
-                | GATTCharacteristicProperties.read
-                | GATTCharacteristicProperties.notify
+                GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify
             ),
-            "Permissions": (
-                GATTAttributePermissions.readable | GATTAttributePermissions.writeable
+            "Permissions": (GATTAttributePermissions.readable),
+            "Value": None,
+        },
+        PT_UPLOAD_WRITE_CHARACTERISTIC_UUID: {
+            "Properties": (GATTCharacteristicProperties.write),
+            "Permissions": (GATTAttributePermissions.writeable),
+            "Value": None,
+        },
+        PT_RUN_READ_CHARACTERISTIC_UUID: {
+            "Properties": (
+                GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify
             ),
+            "Permissions": (GATTAttributePermissions.readable),
+            "Value": None,
+        },
+        PT_RUN_WRITE_CHARACTERISTIC_UUID: {
+            "Properties": (GATTCharacteristicProperties.write),
+            "Permissions": (GATTAttributePermissions.writeable),
             "Value": None,
         },
     },

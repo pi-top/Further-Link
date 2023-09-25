@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Callable, Dict
 
 from aiohttp import web
 from pt_web_vnc.connection_details import VncConnectionDetails
@@ -8,39 +9,19 @@ from ..runner.exec_process_handler import ExecProcessHandler
 from ..runner.process_handler import InvalidOperation
 from ..runner.py_process_handler import PyProcessHandler
 from ..runner.shell_process_handler import ShellProcessHandler
-from ..util.bluetooth.gatt import PT_RUN_CHARACTERISTIC_UUID
 from ..util.bluetooth.utils import bytearray_to_dict
 from ..util.message import BadMessage, create_message, parse_message
 from ..util.user_config import default_user, get_temp_dir
 
 
-class Iface:
-    def __init__(self, obj) -> None:
-        self.obj = obj
-
-    async def send(self, message):
-        logging.warning(f"Iface send: {message}")
-        if isinstance(self.obj, web.WebSocketResponse):
-            try:
-                await self.obj.send_str(message)
-            except ConnectionResetError:
-                pass  # already disconnected
-        else:
-            try:
-                self.obj.write_value(message, PT_RUN_CHARACTERISTIC_UUID)
-            except Exception as e:
-                logging.error(f"Error sending message: {e}")
-                pass
-
-
 class RunManager:
-    def __init__(self, interface, user=None, pty=False):
-        self.iface = Iface(interface)
+    def __init__(self, send_func: Callable, user=None, pty=False):
+        self.send_func = send_func
         self.user = default_user() if user is None else user
         self.pty = pty
 
         self.id = str(id(self))
-        self.process_handlers = {}
+        self.process_handlers: Dict = {}
         self.handler_classes = {
             "exec": ExecProcessHandler,
             "python3": PyProcessHandler,
@@ -56,7 +37,7 @@ class RunManager:
                 pass
 
     async def send(self, type, data=None, process_id=None):
-        await self.iface.send(create_message(type, data, process_id))
+        await self.send_func(create_message(type, data, process_id))
 
     async def handle_message(self, message):
         try:
@@ -171,17 +152,29 @@ class RunManager:
 bt_run_manager = None
 
 
-async def bt_run_handler(interface, uuid, message):
-    message_dict = bytearray_to_dict(message)
+async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_on):
+    try:
+        message_dict = bytearray_to_dict(message)
+    except Exception as e:
+        logging.exception(f"Error: {e}")
+        raise Exception("Error: invalid format")
 
-    user = message_dict.get("user", None)
-    pty = message_dict.get("pty", "").lower() in ["1", "true"]
+    try:
+        user = message_dict.get("user", None)
+        pty = message_dict.get("pty", "").lower() in ["1", "true"]
+    except Exception as e:
+        logging.exception(f"Error: {e}")
+        raise
 
     # TODO: handle multiple 'run' connections
     global bt_run_manager
     if bt_run_manager is None:
-        bt_run_manager = RunManager(interface, user=user, pty=pty)
-        logging.info(f"{bt_run_manager.id} New connection")
+
+        def send_func(message):
+            device.write_value(message, characteristic_to_report_on)
+
+        bt_run_manager = RunManager(send_func, user=user, pty=pty)
+        logging.debug(f"{bt_run_manager.id} New connection")
 
     logging.debug(f"{bt_run_manager.id} Received Message {message_dict}")
     try:
@@ -190,6 +183,7 @@ async def bt_run_handler(interface, uuid, message):
         logging.exception(f"{bt_run_manager.id} Message Exception: {e}")
         await bt_run_manager.stop()
         bt_run_manager = None
+        raise
 
 
 async def run(request):
@@ -200,7 +194,13 @@ async def run(request):
     socket = web.WebSocketResponse()
     await socket.prepare(request)
 
-    run_manager = RunManager(socket, user=user, pty=pty)
+    async def send_func(message):
+        try:
+            await socket.send_str(message)
+        except ConnectionResetError:
+            pass  # already disconnected
+
+    run_manager = RunManager(send_func, user=user, pty=pty)
     logging.info(f"{run_manager.id} New connection")
 
     try:
