@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Callable, Dict
+from typing import Callable, Dict, Type
 
 from aiohttp import web
 from pt_web_vnc.connection_details import VncConnectionDetails
@@ -149,41 +149,48 @@ class RunManager:
         self.process_handlers[process_id] = handler
 
 
-bt_run_manager = None
+bt_run_manager: Dict[str, Type[RunManager]] = {}
 
 
 async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_on):
     try:
         message_dict = bytearray_to_dict(message)
-    except Exception as e:
-        logging.exception(f"Error: {e}")
-        raise Exception("Error: invalid format")
+    except Exception:
+        msg = "Error: invalid format"
+        logging.error(msg)
+        device.write_value(msg, characteristic_to_report_on)
+        return
 
-    try:
-        user = message_dict.get("user", None)
-        pty = message_dict.get("pty", "").lower() in ["1", "true"]
-    except Exception as e:
-        logging.exception(f"Error: {e}")
-        raise
+    user = message_dict.get("user", None)
+    pty = message_dict.get("pty", "").lower() in ["1", "true"]
+    client_uuid = message_dict.pop("client_uuid", None)
 
-    # TODO: handle multiple 'run' connections
+    if client_uuid is None:
+        msg = "Error: client_uuid not provided in message"
+        logging.error(msg)
+        device.write_value(msg, characteristic_to_report_on)
+        return
+
     global bt_run_manager
-    if bt_run_manager is None:
+    if bt_run_manager.get(client_uuid) is None:
 
-        def send_func(message):
+        async def send_func(message):
+            logging.error(f"SENDING MESSAGE: {message}")
             device.write_value(message, characteristic_to_report_on)
 
-        bt_run_manager = RunManager(send_func, user=user, pty=pty)
-        logging.debug(f"{bt_run_manager.id} New connection")
+        bt_run_manager[client_uuid] = RunManager(send_func, user=user, pty=pty)
+        logging.debug(f"{bt_run_manager[client_uuid].id} New connection")
 
-    logging.debug(f"{bt_run_manager.id} Received Message {message_dict}")
+    run_manager = bt_run_manager.get(client_uuid)
+    logging.debug(f"{run_manager.id} Received Message {message_dict}")
     try:
-        await bt_run_manager.handle_message(message)
+        await run_manager.handle_message(message)
     except Exception as e:
-        logging.exception(f"{bt_run_manager.id} Message Exception: {e}")
-        await bt_run_manager.stop()
-        bt_run_manager = None
-        raise
+        msg = f"{run_manager.id} Message Exception: {e}"
+        logging.error(msg)
+        device.write_value(msg, characteristic_to_report_on)
+        await run_manager.stop()
+        del bt_run_manager[client_uuid]
 
 
 async def run(request):

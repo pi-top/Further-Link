@@ -156,8 +156,8 @@ class BluetoothServer:
             .get("WriteHandler")
         )
         if callable(callback):
-            logging.debug(
-                f"Executing WriteHandler callback for {characteristic.uuid}: {callback}"
+            logging.error(
+                f"Executing WriteHandler callback for {characteristic.uuid}: {callback} with {value}"
             )
 
             async def run_callback():

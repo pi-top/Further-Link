@@ -94,16 +94,17 @@ async def send_formatted_bluetooth_message(
             assert client.read_value(characteristic.uuid) == chunk.message
 
 
+async def wait_until(condition, timeout=5.0):
+    t = 0.0
+    delta_t = 0.1
+    while not condition() and t < timeout:
+        await asyncio.sleep(delta_t)
+        t += delta_t
+    if t >= timeout:
+        raise TimeoutError(f"Timed out waiting for condition {condition}")
+
+
 async def wait_until_characteristic_value_is(
     client, characteristic_uuid, value, timeout=5
 ):
-    elapsed = 0.0
-    delta_t = 0.1
-    while client.read_value(characteristic_uuid) != value and elapsed < timeout:
-        await asyncio.sleep(delta_t)
-        elapsed += delta_t
-
-    if elapsed >= timeout:
-        raise TimeoutError(
-            f"Timed out waiting for {value} on characteristic {characteristic_uuid}; read '{client.read_value(characteristic_uuid)}'"
-        )
+    await wait_until(lambda: client.read_value(characteristic_uuid) == value, timeout)
