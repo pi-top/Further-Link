@@ -5,7 +5,8 @@ from typing import Dict, Optional, Union
 from bless import BlessGATTCharacteristic, BlessServer
 
 from further_link.util.bluetooth.gatt import GattConfig
-from further_link.util.bluetooth.messages import ChunkedMessage
+from further_link.util.bluetooth.messages.chunk import Chunk
+from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
 
 
 def to_byte_array(value: str) -> bytearray:
@@ -68,7 +69,7 @@ class BluetoothServer:
         if isinstance(value, str):
             value = to_byte_array(value)
 
-        logging.debug(f"Writing '{value}' to characteristic {uuid}")
+        logging.error(f"Writing '{value}' to characteristic {uuid}")
         characteristic = self.server.get_characteristic(uuid)
         characteristic.value = value
 
@@ -123,23 +124,27 @@ class BluetoothServer:
         logging.debug(
             f"Write request for characteristic {characteristic.uuid} with value '{value}'"
         )
-        # if handling a 'ChunkedMessage', callback is executed only when the message is complete
+        # callback is executed only when a ChunkedMessage message is completely received
         should_execute_callback = False
 
-        if ChunkedMessage.is_start_message(value):
-            self._partial_messages[characteristic.uuid] = ChunkedMessage()
+        chunk = Chunk(value)
+        if not self._partial_messages.get(chunk.id):
+            self._partial_messages[chunk.id] = ChunkedMessage(chunk.id)
 
-        if self._partial_messages.get(characteristic.uuid):
-            self._partial_messages[characteristic.uuid].append(value)
-        else:
-            should_execute_callback = True
+        try:
+            self._partial_messages[chunk.id].append(chunk)
+        except Exception as e:
+            raise Exception(
+                f"Error appending chunk {chunk} to message {self._partial_messages[chunk.id]}: {e}"
+            )
 
         # update characteristic value in all cases
         self.write_value(value, characteristic.uuid)
 
-        if ChunkedMessage.is_stop_message(value):
-            value = self._partial_messages[characteristic.uuid].as_bytearray()
-            del self._partial_messages[characteristic.uuid]
+        if self._partial_messages[chunk.id].is_complete():
+            # get the complete message to execute callback
+            value = self._partial_messages[chunk.id].as_bytearray()
+            del self._partial_messages[chunk.id]
             should_execute_callback = True
 
         if not should_execute_callback:

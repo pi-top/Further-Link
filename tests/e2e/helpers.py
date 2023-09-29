@@ -1,7 +1,10 @@
 import asyncio
+import json
 from concurrent.futures import TimeoutError
 from time import time
 
+from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
+from further_link.util.bluetooth.messages.format import PtMessageFormat
 from further_link.util.message import parse_message
 
 
@@ -69,3 +72,38 @@ async def wait_for_data(
         except (TimeoutError, asyncio.TimeoutError):
             continue
     raise TimeoutError
+
+
+async def send_formatted_bluetooth_message(
+    client, characteristic, message, assert_characteristic_value=True
+):
+    if not isinstance(message, str):
+        message = json.dumps(message)
+    chunked_message = ChunkedMessage.from_string(
+        id=0, message=message, format=PtMessageFormat
+    )
+
+    for i in range(chunked_message.received_chunks):
+        chunk = chunked_message.get_chunk(i)
+
+        # send chunk to server
+        client.server.write(characteristic, chunk.message)
+
+        # read characteristic value and confirm it's the same message as the one sent
+        if assert_characteristic_value:
+            assert client.read_value(characteristic.uuid) == chunk.message
+
+
+async def wait_until_characteristic_value_is(
+    client, characteristic_uuid, value, timeout=5
+):
+    elapsed = 0.0
+    delta_t = 0.1
+    while client.read_value(characteristic_uuid) != value and elapsed < timeout:
+        await asyncio.sleep(delta_t)
+        elapsed += delta_t
+
+    if elapsed >= timeout:
+        raise TimeoutError(
+            f"Timed out waiting for {value} on characteristic {characteristic_uuid}; read '{client.read_value(characteristic_uuid)}'"
+        )

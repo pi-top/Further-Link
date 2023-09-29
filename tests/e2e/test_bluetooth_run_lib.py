@@ -1,5 +1,4 @@
 import asyncio
-import json
 
 import pytest
 
@@ -8,39 +7,9 @@ from further_link.util.bluetooth.gatt import (
     PT_RUN_WRITE_CHARACTERISTIC_UUID,
     PT_SERVICE_UUID,
 )
-from further_link.util.bluetooth.messages import ChunkedMessage
 from further_link.util.message import create_message
 
-
-async def send_long_message(
-    client, characteristic, message, assert_characteristic_value=True
-):
-    if not isinstance(message, str):
-        message = json.dumps(message)
-    chunked_message = ChunkedMessage.from_long_message(message)
-
-    for i in range(chunked_message.total_chunks):
-        chunk = chunked_message.chunk(i)
-
-        # send chunk to server
-        client.server.write(characteristic, chunk)
-
-        # read characteristic value and confirm it's the same message as the one sent
-        if assert_characteristic_value:
-            assert client.read_value(characteristic.uuid) == chunk
-
-
-async def wait_until_value_is(client, characteristic_uuid, value, timeout=5):
-    elapsed = 0.0
-    delta_t = 0.1
-    while client.read_value(characteristic_uuid) != value and elapsed < timeout:
-        await asyncio.sleep(delta_t)
-        elapsed += delta_t
-
-    if elapsed >= timeout:
-        raise TimeoutError(
-            f"Timed out waiting for {value} on characteristic {characteristic_uuid}; read '{client.read_value(characteristic_uuid)}'"
-        )
+from .helpers import send_formatted_bluetooth_message
 
 
 @pytest.mark.asyncio
@@ -60,7 +29,7 @@ print(__version__)
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
 
-    await send_long_message(bluetooth_client, char, start_cmd)
+    await send_formatted_bluetooth_message(bluetooth_client, char, start_cmd)
     await asyncio.sleep(2)
 
     expected_messages = [
@@ -96,7 +65,7 @@ pause()
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
 
-    await send_long_message(
+    await send_formatted_bluetooth_message(
         bluetooth_client,
         char,
         create_message("start", {"runner": "python3", "code": code}, "1"),
@@ -116,7 +85,7 @@ pause()
     ):
         assert expected_message == messages[index]
 
-    await send_long_message(
+    await send_formatted_bluetooth_message(
         bluetooth_client,
         char,
         create_message("keyevent", {"key": "a", "event": "keydown"}, "1"),
@@ -126,7 +95,7 @@ pause()
         b'{"type": "stdout", "data": {"output": "a pressed\\n"}, "process": "1"}'
     )
 
-    await send_long_message(
+    await send_formatted_bluetooth_message(
         bluetooth_client,
         char,
         create_message("keyevent", {"key": "b", "event": "keyup"}, "1"),
@@ -136,7 +105,9 @@ pause()
         b'{"type": "stdout", "data": {"output": "b released\\n"}, "process": "1"}'
     )
 
-    await send_long_message(bluetooth_client, char, create_message("stop", None, "1"))
+    await send_formatted_bluetooth_message(
+        bluetooth_client, char, create_message("stop", None, "1")
+    )
     await asyncio.sleep(2)
     assert messages[-1] == 1
 
@@ -162,7 +133,7 @@ send_image(effect_noise((1, 1), 0))
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
 
-    await send_long_message(
+    await send_formatted_bluetooth_message(
         bluetooth_client,
         char,
         create_message("start", {"runner": "python3", "code": code}, "1"),

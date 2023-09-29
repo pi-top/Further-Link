@@ -24,6 +24,8 @@ repos:
     rev: 6.0.0
     hooks:
     - id: flake8
+      exclude: ^tests/e2e/test_data/text_data.py
+
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.2.0

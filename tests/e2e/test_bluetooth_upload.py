@@ -1,5 +1,3 @@
-import asyncio
-import json
 import os
 from pathlib import Path
 
@@ -11,7 +9,6 @@ from further_link.util.bluetooth.gatt import (
     PT_UPLOAD_READ_CHARACTERISTIC_UUID,
     PT_UPLOAD_WRITE_CHARACTERISTIC_UUID,
 )
-from further_link.util.bluetooth.messages import ChunkedMessage
 from further_link.util.upload import get_bucket_cache_path, get_directory_path
 from further_link.util.user_config import (
     default_user,
@@ -19,38 +16,11 @@ from further_link.util.user_config import (
 )
 
 from ..dirs import WORKING_DIRECTORY
+from .helpers import (
+    send_formatted_bluetooth_message,
+    wait_until_characteristic_value_is,
+)
 from .test_data.upload_data import directory, directory_with_project
-
-
-async def send_long_message(
-    client, characteristic, message, assert_characteristic_value=True
-):
-    if not isinstance(message, str):
-        message = json.dumps(message)
-    chunked_message = ChunkedMessage.from_long_message(message)
-
-    for i in range(chunked_message.total_chunks):
-        chunk = chunked_message.chunk(i)
-
-        # send chunk to server
-        client.server.write(characteristic, chunk)
-
-        # read characteristic value and confirm it's the same message as the one sent
-        if assert_characteristic_value:
-            assert client.read_value(characteristic.uuid) == chunk
-
-
-async def wait_until_value_is(client, characteristic_uuid, value, timeout=5):
-    elapsed = 0.0
-    delta_t = 0.1
-    while client.read_value(characteristic_uuid) != value and elapsed < timeout:
-        await asyncio.sleep(delta_t)
-        elapsed += delta_t
-
-    if elapsed >= timeout:
-        raise TimeoutError(
-            f"Timed out waiting for {value} on characteristic {characteristic_uuid}; read '{client.read_value(characteristic_uuid)}'"
-        )
 
 
 async def assert_uploaded(upload_data, has_miniscreen_project):
@@ -99,10 +69,10 @@ async def test_upload(bluetooth_client):
     )
 
     # send message in chunks
-    await send_long_message(bluetooth_client, char, directory)
+    await send_formatted_bluetooth_message(bluetooth_client, char, directory)
 
     # wait until callback is executed and check status characteristic
-    await wait_until_value_is(
+    await wait_until_characteristic_value_is(
         bluetooth_client,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b'{"success": true, "fetched_urls": true}',
@@ -120,10 +90,12 @@ async def test_upload_with_miniscreen_project(bluetooth_client):
     )
 
     # send message in chunks
-    await send_long_message(bluetooth_client, char, directory_with_project)
+    await send_formatted_bluetooth_message(
+        bluetooth_client, char, directory_with_project
+    )
 
     # wait until callback is executed and check status
-    await wait_until_value_is(
+    await wait_until_characteristic_value_is(
         bluetooth_client,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b'{"success": true, "fetched_urls": true}',
@@ -144,7 +116,7 @@ async def test_upload_invalid_message(bluetooth_client):
     bluetooth_client.server.write(char, b"")
 
     # wait until error is reported on status characteristic
-    await wait_until_value_is(
+    await wait_until_characteristic_value_is(
         bluetooth_client, PT_UPLOAD_READ_CHARACTERISTIC_UUID, b"Error: Invalid format"
     )
 
@@ -160,10 +132,10 @@ async def test_upload_existing_directory(bluetooth_client):
     )
 
     # send message in chunks
-    await send_long_message(bluetooth_client, char, existing_directory)
+    await send_formatted_bluetooth_message(bluetooth_client, char, existing_directory)
 
     # wait until callback is executed and check status
-    await wait_until_value_is(
+    await wait_until_characteristic_value_is(
         bluetooth_client,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b'{"success": true, "fetched_urls": true}',
@@ -184,10 +156,10 @@ async def test_upload_restricted_directory(bluetooth_client):
     )
 
     # send message in chunks
-    await send_long_message(bluetooth_client, char, restricted_directory)
+    await send_formatted_bluetooth_message(bluetooth_client, char, restricted_directory)
 
     # wait until callback is executed and check status
-    await wait_until_value_is(
+    await wait_until_characteristic_value_is(
         bluetooth_client,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b"Error: Forbidden directory name ../injected",
@@ -203,10 +175,10 @@ async def test_upload_no_internet(aioresponses, bluetooth_client):
     )
 
     # send message in chunks
-    await send_long_message(bluetooth_client, char, directory)
+    await send_formatted_bluetooth_message(bluetooth_client, char, directory)
 
     # wait until callback is executed and check status
-    await wait_until_value_is(
+    await wait_until_characteristic_value_is(
         bluetooth_client,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b'{"success": true, "fetched_urls": false}',
