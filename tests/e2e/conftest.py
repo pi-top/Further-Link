@@ -79,6 +79,6 @@ def clear_loggers():
 async def bluetooth_client():
     from further_link.__main__ import create_bluetooth_app
 
-    client = await create_bluetooth_app()
-    yield client
-    await client.stop()
+    server = await create_bluetooth_app()
+    yield server
+    await server.stop()

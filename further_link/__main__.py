@@ -40,7 +40,7 @@ def port():
 
 
 async def create_bluetooth_app() -> Optional[BluetoothServer]:
-    bluetooth_device = None
+    bluetooth_server = None
     try:
         # Associate characteristic read/write with handlers
         # 'upload' and 'run' features use 2 characteristics; one ('READ') is used by the client to read the
@@ -81,11 +81,11 @@ async def create_bluetooth_app() -> Optional[BluetoothServer]:
             ),
         )
 
-        bluetooth_device = BluetoothServer(gatt_config)
-        await bluetooth_device.start()
+        bluetooth_server = BluetoothServer(gatt_config)
+        await bluetooth_server.start()
     except Exception as e:
         logging.error(f"Error creating bluetooth device: {e}")
-    return bluetooth_device
+    return bluetooth_server
 
 
 async def create_web_app():
