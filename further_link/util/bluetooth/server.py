@@ -69,7 +69,7 @@ class BluetoothServer:
         if isinstance(value, str):
             value = to_byte_array(value)
 
-        logging.error(f"Writing '{value}' to characteristic {uuid}")
+        logging.debug(f"Writing '{value}' to characteristic {uuid}")
         characteristic = self.server.get_characteristic(uuid)
         characteristic.value = value
 
@@ -156,7 +156,7 @@ class BluetoothServer:
             .get("WriteHandler")
         )
         if callable(callback):
-            logging.error(
+            logging.debug(
                 f"Executing WriteHandler callback for {characteristic.uuid}: {callback} with {value}"
             )
 
