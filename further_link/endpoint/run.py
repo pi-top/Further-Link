@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import Callable, Dict, Type
+from threading import Timer
+from typing import Callable, Dict, Optional
 
 from aiohttp import web
 from pt_web_vnc.connection_details import VncConnectionDetails
@@ -15,6 +16,8 @@ from ..util.user_config import default_user, get_temp_dir
 
 
 class RunManager:
+    WATCHDOG_TIMEOUT = 10
+
     def __init__(self, send_func: Callable, user=None, pty=False):
         self.send_func = send_func
         self.user = default_user() if user is None else user
@@ -27,6 +30,22 @@ class RunManager:
             "python3": PyProcessHandler,
             "shell": ShellProcessHandler,
         }
+        self.message_callbacks: Dict = {}
+
+        self._watchdog_callback: Optional[Callable] = None
+        self._watchdog_timer: Optional[Timer] = None
+
+    def start_watchdog_timer(self, callback: Callable):
+        if isinstance(self._watchdog_timer, Timer) and self._watchdog_timer.is_alive():
+            self._watchdog_timer.cancel()
+
+        def execute_callback():
+            if self._watchdog_callback:
+                asyncio.create_task(self._watchdog_callback())
+
+        self._watchdog_callback = callback
+        self._watchdog_timer = Timer(self.WATCHDOG_TIMEOUT, execute_callback)
+        self._watchdog_timer.start()
 
     async def stop(self):
         # the dictionary will be mutated so use list to make a copy
@@ -39,11 +58,17 @@ class RunManager:
     async def send(self, type, data=None, process_id=None):
         await self.send_func(create_message(type, data, process_id))
 
+    def set_message_callback(self, message_type, callback):
+        self.message_callbacks[message_type] = callback
+
     async def handle_message(self, message):
         try:
             m_type, m_data, m_process = parse_message(message)
 
             process_handler = self.process_handlers.get(m_process)
+
+            if self._watchdog_timer:
+                self.start_watchdog_timer(self._watchdog_callback)
 
             if m_type == "ping":
                 await self.send("pong")
@@ -149,7 +174,7 @@ class RunManager:
         self.process_handlers[process_id] = handler
 
 
-bt_run_manager: Dict[str, Type[RunManager]] = {}
+bt_run_manager: dict = {}
 
 
 async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_on):
@@ -179,6 +204,21 @@ async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_
             device.write_value(message, characteristic_to_report_on)
 
         bt_run_manager[client_uuid] = RunManager(send_func, user=user, pty=pty)
+
+        # Start watchdog to stop RunManager after a few seconds of inactivity
+        async def remove_run_manager():
+            logging.warning(
+                f"RunManager for client {client_uuid} timed out, cleaning up..."
+            )
+            try:
+                run_manager = bt_run_manager.get(client_uuid)
+                if run_manager:
+                    await run_manager.stop()
+                    del bt_run_manager[client_uuid]
+            except Exception as e:
+                logging.error(f"Error while cleaning up run manager: {e}")
+
+        bt_run_manager[client_uuid].start_watchdog_timer(remove_run_manager)
         logging.debug(f"{bt_run_manager[client_uuid].id} New connection")
 
     run_manager = bt_run_manager.get(client_uuid)
