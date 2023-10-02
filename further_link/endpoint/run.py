@@ -1,10 +1,6 @@
 import asyncio
 import logging
-<<<<<<< HEAD
-from typing import Callable, Dict, Type
-=======
 from typing import Callable, Dict, Optional
->>>>>>> 30b1982 (WIP)
 
 from aiohttp import web
 from pt_web_vnc.connection_details import VncConnectionDetails
@@ -44,6 +40,8 @@ class Timer:
 
 
 class RunManager:
+    WATCHDOG_TIMEOUT = 10
+
     def __init__(self, send_func: Callable, user=None, pty=False):
         self.send_func = send_func
         self.user = default_user() if user is None else user
@@ -56,6 +54,20 @@ class RunManager:
             "python3": PyProcessHandler,
             "shell": ShellProcessHandler,
         }
+        self.message_callbacks: Dict = {}
+
+        self._watchdog_callback: Optional[Callable] = None
+        self._watchdog_timer: Optional[Timer] = None
+
+    def start_watchdog_timer(self, callback: Callable):
+        self._watchdog_callback = callback
+        self.restart_watchdog_timer()
+
+    def restart_watchdog_timer(self):
+        if isinstance(self._watchdog_timer, Timer):
+            self._watchdog_timer.cancel()
+        self._watchdog_timer = Timer(self.WATCHDOG_TIMEOUT, self._watchdog_callback)
+        self._watchdog_timer.start()
 
     async def stop(self):
         # the dictionary will be mutated so use list to make a copy
@@ -67,6 +79,9 @@ class RunManager:
 
     async def send(self, type, data=None, process_id=None):
         await self.send_func(create_message(type, data, process_id))
+
+    def set_message_callback(self, message_type, callback):
+        self.message_callbacks[message_type] = callback
 
     async def handle_message(self, message):
         try:
@@ -180,7 +195,7 @@ class RunManager:
         self.process_handlers[process_id] = handler
 
 
-bt_run_manager: Dict[str, Type[RunManager]] = {}
+bt_run_manager: dict = {}
 
 
 async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_on):
@@ -210,6 +225,21 @@ async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_
         bt_run_manager[client_uuid] = RunManager(send_func, user=None, pty=True)
 
         logging.info(f"{bt_run_manager[client_uuid].id} New connection")
+
+        # Start watchdog to stop RunManager after a few seconds of inactivity
+        async def remove_run_manager():
+            logging.warning(
+                f"RunManager for client {client_uuid} timed out, cleaning up..."
+            )
+            try:
+                run_manager = bt_run_manager.get(client_uuid)
+                if run_manager:
+                    await run_manager.stop()
+                    del bt_run_manager[client_uuid]
+            except Exception as e:
+                logging.error(f"Error while cleaning up run manager: {e}")
+
+        bt_run_manager[client_uuid].start_watchdog_timer(remove_run_manager)
 
     run_manager = bt_run_manager.get(client_uuid)
     logging.debug(f"{run_manager.id} Received Message {message_dict}")
