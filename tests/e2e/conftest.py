@@ -76,7 +76,7 @@ def clear_loggers():
 
 
 @pytest.fixture()
-async def bluetooth_client():
+async def bluetooth_server():
     from further_link.__main__ import create_bluetooth_app
 
     server = await create_bluetooth_app()

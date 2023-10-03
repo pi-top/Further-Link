@@ -14,8 +14,8 @@ from .test_data.image import jpeg_pixel_b64
 
 
 @pytest.mark.asyncio
-async def test_fails_if_no_client_uuid_is_provided(bluetooth_client):
-    char = bluetooth_client.server.get_service(PT_SERVICE_UUID).get_characteristic(
+async def test_fails_if_no_client_uuid_is_provided(bluetooth_server):
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
         PT_RUN_WRITE_CHARACTERISTIC_UUID
     )
 
@@ -26,19 +26,19 @@ print(__version__)
     start_cmd = create_message("start", {"runner": "python3", "code": code}, "1")
 
     messages = []
-    bluetooth_client.server._subscribe_to_characteristic(
+    bluetooth_server.server._subscribe_to_characteristic(
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
 
-    await send_formatted_bluetooth_message(bluetooth_client, char, start_cmd)
+    await send_formatted_bluetooth_message(bluetooth_server, char, start_cmd)
 
     await wait_until(lambda: len(messages) > 0)
     assert messages == [b"Error: client_uuid not provided in message"]
 
 
 @pytest.mark.asyncio
-async def test_use_lib(bluetooth_client):
-    char = bluetooth_client.server.get_service(PT_SERVICE_UUID).get_characteristic(
+async def test_use_lib(bluetooth_server):
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
         PT_RUN_WRITE_CHARACTERISTIC_UUID
     )
 
@@ -50,11 +50,11 @@ print(__version__)
     start_cmd = append_to_message(start_cmd, {"client_uuid": "1"})
 
     messages = []
-    bluetooth_client.server._subscribe_to_characteristic(
+    bluetooth_server.server._subscribe_to_characteristic(
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
 
-    await send_formatted_bluetooth_message(bluetooth_client, char, start_cmd)
+    await send_formatted_bluetooth_message(bluetooth_server, char, start_cmd)
     await asyncio.sleep(1)
 
     await wait_until(lambda: len(messages) == 3)
@@ -67,8 +67,8 @@ print(__version__)
 
 # @pytest.mark.skip(reason="fails on button press/release event")
 @pytest.mark.asyncio
-async def test_keyevent(bluetooth_client):
-    char = bluetooth_client.server.get_service(PT_SERVICE_UUID).get_characteristic(
+async def test_keyevent(bluetooth_server):
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
         PT_RUN_WRITE_CHARACTERISTIC_UUID
     )
 
@@ -83,13 +83,13 @@ pause()
 """
 
     messages = []
-    bluetooth_client.server._subscribe_to_characteristic(
+    bluetooth_server.server._subscribe_to_characteristic(
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
     start_cmd = create_message("start", {"runner": "python3", "code": code}, "2")
     start_cmd = append_to_message(start_cmd, {"client_uuid": "2"})
     await send_formatted_bluetooth_message(
-        bluetooth_client,
+        bluetooth_server,
         char,
         start_cmd,
     )
@@ -105,7 +105,7 @@ pause()
     start_cmd = create_message("keyevent", {"key": "a", "event": "keydown"}, "2")
     start_cmd = append_to_message(start_cmd, {"client_uuid": "2"})
     await send_formatted_bluetooth_message(
-        bluetooth_client,
+        bluetooth_server,
         char,
         start_cmd,
     )
@@ -118,7 +118,7 @@ pause()
     start_cmd = create_message("keyevent", {"key": "b", "event": "keyup"}, "2")
     start_cmd = append_to_message(start_cmd, {"client_uuid": "2"})
     await send_formatted_bluetooth_message(
-        bluetooth_client,
+        bluetooth_server,
         char,
         start_cmd,
     )
@@ -130,7 +130,7 @@ pause()
     # send stop message and wait for response
     start_cmd = create_message("stop", None, "2")
     start_cmd = append_to_message(start_cmd, {"client_uuid": "2"})
-    await send_formatted_bluetooth_message(bluetooth_client, char, start_cmd)
+    await send_formatted_bluetooth_message(bluetooth_server, char, start_cmd)
     await wait_until(
         lambda: b'{"type": "stopped", "data": {"exitCode": -15}, "process": "2"}'
         in messages
@@ -138,8 +138,8 @@ pause()
 
 
 @pytest.mark.asyncio
-async def test_send_image_pil(bluetooth_client):
-    char = bluetooth_client.server.get_service(PT_SERVICE_UUID).get_characteristic(
+async def test_send_image_pil(bluetooth_server):
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
         PT_RUN_WRITE_CHARACTERISTIC_UUID
     )
 
@@ -150,14 +150,14 @@ send_image(effect_noise((1, 1), 0))
 """
 
     messages = []
-    bluetooth_client.server._subscribe_to_characteristic(
+    bluetooth_server.server._subscribe_to_characteristic(
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
 
     start_cmd = create_message("start", {"runner": "python3", "code": code}, "3")
     start_cmd = append_to_message(start_cmd, {"client_uuid": "3"})
     await send_formatted_bluetooth_message(
-        bluetooth_client,
+        bluetooth_server,
         char,
         start_cmd,
     )
@@ -173,13 +173,13 @@ send_image(effect_noise((1, 1), 0))
 
 
 @pytest.mark.asyncio
-async def test_send_image_opencv(bluetooth_client):
-    char = bluetooth_client.server.get_service(PT_SERVICE_UUID).get_characteristic(
+async def test_send_image_opencv(bluetooth_server):
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
         PT_RUN_WRITE_CHARACTERISTIC_UUID
     )
 
     messages = []
-    bluetooth_client.server._subscribe_to_characteristic(
+    bluetooth_server.server._subscribe_to_characteristic(
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
 
@@ -193,7 +193,7 @@ send_image(array(effect_noise((1, 1), 0)))
     start_cmd = append_to_message(start_cmd, {"client_uuid": "4"})
 
     await send_formatted_bluetooth_message(
-        bluetooth_client,
+        bluetooth_server,
         char,
         start_cmd,
     )
@@ -210,18 +210,18 @@ send_image(array(effect_noise((1, 1), 0)))
 
 
 @pytest.mark.asyncio
-async def test_send_image_with_directory(bluetooth_client):
+async def test_send_image_with_directory(bluetooth_server):
     code = """\
 from further_link import send_image
 from PIL.Image import effect_noise
 send_image(effect_noise((1, 1), 0))
 """
-    char = bluetooth_client.server.get_service(PT_SERVICE_UUID).get_characteristic(
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
         PT_RUN_WRITE_CHARACTERISTIC_UUID
     )
 
     messages = []
-    bluetooth_client.server._subscribe_to_characteristic(
+    bluetooth_server.server._subscribe_to_characteristic(
         PT_RUN_READ_CHARACTERISTIC_UUID, lambda msg: messages.append(msg)
     )
 
@@ -231,7 +231,7 @@ send_image(effect_noise((1, 1), 0))
     start_cmd = append_to_message(start_cmd, {"client_uuid": "5"})
 
     await send_formatted_bluetooth_message(
-        bluetooth_client,
+        bluetooth_server,
         char,
         start_cmd,
     )
