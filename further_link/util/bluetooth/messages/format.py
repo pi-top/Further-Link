@@ -51,16 +51,20 @@ class PtMessageFormat(MessageFormat):
         cls, id: int, current_index: int, total_chunks: int, data: bytearray
     ) -> bytearray:
         return bytearray(
-            int.to_bytes(id, cls.CHUNK_MESSAGE_ID_SIZE, byteorder="big")
-            + int.to_bytes(total_chunks - 1, cls.CHUNK_END_INDEX_SIZE, byteorder="big")
-            + int.to_bytes(current_index, cls.CHUNK_CURRENT_INDEX_SIZE, byteorder="big")
+            int.to_bytes(id, cls.CHUNK_MESSAGE_ID_SIZE, byteorder="little")
+            + int.to_bytes(
+                total_chunks - 1, cls.CHUNK_END_INDEX_SIZE, byteorder="little"
+            )
+            + int.to_bytes(
+                current_index, cls.CHUNK_CURRENT_INDEX_SIZE, byteorder="little"
+            )
             + data
         )
 
     @classmethod
     def get_id(cls, formatted_data: bytearray) -> int:
         id_bytes = formatted_data[: cls.CHUNK_MESSAGE_ID_SIZE]
-        return int.from_bytes(id_bytes, byteorder="big")
+        return int.from_bytes(id_bytes, byteorder="little")
 
     @classmethod
     def get_chunk_end_index(cls, formatted_data: bytearray) -> int:
@@ -68,7 +72,7 @@ class PtMessageFormat(MessageFormat):
             cls.CHUNK_MESSAGE_ID_SIZE : cls.CHUNK_MESSAGE_ID_SIZE
             + cls.CHUNK_END_INDEX_SIZE
         ]
-        return int.from_bytes(end_index_bytes, byteorder="big")
+        return int.from_bytes(end_index_bytes, byteorder="little")
 
     @classmethod
     def get_chunk_current_index(cls, formatted_data: bytearray) -> int:
@@ -78,7 +82,7 @@ class PtMessageFormat(MessageFormat):
             + cls.CHUNK_END_INDEX_SIZE
             + cls.CHUNK_CURRENT_INDEX_SIZE
         ]
-        return int.from_bytes(current_index_bytes, byteorder="big")
+        return int.from_bytes(current_index_bytes, byteorder="little")
 
     @classmethod
     def get_payload(cls, formatted_data: bytearray) -> bytearray:
