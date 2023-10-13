@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from threading import Timer
 from typing import Callable, Dict, Optional
 
 from aiohttp import web
@@ -13,6 +12,31 @@ from ..runner.shell_process_handler import ShellProcessHandler
 from ..util.bluetooth.utils import bytearray_to_dict
 from ..util.message import BadMessage, create_message, parse_message
 from ..util.user_config import default_user, get_temp_dir
+
+
+class Timer:
+    """
+    Class that calls a callback after a specified timeout.
+    Similar to threading.Timer but supports asyncio
+    """
+
+    def __init__(self, timeout, callback):
+        self._timeout = timeout
+        self._callback = callback
+        self._task = None
+
+    def start(self):
+        self._task = asyncio.ensure_future(self._job())
+
+    async def _job(self):
+        await asyncio.sleep(self._timeout)
+        if self._callback and callable(self._callback):
+            await self._callback()
+
+    def cancel(self):
+        if self._task:
+            self._task.cancel()
+            self._task = None
 
 
 class RunManager:
@@ -36,15 +60,13 @@ class RunManager:
         self._watchdog_timer: Optional[Timer] = None
 
     def start_watchdog_timer(self, callback: Callable):
-        if isinstance(self._watchdog_timer, Timer) and self._watchdog_timer.is_alive():
-            self._watchdog_timer.cancel()
-
-        def execute_callback():
-            if self._watchdog_callback:
-                asyncio.create_task(self._watchdog_callback())
-
         self._watchdog_callback = callback
-        self._watchdog_timer = Timer(self.WATCHDOG_TIMEOUT, execute_callback)
+        self.restart_watchdog_timer()
+
+    def restart_watchdog_timer(self):
+        if isinstance(self._watchdog_timer, Timer):
+            self._watchdog_timer.cancel()
+        self._watchdog_timer = Timer(self.WATCHDOG_TIMEOUT, self._watchdog_callback)
         self._watchdog_timer.start()
 
     async def stop(self):
@@ -67,10 +89,9 @@ class RunManager:
 
             process_handler = self.process_handlers.get(m_process)
 
-            if self._watchdog_timer:
-                self.start_watchdog_timer(self._watchdog_callback)
-
             if m_type == "ping":
+                if self._watchdog_timer:
+                    self.restart_watchdog_timer()
                 await self.send("pong")
 
             elif (
@@ -183,7 +204,7 @@ async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_
     except Exception:
         msg = "Error: invalid format"
         logging.error(msg)
-        device.write_value(msg, characteristic_to_report_on)
+        await device.write_value(msg, characteristic_to_report_on)
         return
 
     user = message_dict.get("user", None)
@@ -193,15 +214,15 @@ async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_
     if client_uuid is None:
         msg = "Error: client_uuid not provided in message"
         logging.error(msg)
-        device.write_value(msg, characteristic_to_report_on)
+        await device.write_value(msg, characteristic_to_report_on)
         return
 
     global bt_run_manager
     if bt_run_manager.get(client_uuid) is None:
 
         async def send_func(message):
-            logging.error(f"SENDING MESSAGE: {message}")
-            device.write_value(message, characteristic_to_report_on)
+            logging.debug(f"Sending: {message[0:120]}")
+            await device.write_value(message, characteristic_to_report_on)
 
         bt_run_manager[client_uuid] = RunManager(send_func, user=user, pty=pty)
 
@@ -228,7 +249,7 @@ async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_
     except Exception as e:
         msg = f"{run_manager.id} Message Exception: {e}"
         logging.error(msg)
-        device.write_value(msg, characteristic_to_report_on)
+        await device.write_value(msg, characteristic_to_report_on)
         await run_manager.stop()
         del bt_run_manager[client_uuid]
 

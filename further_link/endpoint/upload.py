@@ -60,10 +60,10 @@ async def bluetooth_upload(
 ):
     try:
         final_message = await _bt_upload(device, characteristic_to_report_on, message)
-        device.write_value(f"{final_message}", characteristic_to_report_on)
+        await device.write_value(f"{final_message}", characteristic_to_report_on)
     except Exception as e:
         logging.exception(f"Error: {e}")
-        device.write_value(f"Error: {e}", characteristic_to_report_on)
+        await device.write_value(f"Error: {e}", characteristic_to_report_on)
 
 
 async def _bt_upload(device, uuid: str, message: bytearray):

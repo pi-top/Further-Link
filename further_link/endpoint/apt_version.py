@@ -13,7 +13,7 @@ def _apt_version_dict(package):
 
 async def apt_version_bt(device, char_uuid, value, characteristic_to_report_on):
     version = _apt_version_dict(value.decode())
-    device.write_value(json.dumps(version), characteristic_to_report_on)
+    await device.write_value(json.dumps(version), characteristic_to_report_on)
 
 
 async def apt_version(request):

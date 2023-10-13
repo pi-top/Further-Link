@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from functools import lru_cache
+from random import randint
 from typing import Dict, Optional, Union
 
 from bless import BlessGATTCharacteristic, BlessServer
@@ -7,7 +9,7 @@ from bless import BlessGATTCharacteristic, BlessServer
 from further_link.util.bluetooth.gatt import GattConfig
 from further_link.util.bluetooth.messages.chunk import Chunk
 from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
-from further_link.util.bluetooth.messages.format import MessageFormat, PtMessageFormat
+from further_link.util.bluetooth.messages.format import PtMessageFormat
 
 
 def to_bytearray(value: str):  # -> bytearray:
@@ -48,6 +50,7 @@ class BluetoothServer:
             logging.debug("Stopping bluetooth server")
             await self.server.stop()
 
+    @lru_cache(maxsize=128)
     def _get_service_uuid(self, characteristic_uuid: str) -> str:
         if self.server is None:
             raise Exception("Bluetooth server not started")
@@ -63,7 +66,7 @@ class BluetoothServer:
 
         return uuid
 
-    def write_value(self, value: Union[str, bytearray], uuid: str) -> None:
+    async def write_value(self, value: Union[str, bytearray], uuid: str) -> None:
         """Write a characteristic value, notifying subscribers"""
         if self.server is None:
             raise Exception("Bluetooth server not started")
@@ -71,12 +74,32 @@ class BluetoothServer:
         if isinstance(value, str):
             value = to_bytearray(value)
 
-        logging.debug(f"Writing '{value}' to characteristic {uuid}")
         characteristic = self.server.get_characteristic(uuid)
+
+        assert isinstance(value, bytearray)
+
+        # Generate a random id
+        id = randint(0, pow(2, 8 * PtMessageFormat.CHUNK_MESSAGE_ID_SIZE) - 1)
+        chunked = ChunkedMessage.from_bytearray(id, value, PtMessageFormat)
+        for i in range(chunked.total_chunks):
+            chunked_message = chunked.get_chunk(i).message
+            self._write_raw_value(chunked_message, characteristic)
+
+    def _write_raw_value(
+        self, value: Union[str, bytearray], characteristic: BlessGATTCharacteristic
+    ) -> None:
+        if self.server is None:
+            raise Exception("Bluetooth server not started")
+
+        logging.debug(f"Writing '{value}' to characteristic {characteristic.uuid}")
+
+        # Write value
         characteristic.value = value
 
         # Notify subscribers
-        self.server.update_value(self._get_service_uuid(uuid), uuid)
+        self.server.update_value(
+            self._get_service_uuid(characteristic.uuid), characteristic.uuid
+        )
 
     def read_value(self, uuid: str) -> Optional[bytearray]:
         if self.server is None:
@@ -101,18 +124,22 @@ class BluetoothServer:
         )
 
         chunked_message = self._send_partial_message.get(characteristic.uuid)
+        value = characteristic.value
         if chunked_message:
-            # if there's a chunked message for this uuid, respond with the next chunk
-            # use the current characteristic value to get the latest index that was sent
+            # if there's a chunked message for this uuid, respond with the next chunk.
+            # use the current characteristic value to identify the last index that was sent
             latest_chunk_index = PtMessageFormat.get_chunk_current_index(
                 characteristic.value
             )
             current_index = latest_chunk_index + 1
 
             value = chunked_message.get_chunk(current_index).message
-            self.write_value(value, characteristic.uuid)
+
             if current_index == chunked_message.total_chunks - 1:
+                # cleanup when sending the last chunk
                 del self._send_partial_message[characteristic.uuid]
+
+            self._write_raw_value(value, characteristic)
         elif callback and callable(callback):
             # callback on read requests will update the value of the characteristic before returning
             logging.debug(f"Executing ReadHandler callback for {characteristic.uuid}")
@@ -122,22 +149,19 @@ class BluetoothServer:
                     value = to_bytearray(value)
             except Exception as e:
                 logging.exception(f"Error executing callback: '{e}' - returning ''")
-                value = b""
+                value = bytearray(b"")
 
-            if len(value) >= MessageFormat.MAX_SIZE:
-                chunked = ChunkedMessage.from_bytearray(0, value, PtMessageFormat)
+            # Generate a random id
+            id = randint(0, pow(2, 8 * PtMessageFormat.CHUNK_MESSAGE_ID_SIZE) - 1)
+            chunked = ChunkedMessage.from_bytearray(id, value, PtMessageFormat)
+            if chunked.total_chunks > 1:
                 self._send_partial_message[characteristic.uuid] = chunked
-                value = chunked.get_chunk(0).message
-
-            self.write_value(value, characteristic.uuid)
-
-        else:
-            value = characteristic.value
+            value = chunked.get_chunk(0).message
+            self._write_raw_value(value, characteristic)
 
         logging.debug(
             f"Read request for characteristic {characteristic}; returning '{value}'"
         )
-
         return value
 
     def _write_request(
@@ -163,10 +187,9 @@ class BluetoothServer:
             )
 
         # update characteristic value in all cases
-        self.write_value(value, characteristic.uuid)
+        self._write_raw_value(value, characteristic)
 
         if self._received_partial_messages[chunk.id].is_complete():
-            # get the complete message to execute callback
             value = self._received_partial_messages[chunk.id].as_bytearray()
             del self._received_partial_messages[chunk.id]
             should_execute_callback = True
