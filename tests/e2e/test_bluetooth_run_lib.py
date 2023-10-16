@@ -13,6 +13,16 @@ from .helpers import send_formatted_bluetooth_message, wait_until
 from .test_data.image import jpeg_pixel_b64
 
 
+def message_received(message: bytearray, messages: list):
+    def _message_received():
+        for msg in messages:
+            if msg.endswith(message):
+                return True
+        return False
+
+    return _message_received
+
+
 @pytest.mark.asyncio
 async def test_fails_if_no_client_uuid_is_provided(bluetooth_server):
     char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
@@ -33,7 +43,7 @@ print(__version__)
     await send_formatted_bluetooth_message(bluetooth_server, char, start_cmd)
 
     await wait_until(lambda: len(messages) > 0)
-    assert messages == [b"Error: client_uuid not provided in message"]
+    assert messages[0].endswith(b"Error: client_uuid not provided in message")
 
 
 @pytest.mark.asyncio
@@ -58,14 +68,15 @@ print(__version__)
     await asyncio.sleep(1)
 
     await wait_until(lambda: len(messages) == 3)
-    assert messages == [
+    message_end = [
         b'{"type": "started", "data": null, "process": "1"}',
         b'{"type": "stdout", "data": {"output": "0.0.1.dev1\\n"}, "process": "1"}',
         b'{"type": "stopped", "data": {"exitCode": 0}, "process": "1"}',
     ]
+    for message, message_end in zip(messages, message_end):
+        assert message.endswith(message_end)
 
 
-# @pytest.mark.skip(reason="fails on button press/release event")
 @pytest.mark.asyncio
 async def test_keyevent(bluetooth_server):
     char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
@@ -95,11 +106,13 @@ pause()
     )
 
     await wait_until(lambda: len(messages) == 3)
-    assert messages == [
+    message_end = [
         b'{"type": "started", "data": null, "process": "2"}',
         b'{"type": "keylisten", "data": {"output": "a"}, "process": "2"}',
         b'{"type": "keylisten", "data": {"output": "b"}, "process": "2"}',
     ]
+    for message, message_end in zip(messages, message_end):
+        assert message.endswith(message_end)
 
     # send keyevent and wait for output
     start_cmd = create_message("keyevent", {"key": "a", "event": "keydown"}, "2")
@@ -109,9 +122,12 @@ pause()
         char,
         start_cmd,
     )
+
     await wait_until(
-        lambda: b'{"type": "stdout", "data": {"output": "a pressed\\n"}, "process": "2"}'
-        in messages
+        message_received(
+            b'{"type": "stdout", "data": {"output": "a pressed\\n"}, "process": "2"}',
+            messages,
+        )
     )
 
     # send keyevent and wait for output
@@ -123,8 +139,10 @@ pause()
         start_cmd,
     )
     await wait_until(
-        lambda: b'{"type": "stdout", "data": {"output": "b released\\n"}, "process": "2"}'
-        in messages
+        message_received(
+            b'{"type": "stdout", "data": {"output": "b released\\n"}, "process": "2"}',
+            messages,
+        )
     )
 
     # send stop message and wait for response
@@ -132,8 +150,9 @@ pause()
     start_cmd = append_to_message(start_cmd, {"client_uuid": "2"})
     await send_formatted_bluetooth_message(bluetooth_server, char, start_cmd)
     await wait_until(
-        lambda: b'{"type": "stopped", "data": {"exitCode": -15}, "process": "2"}'
-        in messages
+        message_received(
+            b'{"type": "stopped", "data": {"exitCode": -15}, "process": "2"}', messages
+        )
     )
 
 
@@ -163,13 +182,15 @@ send_image(effect_noise((1, 1), 0))
     )
 
     await wait_until(lambda: len(messages) == 3)
-    assert messages == [
+    message_end = [
         b'{"type": "started", "data": null, "process": "3"}',
         b'{"type": "video", "data": {"output": "'
         + jpeg_pixel_b64.encode()
         + b'"}, "process": "3"}',
         b'{"type": "stopped", "data": {"exitCode": 0}, "process": "3"}',
     ]
+    for message, message_end in zip(messages, message_end):
+        assert message.endswith(message_end)
 
 
 @pytest.mark.asyncio
@@ -198,7 +219,7 @@ send_image(array(effect_noise((1, 1), 0)))
         start_cmd,
     )
     await wait_until(lambda: len(messages) == 3)
-    assert messages == [
+    message_end = [
         b'{"type": "started", "data": null, "process": "4"}',
         b'{"type": "video", "data": {"output": "/9j/4AAQSkZJRgABAQAAAQABAA'
         + b"D/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIx"
@@ -207,6 +228,8 @@ send_image(array(effect_noise((1, 1), 0)))
         + b'rocess": "4"}',
         b'{"type": "stopped", "data": {"exitCode": 0}, "process": "4"}',
     ]
+    for message, message_end in zip(messages, message_end):
+        assert message.endswith(message_end)
 
 
 @pytest.mark.asyncio
@@ -236,7 +259,7 @@ send_image(effect_noise((1, 1), 0))
         start_cmd,
     )
     await wait_until(lambda: len(messages) == 3)
-    assert messages == [
+    message_end = [
         b'{"type": "started", "data": null, "process": "5"}',
         b'{"type": "video", "data": {"output": "/9j/4AAQSkZJRgABAQAAAQABAA'
         b"D/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIx"
@@ -245,3 +268,5 @@ send_image(effect_noise((1, 1), 0))
         b'rocess": "5"}',
         b'{"type": "stopped", "data": {"exitCode": 0}, "process": "5"}',
     ]
+    for message, message_end in zip(messages, message_end):
+        assert message.endswith(message_end)

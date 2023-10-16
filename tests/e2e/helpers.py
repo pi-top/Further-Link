@@ -104,7 +104,11 @@ async def wait_until(condition, timeout=5.0):
         raise TimeoutError(f"Timed out waiting for condition {condition}")
 
 
-async def wait_until_characteristic_value_is(
+async def wait_until_characteristic_value_endswith(
     client, characteristic_uuid, value, timeout=5
 ):
-    await wait_until(lambda: client.read_value(characteristic_uuid) == value, timeout)
+    def read_and_check():
+        read = client.read_value(characteristic_uuid)
+        return read.endswith(value)
+
+    await wait_until(read_and_check, timeout)

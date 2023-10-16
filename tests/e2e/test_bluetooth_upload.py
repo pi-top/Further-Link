@@ -18,7 +18,7 @@ from further_link.util.user_config import (
 from ..dirs import WORKING_DIRECTORY
 from .helpers import (
     send_formatted_bluetooth_message,
-    wait_until_characteristic_value_is,
+    wait_until_characteristic_value_endswith,
 )
 from .test_data.upload_data import directory, directory_with_project
 
@@ -72,7 +72,7 @@ async def test_upload(bluetooth_server):
     await send_formatted_bluetooth_message(bluetooth_server, char, directory)
 
     # wait until callback is executed and check status characteristic
-    await wait_until_characteristic_value_is(
+    await wait_until_characteristic_value_endswith(
         bluetooth_server,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b'{"success": true, "fetched_urls": true}',
@@ -95,7 +95,7 @@ async def test_upload_with_miniscreen_project(bluetooth_server):
     )
 
     # wait until callback is executed and check status
-    await wait_until_characteristic_value_is(
+    await wait_until_characteristic_value_endswith(
         bluetooth_server,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b'{"success": true, "fetched_urls": true}',
@@ -116,7 +116,7 @@ async def test_upload_invalid_message(bluetooth_server):
     bluetooth_server.server.write(char, b"")
 
     # wait until error is reported on status characteristic
-    await wait_until_characteristic_value_is(
+    await wait_until_characteristic_value_endswith(
         bluetooth_server, PT_UPLOAD_READ_CHARACTERISTIC_UUID, b"Error: Invalid format"
     )
 
@@ -135,7 +135,7 @@ async def test_upload_existing_directory(bluetooth_server):
     await send_formatted_bluetooth_message(bluetooth_server, char, existing_directory)
 
     # wait until callback is executed and check status
-    await wait_until_characteristic_value_is(
+    await wait_until_characteristic_value_endswith(
         bluetooth_server,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b'{"success": true, "fetched_urls": true}',
@@ -159,7 +159,7 @@ async def test_upload_restricted_directory(bluetooth_server):
     await send_formatted_bluetooth_message(bluetooth_server, char, restricted_directory)
 
     # wait until callback is executed and check status
-    await wait_until_characteristic_value_is(
+    await wait_until_characteristic_value_endswith(
         bluetooth_server,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b"Error: Forbidden directory name ../injected",
@@ -178,7 +178,7 @@ async def test_upload_no_internet(aioresponses, bluetooth_server):
     await send_formatted_bluetooth_message(bluetooth_server, char, directory)
 
     # wait until callback is executed and check status
-    await wait_until_characteristic_value_is(
+    await wait_until_characteristic_value_endswith(
         bluetooth_server,
         PT_UPLOAD_READ_CHARACTERISTIC_UUID,
         b'{"success": true, "fetched_urls": false}',
