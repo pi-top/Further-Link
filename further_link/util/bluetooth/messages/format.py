@@ -2,8 +2,8 @@ from .message import Message
 
 
 class MessageFormat:
-    MAX_SIZE = 512
-    DATA_SIZE = 504
+    MAX_SIZE = 0
+    DATA_SIZE = 0
 
     @classmethod
     def create_message(
@@ -44,6 +44,7 @@ class PtMessageFormat(MessageFormat):
     CHUNK_MESSAGE_ID_SIZE = 2
     CHUNK_END_INDEX_SIZE = 3
     CHUNK_CURRENT_INDEX_SIZE = 3
+    MAX_SIZE = 512
     DATA_SIZE = 504
 
     @classmethod

@@ -7,26 +7,13 @@ import aiohttp_cors
 import click
 from aiohttp import web
 
-from further_link.endpoint.apt_version import apt_version, apt_version_bt
-from further_link.endpoint.run import bluetooth_run_handler
+from further_link.endpoint.apt_version import apt_version
 from further_link.endpoint.run import run as run_handler
 from further_link.endpoint.run_py import run_py
-from further_link.endpoint.status import raw_status, raw_version, status, version
-from further_link.endpoint.upload import bluetooth_upload, upload
+from further_link.endpoint.status import status, version
+from further_link.endpoint.upload import upload
 from further_link.util import vnc
-from further_link.util.bluetooth.gatt import (
-    FURTHER_GATT_CONFIG,
-    PT_APT_VERSION_READ_CHARACTERISTIC_UUID,
-    PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID,
-    PT_RUN_READ_CHARACTERISTIC_UUID,
-    PT_RUN_WRITE_CHARACTERISTIC_UUID,
-    PT_SERVICE_UUID,
-    PT_STATUS_CHARACTERISTIC_UUID,
-    PT_UPLOAD_READ_CHARACTERISTIC_UUID,
-    PT_UPLOAD_WRITE_CHARACTERISTIC_UUID,
-    PT_VERSION_CHARACTERISTIC_UUID,
-)
-from further_link.util.bluetooth.server import BluetoothServer, GattConfig
+from further_link.util.bluetooth.server import BluetoothServer
 from further_link.util.ssl_context import ssl_context
 
 logging.basicConfig(
@@ -40,48 +27,15 @@ def port():
 
 
 async def create_bluetooth_app() -> Optional[BluetoothServer]:
+    if os.environ.get("FURTHER_LINK_SKIP_BLUETOOTH", "0").lower() in (
+        "1",
+        "true",
+    ):
+        return None
+
     bluetooth_server = None
     try:
-        # Associate characteristic read/write with handlers
-        # 'upload' and 'run' features use 2 characteristics; one ('READ') is used by the client to read the
-        # characteristic's value, or get notified of a change in the characteristic's value when subscribed.
-        #
-        # The other ('WRITE') is used by the client to send a value to the server.
-        #
-        # When a value is written to the 'WRITE' characteristic, the associated callback will be executed,
-        # writing a value to the associated 'READ' characteristic.
-        #
-        # In both cases, the value written/read from/to the characteristic is treated as a message being sent/received.
-        gatt_config = GattConfig("Further", FURTHER_GATT_CONFIG)
-        gatt_config.register_read_handler(
-            PT_SERVICE_UUID, PT_STATUS_CHARACTERISTIC_UUID, raw_status
-        )
-        gatt_config.register_read_handler(
-            PT_SERVICE_UUID, PT_VERSION_CHARACTERISTIC_UUID, raw_version
-        )
-        gatt_config.register_write_handler(
-            PT_SERVICE_UUID,
-            PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID,
-            lambda device, uuid, message: apt_version_bt(
-                device, uuid, message, PT_APT_VERSION_READ_CHARACTERISTIC_UUID
-            ),
-        )
-        gatt_config.register_write_handler(
-            PT_SERVICE_UUID,
-            PT_RUN_WRITE_CHARACTERISTIC_UUID,
-            lambda device, uuid, message: bluetooth_run_handler(
-                device, uuid, message, PT_RUN_READ_CHARACTERISTIC_UUID
-            ),
-        )
-        gatt_config.register_write_handler(
-            PT_SERVICE_UUID,
-            PT_UPLOAD_WRITE_CHARACTERISTIC_UUID,
-            lambda device, uuid, message: bluetooth_upload(
-                device, uuid, message, PT_UPLOAD_READ_CHARACTERISTIC_UUID
-            ),
-        )
-
-        bluetooth_server = BluetoothServer(gatt_config)
+        bluetooth_server = BluetoothServer()
         await bluetooth_server.start()
     except Exception as e:
         logging.error(f"Error creating bluetooth device: {e}")

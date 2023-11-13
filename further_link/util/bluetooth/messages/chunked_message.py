@@ -65,7 +65,6 @@ class ChunkedMessage:
 
     @classmethod
     def from_chunk(cls, chunk: Chunk, format: Type[MessageFormat]):
-        print(f"from chunk : id: {chunk.id}, message: {chunk.payload}")
         obj = cls(chunk.id)
         obj.total_chunks = chunk.total_chunks
         obj._data = bytearray(obj.total_chunks)
