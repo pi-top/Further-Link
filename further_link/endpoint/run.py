@@ -10,6 +10,7 @@ from ..runner.process_handler import InvalidOperation
 from ..runner.py_process_handler import PyProcessHandler
 from ..runner.shell_process_handler import ShellProcessHandler
 from ..util.bluetooth.utils import bytearray_to_dict
+from ..util.connection_types import ConnectionType
 from ..util.message import BadMessage, create_message, parse_message
 from ..util.user_config import default_user, get_temp_dir
 
@@ -42,10 +43,17 @@ class Timer:
 class RunManager:
     WATCHDOG_TIMEOUT = 10
 
-    def __init__(self, send_func: Callable, user=None, pty=False):
+    def __init__(
+        self,
+        send_func: Callable,
+        user=None,
+        pty=False,
+        connection_type: ConnectionType = ConnectionType.WEBSOCKET,
+    ):
         self.send_func = send_func
         self.user = default_user() if user is None else user
         self.pty = pty
+        self.connection_type = connection_type
 
         self.id = str(id(self))
         self.process_handlers: Dict = {}
@@ -185,7 +193,7 @@ class RunManager:
                 process_id,
             )
 
-        handler = handler_class(self.user, self.pty)
+        handler = handler_class(self.user, self.pty, self.connection_type)
         handler.on_start = on_start
         handler.on_stop = on_stop
         handler.on_display_activity = on_display_activity
@@ -222,7 +230,9 @@ async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_
             logging.debug(f"Sending: {message[0:120]}")
             await device.write_value(message, characteristic_to_report_on)
 
-        bt_run_manager[client_uuid] = RunManager(send_func, user=None, pty=True)
+        bt_run_manager[client_uuid] = RunManager(
+            send_func, user=None, pty=True, connection_type=ConnectionType.BLUETOOTH
+        )
 
         logging.info(f"{bt_run_manager[client_uuid].id} New connection")
 
@@ -267,7 +277,9 @@ async def run(request):
         except ConnectionResetError:
             pass  # already disconnected
 
-    run_manager = RunManager(send_func, user=user, pty=pty)
+    run_manager = RunManager(
+        send_func, user=user, pty=pty, connection_type=ConnectionType.WEBSOCKET
+    )
     logging.info(f"{run_manager.id} New connection")
 
     try:

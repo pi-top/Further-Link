@@ -35,14 +35,16 @@ async def stream_read(stream, chunk_size):
 async def ringbuf_read(
     stream,
     output_callback=None,
-    buffer_time=0.1,
-    max_chunks=50,
-    chunk_size=256,
     done_condition=loop_forever,
+    kBps=0,
 ):
+    buffer_time = 0.1
+    chunk_size = 256  # this is too large to support kBps < 3, that's ok
+    max_chunks = None if kBps == 0 else int(kBps * buffer_time * 1000 / chunk_size)
+
     # stream is read into a ring buffer so that if produces faster desired
     # limit the oldest data is dumped
-    # default limit ~ 50 * 256b / 0.1s (128k characters per second)
+    # example limit 128kBps = 50 max_chunks * 256 byte chunk_size / 0.1s
 
     ringbuf = deque(maxlen=max_chunks)
     completed = False

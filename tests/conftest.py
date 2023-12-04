@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from mock import AsyncMock
 
+os.environ["TESTING"] = "1"
 from further_link.__main__ import create_bluetooth_app
 
 from .dirs import PROJECTS_DIR, WORKING_DIRECTORY
