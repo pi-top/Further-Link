@@ -10,6 +10,7 @@ import aiofiles
 from pt_web_vnc.vnc import async_start, async_stop
 
 from ..util.async_helpers import ringbuf_read, timeout
+from ..util.connection_types import ConnectionType, bandwidth_limits_kBps
 from ..util.id_generator import IdGenerator
 from ..util.images import base64_encode
 from ..util.ipc import async_ipc_send, async_start_ipc_server, ipc_cleanup
@@ -45,11 +46,18 @@ id_generator = IdGenerator(min_value=100, max_value=999)
 
 
 class ProcessHandler:
-    def __init__(self, user, pty=False):
+    def __init__(self, user, pty=False, connection_type=ConnectionType.WEBSOCKET):
         self.pty = pty
-        self.id = id_generator.create()
+
         assert user_exists(user)
         self.user = user
+
+        assert connection_type in ConnectionType
+        self.connection_type = connection_type
+        assert connection_type in bandwidth_limits_kBps
+        self.bandwidth_limit_kBps = bandwidth_limits_kBps[connection_type]
+
+        self.id = id_generator.create()
         self.had_display_activity = False
         self.on_display_activity = None
         self.background_tasks = set()
@@ -213,7 +221,10 @@ class ProcessHandler:
             self.ipc_tasks.append(
                 asyncio.create_task(
                     async_start_ipc_server(
-                        channel, partial(self.on_output, channel), pgid=self.pgid
+                        channel,
+                        partial(self.on_output, channel),
+                        pgid=self.pgid,
+                        kBps=self.bandwidth_limit_kBps,
                     )
                 )
             )
@@ -268,10 +279,8 @@ class ProcessHandler:
         await ringbuf_read(
             stream,
             output_callback=partial(self.on_output, channel),
-            buffer_time=0.1,
-            max_chunks=50,
-            chunk_size=256,
             done_condition=self.process.wait,
+            kBps=self.bandwidth_limit_kBps,
         )
 
     async def _clean_up(self):

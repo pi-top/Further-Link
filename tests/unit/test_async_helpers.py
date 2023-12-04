@@ -53,9 +53,10 @@ async def test_timeout_timedout():
 
 @pytest.mark.asyncio
 async def test_ringbuf_read():
-    buffer_time = 0.1
-    max_chunks = 10
-    chunk_size = 10
+    buffer_time = 0.1  # constant
+    chunk_size = 256  # constant
+    max_chunks = 1
+    kBps = max_chunks * chunk_size / buffer_time / 1000
 
     bytes_buffered = max_chunks * chunk_size
     fast_stream = asyncio.StreamReader()
@@ -67,14 +68,12 @@ async def test_ringbuf_read():
         ringbuf_read(
             fast_stream,
             read_callback,
-            buffer_time=buffer_time,
-            max_chunks=max_chunks,
-            chunk_size=chunk_size,
+            kBps=kBps,
         )
     )
     await asyncio.sleep(buffer_time + 0.01)
 
-    # first 100 bytes of 'a's should be dropped
+    # first chunk_size bytes of 'a's should be dropped
     read_callback.assert_called_with("b" * bytes_buffered)
 
     fast_stream.feed_eof()
@@ -86,7 +85,12 @@ async def test_ringbuf_read():
 async def test_ringbuf_read_done_condition():
     fast_stream = asyncio.StreamReader()
     fast_stream.feed_data(b"hello")
-    buffer_time = 0.1
+
+    buffer_time = 0.1  # constant
+    chunk_size = 256  # constant
+    max_chunks = 50
+    kBps = max_chunks * chunk_size / buffer_time / 1000
+
     done_time = 0.3
 
     read_callback = AsyncMock()
@@ -95,8 +99,8 @@ async def test_ringbuf_read_done_condition():
         ringbuf_read(
             fast_stream,
             read_callback,
-            buffer_time=buffer_time,
             done_condition=partial(asyncio.sleep, done_time),
+            kBps=kBps,
         )
     )
     await asyncio.sleep(buffer_time + 0.01)
