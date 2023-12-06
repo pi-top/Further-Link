@@ -5,11 +5,11 @@ from aiohttp import web
 from further_link.version import __version__
 
 
-def raw_status() -> str:
+def raw_status():
     return "OK"
 
 
-def raw_version() -> str:
+def raw_version():
     return dumps({"version": __version__})
 
 

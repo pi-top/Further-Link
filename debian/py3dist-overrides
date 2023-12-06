@@ -8,4 +8,5 @@ numpy python3-numpy; s/^/1:/
 Pillow python3-pil; PEP386
 pyOpenSSL python3-openssl
 pt_web_vnc pt-web-vnc
-bluez-peripheral python3-bluez-peripheral; PEP386
+bless python3-bless; PEP386
+dbus-next python3-dbus-next; PEP386

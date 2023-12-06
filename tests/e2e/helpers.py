@@ -75,7 +75,7 @@ async def wait_for_data(
 
 
 async def send_formatted_bluetooth_message(
-    service, characteristic, message, assert_characteristic_value=True
+    client, characteristic, message, assert_characteristic_value=True
 ):
     if not isinstance(message, str):
         message = json.dumps(message)
@@ -86,12 +86,12 @@ async def send_formatted_bluetooth_message(
     for i in range(chunked_message.received_chunks):
         chunk = chunked_message.get_chunk(i)
 
-        # write chunk to characteristic
-        await characteristic.WriteValue(chunk.message, {})
+        # send chunk to server
+        client.server.write(characteristic, chunk.message)
 
         # read characteristic value and confirm it's the same message as the one sent
         if assert_characteristic_value:
-            assert characteristic._value == chunk.message
+            assert client.read_value(characteristic.uuid) == chunk.message
 
 
 async def wait_until(condition, timeout=5.0):
@@ -104,8 +104,11 @@ async def wait_until(condition, timeout=5.0):
         raise TimeoutError(f"Timed out waiting for condition {condition}")
 
 
-async def wait_until_characteristic_value_endswith(characteristic, value, timeout=5):
+async def wait_until_characteristic_value_endswith(
+    client, characteristic_uuid, value, timeout=5
+):
     def read_and_check():
-        return characteristic._value.endswith(value)
+        read = client.read_value(characteristic_uuid)
+        return read.endswith(value)
 
     await wait_until(read_and_check, timeout)

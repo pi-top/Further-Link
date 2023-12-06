@@ -1,24 +1,24 @@
 import asyncio
 
-import pytest
-
-from further_link.util.bluetooth.messages.chunk import Chunk
-from further_link.util.bluetooth.utils import bytearray_to_dict
-from further_link.util.bluetooth.uuids import (
+from further_link.util.bluetooth.gatt import (
     PT_APT_VERSION_READ_CHARACTERISTIC_UUID,
     PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID,
     PT_SERVICE_UUID,
     PT_STATUS_CHARACTERISTIC_UUID,
     PT_VERSION_CHARACTERISTIC_UUID,
 )
-from tests.e2e.helpers import send_formatted_bluetooth_message
+from further_link.util.bluetooth.messages.chunk import Chunk
+from further_link.util.bluetooth.utils import bytearray_to_dict
+
+from .helpers import send_formatted_bluetooth_message
 
 
 def test_status_characteristic_read(bluetooth_server):
     assert bluetooth_server is not None
-    service = bluetooth_server.get_service(PT_SERVICE_UUID)
-    char = service.get_characteristic(PT_STATUS_CHARACTERISTIC_UUID)
-    value = char.getter_func(service, {})
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
+        PT_STATUS_CHARACTERISTIC_UUID
+    )
+    value = bluetooth_server.server.read(char)
 
     chunk = Chunk(value)
     assert chunk.message == value
@@ -31,9 +31,10 @@ def test_status_characteristic_read(bluetooth_server):
 
 def test_version_characteristic_read(bluetooth_server):
     assert bluetooth_server is not None
-    service = bluetooth_server.get_service(PT_SERVICE_UUID)
-    char = service.get_characteristic(PT_VERSION_CHARACTERISTIC_UUID)
-    value = char.getter_func(service, {})
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
+        PT_VERSION_CHARACTERISTIC_UUID
+    )
+    value = bluetooth_server.server.read(char)
 
     chunk = Chunk(value)
     assert chunk.message == value
@@ -44,19 +45,17 @@ def test_version_characteristic_read(bluetooth_server):
     assert chunk.id < 65536
 
 
-@pytest.mark.asyncio
 async def test_apt_version(bluetooth_server):
-    service = bluetooth_server.get_service(PT_SERVICE_UUID)
-    apt_write_char = service.get_characteristic(
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
         PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID
     )
-    await send_formatted_bluetooth_message(
-        service, apt_write_char, "python3", assert_characteristic_value=False
-    )
+    await send_formatted_bluetooth_message(bluetooth_server, char, "python3")
     await asyncio.sleep(0.3)
 
-    apt_read_char = service.get_characteristic(PT_APT_VERSION_READ_CHARACTERISTIC_UUID)
-    value = apt_read_char._value
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
+        PT_APT_VERSION_READ_CHARACTERISTIC_UUID
+    )
+    value = bluetooth_server.server.read(char)
 
     chunk = Chunk(value)
     assert chunk.message == value

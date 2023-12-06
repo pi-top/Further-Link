@@ -21,8 +21,5 @@ override_dh_auto_build:
 
 override_dh_clean:
 	rm -rf extra/fl.dat extra/key.aes.pem
-	dh_clean
 
-override_dh_installsystemd:
-	dh_installsystemd --name=further-link
-	dh_installsystemd --name=further-link-bluetooth-pairing --no-start --no-enable
+	dh_clean

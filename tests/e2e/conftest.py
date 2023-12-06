@@ -73,3 +73,12 @@ def clear_loggers():
         handlers = getattr(logger, "handlers", [])
         for handler in handlers:
             logger.removeHandler(handler)
+
+
+@pytest.fixture()
+async def bluetooth_server():
+    from further_link.__main__ import create_bluetooth_app
+
+    server = await create_bluetooth_app()
+    yield server
+    await server.stop()

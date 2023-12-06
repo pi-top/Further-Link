@@ -1,15 +1,13 @@
 import json
 
-import pytest
-
+from further_link.util.bluetooth.gatt import (
+    PT_SERVICE_UUID,
+    PT_STATUS_CHARACTERISTIC_UUID,
+)
 from further_link.util.bluetooth.messages.chunk import Chunk
 from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
 from further_link.util.bluetooth.messages.format import PtMessageFormat
 from further_link.util.bluetooth.messages.message import Message
-from further_link.util.bluetooth.uuids import (
-    PT_SERVICE_UUID,
-    PT_STATUS_CHARACTERISTIC_UUID,
-)
 
 from .test_data.text_data import lorem_ipsum_100
 from .test_data.upload_data import directory
@@ -160,31 +158,28 @@ def test_chunkedmessage_append():
     assert received_message.as_bytearray() == client_chunks.as_bytearray()
 
 
-@pytest.mark.asyncio
-async def test_server_sends_chunked_message(bluetooth_server, mocker):
-    message_id = 5050
-    mocker.patch("further_link.util.bluetooth.service.randint", return_value=message_id)
+def test_server_sends_chunked_message(bluetooth_server):
+    # server responds with a chunked message.
+    # client can read and get sequential chunks of the message
+
+    char = bluetooth_server.server.get_service(PT_SERVICE_UUID).get_characteristic(
+        PT_STATUS_CHARACTERISTIC_UUID
+    )
 
     # mock "status" characteristic read handler to return a very long message
-    mocker.patch(
-        "further_link.util.bluetooth.service.raw_status",
-        return_value=bytearray(lorem_ipsum_100, "utf-8"),
-    )
-
-    service = bluetooth_server.get_service(PT_SERVICE_UUID)
-    characteristic = service.get_characteristic(PT_STATUS_CHARACTERISTIC_UUID)
+    gatt_char = bluetooth_server.config.tree.get(
+        bluetooth_server._get_service_uuid(char.uuid), {}
+    ).get(char.uuid, {})
+    gatt_char["ReadHandler"] = lambda: lorem_ipsum_100
 
     # chunks provide information about message size
-    chunked_message = ChunkedMessage.from_bytearray(
-        message_id, bytearray(lorem_ipsum_100, "utf-8"), PtMessageFormat
-    )
-    end_index = chunked_message.total_chunks - 1
-
+    chunk = Chunk(bluetooth_server._read_request(char))
+    end_index = chunk.total_chunks - 1
     current_index = 0
-    chunked = ChunkedMessage(id=message_id)
+    chunked = ChunkedMessage.from_chunk(chunk, PtMessageFormat)
+
     while current_index < end_index:
-        read = characteristic.getter_func(service, {})
-        chunk = Chunk(read)
+        chunk = Chunk(bluetooth_server._read_request(char))
         chunked.append(chunk)
         current_index = chunk.current_index
 
