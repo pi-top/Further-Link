@@ -24,6 +24,7 @@ from further_link.util.bluetooth.uuids import (
     PT_UPLOAD_READ_CHARACTERISTIC_UUID,
     PT_UPLOAD_WRITE_CHARACTERISTIC_UUID,
     PT_VERSION_CHARACTERISTIC_UUID,
+    PT_WRITE_CHARACTERISTIC_UUID,
 )
 
 
@@ -75,6 +76,18 @@ def FurtherGattService():
         @characteristic(PT_STATUS_CHARACTERISTIC_UUID, CharFlags.READ)
         def status(self, options):
             return self._read_request(PT_STATUS_CHARACTERISTIC_UUID, raw_status)
+
+        @characteristic(PT_WRITE_CHARACTERISTIC_UUID, CharFlags.WRITE)
+        def write_test(self, options):
+            pass
+
+        @write_test.setter
+        async def write_test(self, value, options):
+            self._write_request(
+                uuid=PT_WRITE_CHARACTERISTIC_UUID,
+                value=value,
+                callback=None,
+            )
 
         @characteristic(PT_VERSION_CHARACTERISTIC_UUID, CharFlags.READ)
         def further_version(self, options):
