@@ -1,7 +1,8 @@
 import asyncio
 import logging
+import os
 from random import randint
-from typing import Callable, Optional
+from typing import Callable, Optional, Type, Union
 
 from bluez_peripheral.gatt.characteristic import CharacteristicFlags, characteristic
 from bluez_peripheral.gatt.service import Service
@@ -24,6 +25,28 @@ from further_link.util.bluetooth.uuids import (
     PT_UPLOAD_WRITE_CHARACTERISTIC_UUID,
     PT_VERSION_CHARACTERISTIC_UUID,
 )
+
+
+class SecureFlags:
+    READ = CharacteristicFlags.ENCRYPT_READ
+    WRITE = CharacteristicFlags.ENCRYPT_WRITE
+    NOTIFY = CharacteristicFlags.NOTIFY
+
+
+# Windows doesn't support protected/secure characteristics
+class NonSecureFlags:
+    READ = CharacteristicFlags.READ
+    WRITE = CharacteristicFlags.WRITE
+    NOTIFY = CharacteristicFlags.NOTIFY
+
+
+CharFlags: Union[Type[SecureFlags], Type[NonSecureFlags]] = SecureFlags
+if os.environ.get("FURTHER_LINK_NO_BLUETOOTH_ENCRYPTION", "0").lower() in (
+    "1",
+    "true",
+):
+    logging.info("Using non-secure bluetooth characteristics")
+    CharFlags = NonSecureFlags
 
 
 def FurtherGattService():
@@ -49,27 +72,23 @@ def FurtherGattService():
                 # Notify subscribers
                 char.changed(chunked_message)
 
-        @characteristic(PT_STATUS_CHARACTERISTIC_UUID, CharacteristicFlags.ENCRYPT_READ)
+        @characteristic(PT_STATUS_CHARACTERISTIC_UUID, CharFlags.READ)
         def status(self, options):
             return self._read_request(PT_STATUS_CHARACTERISTIC_UUID, raw_status)
 
-        @characteristic(
-            PT_VERSION_CHARACTERISTIC_UUID, CharacteristicFlags.ENCRYPT_READ
-        )
+        @characteristic(PT_VERSION_CHARACTERISTIC_UUID, CharFlags.READ)
         def further_version(self, options):
             return self._read_request(PT_VERSION_CHARACTERISTIC_UUID, raw_version)
 
         # APT VERSION
         @characteristic(
             PT_APT_VERSION_READ_CHARACTERISTIC_UUID,
-            CharacteristicFlags.ENCRYPT_READ | CharacteristicFlags.NOTIFY,
+            CharFlags.READ | CharFlags.NOTIFY,
         )
         def apt_version_read(self, options):
             return self._read_request(PT_APT_VERSION_READ_CHARACTERISTIC_UUID)
 
-        @characteristic(
-            PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID, CharacteristicFlags.ENCRYPT_WRITE
-        )
+        @characteristic(PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID, CharFlags.WRITE)
         def apt_version_write(self, options):
             pass
 
@@ -86,14 +105,12 @@ def FurtherGattService():
         # UPLOAD
         @characteristic(
             PT_UPLOAD_READ_CHARACTERISTIC_UUID,
-            CharacteristicFlags.ENCRYPT_READ | CharacteristicFlags.NOTIFY,
+            CharFlags.READ | CharFlags.NOTIFY,
         )
         def upload_read(self, options):
             pass
 
-        @characteristic(
-            PT_UPLOAD_WRITE_CHARACTERISTIC_UUID, CharacteristicFlags.ENCRYPT_WRITE
-        )
+        @characteristic(PT_UPLOAD_WRITE_CHARACTERISTIC_UUID, CharFlags.WRITE)
         def upload_write(self, options):
             return self._read_request(PT_UPLOAD_WRITE_CHARACTERISTIC_UUID)
 
@@ -110,14 +127,12 @@ def FurtherGattService():
         # RUN
         @characteristic(
             PT_RUN_READ_CHARACTERISTIC_UUID,
-            CharacteristicFlags.ENCRYPT_READ | CharacteristicFlags.NOTIFY,
+            CharFlags.READ | CharFlags.NOTIFY,
         )
         def run_read(self, options):
             return self._read_request(PT_RUN_READ_CHARACTERISTIC_UUID)
 
-        @characteristic(
-            PT_RUN_WRITE_CHARACTERISTIC_UUID, CharacteristicFlags.ENCRYPT_WRITE
-        )
+        @characteristic(PT_RUN_WRITE_CHARACTERISTIC_UUID, CharFlags.WRITE)
         def run_write(self, options):
             pass
 

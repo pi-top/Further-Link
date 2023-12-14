@@ -32,7 +32,7 @@ class BluetoothServer:
         adapter = await Adapter.get_first(self.bus)
 
         # DEBUG: avoids use of miniscreen for pairing
-        if environ.get("FURTHER_LINK_NO_MINISCREEN_PAIRING") == "true":
+        if environ.get("FURTHER_LINK_BLUETOOTH_PAIR_AND_ADVERTISE") in ("1", "true"):
             advert = Advertisement(
                 localName=get_bluetooth_server_name(),
                 serviceUUIDs=[service.UUID for service in self.services],
