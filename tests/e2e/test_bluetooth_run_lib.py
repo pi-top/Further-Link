@@ -68,7 +68,7 @@ print(__version__)
     await wait_until(lambda: len(messages) == 3)
     message_end = [
         b'{"type": "started", "data": null, "process": "1"}',
-        b'{"type": "stdout", "data": {"output": "0.0.1.dev1\\n"}, "process": "1"}',
+        b'{"type": "stdout", "data": {"output": "0.0.1.dev1\\r\\n"}, "process": "1"}',
         b'{"type": "stopped", "data": {"exitCode": 0}, "process": "1"}',
     ]
     for message, message_end in zip(messages, message_end):
@@ -122,7 +122,7 @@ pause()
 
     await wait_until(
         message_received(
-            b'{"type": "stdout", "data": {"output": "a pressed\\n"}, "process": "2"}',
+            b'{"type": "stdout", "data": {"output": "a pressed\\r\\n"}, "process": "2"}',
             messages,
         )
     )
@@ -137,7 +137,7 @@ pause()
     )
     await wait_until(
         message_received(
-            b'{"type": "stdout", "data": {"output": "b released\\n"}, "process": "2"}',
+            b'{"type": "stdout", "data": {"output": "b released\\r\\n"}, "process": "2"}',
             messages,
         )
     )

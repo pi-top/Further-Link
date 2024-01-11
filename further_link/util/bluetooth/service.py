@@ -11,6 +11,7 @@ from further_link.endpoint.apt_version import apt_version_bt
 from further_link.endpoint.run import bluetooth_run_handler
 from further_link.endpoint.status import raw_status, raw_version
 from further_link.endpoint.upload import bluetooth_upload
+from further_link.util import state
 from further_link.util.bluetooth.messages.chunk import Chunk
 from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
 from further_link.util.bluetooth.messages.format import PtMessageFormat
@@ -34,7 +35,7 @@ class SecureFlags:
     NOTIFY = CharacteristicFlags.NOTIFY
 
 
-# Windows doesn't support protected/secure characteristics
+# Some OS doesn't support protected/secure characteristics
 class NonSecureFlags:
     READ = CharacteristicFlags.READ
     WRITE = CharacteristicFlags.WRITE
@@ -45,8 +46,8 @@ CharFlags: Union[Type[SecureFlags], Type[NonSecureFlags]] = SecureFlags
 if os.environ.get("FURTHER_LINK_NO_BLUETOOTH_ENCRYPTION", "0").lower() in (
     "1",
     "true",
-):
-    logging.info("Using non-secure bluetooth characteristics")
+) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("0", "false"):
+    logging.info("Using unencrypted bluetooth characteristics")
     CharFlags = NonSecureFlags
 
 

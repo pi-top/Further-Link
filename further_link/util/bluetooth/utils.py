@@ -28,7 +28,7 @@ def get_raspberry_pi_serial() -> str:
                     serial = line.rpartition(":")[2].strip().upper()
                     break
     except Exception:
-        pass
+        serial = ""
     return serial
 
 
