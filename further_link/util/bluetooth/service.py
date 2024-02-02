@@ -18,6 +18,7 @@ from further_link.util.bluetooth.messages.format import PtMessageFormat
 from further_link.util.bluetooth.uuids import (
     PT_APT_VERSION_READ_CHARACTERISTIC_UUID,
     PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID,
+    PT_CLIENTS_CHARACTERISTIC_UUID,
     PT_RUN_READ_CHARACTERISTIC_UUID,
     PT_RUN_WRITE_CHARACTERISTIC_UUID,
     PT_SERVICE_UUID,
@@ -56,6 +57,7 @@ def FurtherGattService():
         def __init__(self):
             self._received_partial_messages = {}
             self._send_partial_message = {}
+            self._client_run_managers = {}
             super().__init__(PT_SERVICE_UUID, True)
 
         async def write_value(self, value, char):
@@ -77,6 +79,13 @@ def FurtherGattService():
         @characteristic(PT_STATUS_CHARACTERISTIC_UUID, CharFlags.READ)
         def status(self, options):
             return self._read_request(PT_STATUS_CHARACTERISTIC_UUID, raw_status)
+
+        @characteristic(PT_CLIENTS_CHARACTERISTIC_UUID, CharFlags.READ)
+        def clients(self, options):
+            def n_clients():
+                return str(len(self._client_run_managers))
+
+            return self._read_request(PT_CLIENTS_CHARACTERISTIC_UUID, n_clients)
 
         @characteristic(PT_WRITE_CHARACTERISTIC_UUID, CharFlags.WRITE)
         def write_test(self, options):
@@ -156,7 +165,7 @@ def FurtherGattService():
                 uuid=PT_RUN_WRITE_CHARACTERISTIC_UUID,
                 value=value,
                 callback=lambda message: bluetooth_run_handler(
-                    self, "", message, self.run_read
+                    self, message, self.run_read, self._client_run_managers
                 ),
             )
 

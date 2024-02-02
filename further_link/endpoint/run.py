@@ -46,11 +46,13 @@ class RunManager:
     def __init__(
         self,
         send_func: Callable,
+        client_uuid: str,
         user=None,
         pty=False,
         connection_type: ConnectionType = ConnectionType.WEBSOCKET,
     ):
         self.send_func = send_func
+        self.client_uuid = client_uuid
         self.user = default_user() if user is None else user
         self.pty = pty
         self.connection_type = connection_type
@@ -71,9 +73,12 @@ class RunManager:
         self._watchdog_callback = callback
         self.restart_watchdog_timer()
 
-    def restart_watchdog_timer(self):
+    def stop_watchdog_timer(self):
         if isinstance(self._watchdog_timer, Timer):
             self._watchdog_timer.cancel()
+
+    def restart_watchdog_timer(self):
+        self.stop_watchdog_timer()
         self._watchdog_timer = Timer(self.WATCHDOG_TIMEOUT, self._watchdog_callback)
         self._watchdog_timer.start()
 
@@ -85,15 +90,18 @@ class RunManager:
             except InvalidOperation:
                 pass
 
+        self.stop_watchdog_timer()
+
     async def send(self, type, data=None, process_id=None):
-        await self.send_func(create_message(type, data, process_id))
+        client_uuid = self.client_uuid
+        await self.send_func(create_message(type, client_uuid, data, process_id))
 
     def set_message_callback(self, message_type, callback):
         self.message_callbacks[message_type] = callback
 
     async def handle_message(self, message):
         try:
-            m_type, m_data, m_process = parse_message(message)
+            m_type, m_data, m_process, _ = parse_message(message)
 
             process_handler = self.process_handlers.get(m_process)
 
@@ -203,56 +211,58 @@ class RunManager:
         self.process_handlers[process_id] = handler
 
 
-bt_run_manager: dict = {}
-
-
-async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_on):
+async def bluetooth_run_handler(
+    device,
+    message,
+    characteristic_to_report_on,
+    bt_run_managers,
+):
     try:
         message_dict = bytearray_to_dict(message)
     except Exception:
         msg = "Error: invalid format"
         logging.error(msg)
-        await device.write_value(msg, characteristic_to_report_on)
         return
 
-    client_uuid = message_dict.pop("client_uuid", None)
-
+    client_uuid = message_dict.pop("client", None)
     if client_uuid is None:
         msg = "Error: client_uuid not provided in message"
         logging.error(msg)
-        await device.write_value(msg, characteristic_to_report_on)
         return
 
-    global bt_run_manager
-    if bt_run_manager.get(client_uuid) is None:
+    if bt_run_managers.get(client_uuid) is None:
 
         async def send_func(message):
             logging.debug(f"Sending: {message[0:120]}")
             await device.write_value(message, characteristic_to_report_on)
 
-        bt_run_manager[client_uuid] = RunManager(
-            send_func, user=None, pty=True, connection_type=ConnectionType.BLUETOOTH
-        )
-
-        logging.info(f"{bt_run_manager[client_uuid].id} New connection")
-
-        # Start watchdog to stop RunManager after a few seconds of inactivity
-        async def remove_run_manager():
+        # after a few seconds of inactivity, stop and remove RunManager
+        async def on_timeout_callback():
             logging.warning(
                 f"RunManager for client {client_uuid} timed out, cleaning up..."
             )
             try:
-                run_manager = bt_run_manager.get(client_uuid)
+                run_manager = bt_run_managers.get(client_uuid)
                 if run_manager:
                     await run_manager.stop()
-                    del bt_run_manager[client_uuid]
+                    del bt_run_managers[client_uuid]
             except Exception as e:
                 logging.error(f"Error while cleaning up run manager: {e}")
 
-        bt_run_manager[client_uuid].start_watchdog_timer(remove_run_manager)
+        run_manager = RunManager(
+            send_func,
+            client_uuid=client_uuid,
+            user=None,
+            pty=True,
+            connection_type=ConnectionType.BLUETOOTH,
+        )
+        run_manager.start_watchdog_timer(on_timeout_callback)
+        logging.info(f"{run_manager.id} New connection")
+        bt_run_managers[client_uuid] = run_manager
 
-    run_manager = bt_run_manager.get(client_uuid)
+    run_manager = bt_run_managers.get(client_uuid)
     logging.debug(f"{run_manager.id} Received Message {message_dict}")
+
     try:
         await run_manager.handle_message(message)
     except Exception as e:
@@ -260,11 +270,12 @@ async def bluetooth_run_handler(device, uuid, message, characteristic_to_report_
         logging.error(msg)
         await device.write_value(msg, characteristic_to_report_on)
         await run_manager.stop()
-        del bt_run_manager[client_uuid]
+        del bt_run_managers[client_uuid]
 
 
 async def run(request):
     query_params = request.query
+    client_uuid = query_params.get("client", "")
     user = query_params.get("user", None)
     pty = query_params.get("pty", "").lower() in ["1", "true"]
 
@@ -278,7 +289,11 @@ async def run(request):
             pass  # already disconnected
 
     run_manager = RunManager(
-        send_func, user=user, pty=pty, connection_type=ConnectionType.WEBSOCKET
+        send_func,
+        client_uuid=client_uuid,
+        user=user,
+        pty=pty,
+        connection_type=ConnectionType.WEBSOCKET,
     )
     logging.info(f"{run_manager.id} New connection")
 
