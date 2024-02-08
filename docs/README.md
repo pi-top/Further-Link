@@ -1,11 +1,21 @@
 ## Overview
-The core of this project is an `aiohttp` websocket server which uses `asyncio`
-subprocesses to run code or interactaive sessions for the user and provide
-access to their stdin/stdout/stderr streams. Files can be uploaded to an
-application-managed directory for use in the execution. There is also a system
-of additional IO streams, for uses such as video output and keyboard events,
-which can be used with a Python [package](../further_link/__init__.py) provided with
-the server.
+The core of this project is a server which uses subprocess to run code and
+other interactive sessions for the user and provide access to their
+stdin/stdout/stderr streams.
+
+The server can be accessed by HTTP/websocket and Bluetooth GATT protocols.
+Multiple simulataneous clients are able to use it simultaneously and each can
+manage multiple active processes. Multiple clients on the GATT server, which
+is a broadcast system, are supported by including a client id in all messages
+so that the client can distinguish which to process.
+
+Files can be uploaded to an application-managed directory for use in the
+execution. There is also a system of additional IO streams, for uses such as
+video output and keyboard events, which can be used with a Python
+[package](../further_link/__init__.py) provided with the server.
+
+The server makes use of `asyncio` for concurrency, using modules such as
+`asyncio.subprocess`, `aiohttp` websocket server, and `bluez-peripheral`.
 
 ## Development usage
 The project requires Python 3.7+. The dependencies, command line tool and
@@ -47,7 +57,19 @@ directory with the names `cert.pem` and `key.pem`.
 The default working directory where files are uploaded and executed from is
 `~/further`. This can be overridden by setting env var FURTHER_LINK_WORK_DIR.
 
+### Client
+A client reference is not currently provided in this repo. The primary client
+is built into the Further frontend although these docs and the project e2e
+tests provide some insight into how it works.
+
 ## API
+### Bluetooth
+The Bluetooth API is not currently documented here but is based on the
+HTTP/websocket API. The primary differences are that a `client` property is
+required in all messages to identify the client source/destination, and that
+messages are broken into chunks by an additional protocol to support the low
+max message length of GATT.
+
 ### HTTP Post /upload
 - Body should be a JSON object with `name` of directory to upload into and
   `files` object. Files are provided as `text` type, with the text content, or
