@@ -7,9 +7,18 @@ from subprocess import run
 from aiohttp import web
 
 
+def _apt_version_dict(package):
+    return {"version": apt_cache_installed(package)}
+
+
+async def apt_version_bt(device, char_uuid, value, characteristic_to_report_on):
+    version = _apt_version_dict(value.decode())
+    await device.write_value(json.dumps(version), characteristic_to_report_on)
+
+
 async def apt_version(request):
-    version = apt_cache_installed(request.match_info["pkg"])
-    return web.Response(text=json.dumps({"version": version}))
+    version = _apt_version_dict(request.match_info["pkg"])
+    return web.Response(text=json.dumps(version))
 
 
 def apt_cache_installed(pkg_name):

@@ -18,8 +18,9 @@
 Further Link
 ============
 
-Further Link is a web server application, intended to run on `pi-top`_
-hardware, which allows communicating with the device from `pi-top Further`_.
+Further Link is server application, intended to run on `pi-top`_ hardware,
+which allows communicating with the device from `pi-top Further`_.It is
+accessible by both HTTP/websocket and Bluetooth GATT protocols
 
 The primary use case of this is to remotely run Further user's code (python3
 usually) on the pi-top, with full interactivity via a websocket api.

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Callable, Dict, Optional
 
 from aiohttp import web
 from pt_web_vnc.connection_details import VncConnectionDetails
@@ -8,23 +9,78 @@ from ..runner.exec_process_handler import ExecProcessHandler
 from ..runner.process_handler import InvalidOperation
 from ..runner.py_process_handler import PyProcessHandler
 from ..runner.shell_process_handler import ShellProcessHandler
+from ..util.bluetooth.utils import bytearray_to_dict
+from ..util.connection_types import ConnectionType
 from ..util.message import BadMessage, create_message, parse_message
 from ..util.user_config import default_user, get_temp_dir
 
 
+class Timer:
+    """
+    Class that calls a callback after a specified timeout.
+    Similar to threading.Timer but supports asyncio
+    """
+
+    def __init__(self, timeout, callback):
+        self._timeout = timeout
+        self._callback = callback
+        self._task = None
+
+    def start(self):
+        self._task = asyncio.ensure_future(self._job())
+
+    async def _job(self):
+        await asyncio.sleep(self._timeout)
+        if self._callback and callable(self._callback):
+            await self._callback()
+
+    def cancel(self):
+        if self._task:
+            self._task.cancel()
+            self._task = None
+
+
 class RunManager:
-    def __init__(self, socket, user=None, pty=False):
-        self.socket = socket
+    WATCHDOG_TIMEOUT = 10
+
+    def __init__(
+        self,
+        send_func: Callable,
+        client_uuid: str,
+        user=None,
+        pty=False,
+        connection_type: ConnectionType = ConnectionType.WEBSOCKET,
+    ):
+        self.send_func = send_func
+        self.client_uuid = client_uuid
         self.user = default_user() if user is None else user
         self.pty = pty
+        self.connection_type = connection_type
 
         self.id = str(id(self))
-        self.process_handlers = {}
+        self.process_handlers: Dict = {}
         self.handler_classes = {
             "exec": ExecProcessHandler,
             "python3": PyProcessHandler,
             "shell": ShellProcessHandler,
         }
+        self.message_callbacks: Dict = {}
+
+        self._watchdog_callback: Optional[Callable] = None
+        self._watchdog_timer: Optional[Timer] = None
+
+    def start_watchdog_timer(self, callback: Callable):
+        self._watchdog_callback = callback
+        self.restart_watchdog_timer()
+
+    def stop_watchdog_timer(self):
+        if isinstance(self._watchdog_timer, Timer):
+            self._watchdog_timer.cancel()
+
+    def restart_watchdog_timer(self):
+        self.stop_watchdog_timer()
+        self._watchdog_timer = Timer(self.WATCHDOG_TIMEOUT, self._watchdog_callback)
+        self._watchdog_timer.start()
 
     async def stop(self):
         # the dictionary will be mutated so use list to make a copy
@@ -34,19 +90,24 @@ class RunManager:
             except InvalidOperation:
                 pass
 
+        self.stop_watchdog_timer()
+
     async def send(self, type, data=None, process_id=None):
-        try:
-            await self.socket.send_str(create_message(type, data, process_id))
-        except ConnectionResetError:
-            pass  # already disconnected
+        client_uuid = self.client_uuid
+        await self.send_func(create_message(type, client_uuid, data, process_id))
+
+    def set_message_callback(self, message_type, callback):
+        self.message_callbacks[message_type] = callback
 
     async def handle_message(self, message):
         try:
-            m_type, m_data, m_process = parse_message(message)
+            m_type, m_data, m_process, _ = parse_message(message)
 
             process_handler = self.process_handlers.get(m_process)
 
             if m_type == "ping":
+                if self._watchdog_timer:
+                    self.restart_watchdog_timer()
                 await self.send("pong")
 
             elif (
@@ -140,7 +201,7 @@ class RunManager:
                 process_id,
             )
 
-        handler = handler_class(self.user, self.pty)
+        handler = handler_class(self.user, self.pty, self.connection_type)
         handler.on_start = on_start
         handler.on_stop = on_stop
         handler.on_display_activity = on_display_activity
@@ -150,15 +211,90 @@ class RunManager:
         self.process_handlers[process_id] = handler
 
 
+async def bluetooth_run_handler(
+    device,
+    message,
+    characteristic_to_report_on,
+    bt_run_managers,
+):
+    try:
+        message_dict = bytearray_to_dict(message)
+    except Exception:
+        msg = "Error: invalid format"
+        logging.error(msg)
+        return
+
+    client_uuid = message_dict.pop("client", None)
+    if client_uuid is None:
+        msg = "Error: client_uuid not provided in message"
+        logging.error(msg)
+        return
+
+    if bt_run_managers.get(client_uuid) is None:
+
+        async def send_func(message):
+            logging.debug(f"Sending: {message[0:120]}")
+            await device.write_value(message, characteristic_to_report_on)
+
+        # after a few seconds of inactivity, stop and remove RunManager
+        async def on_timeout_callback():
+            logging.warning(
+                f"RunManager for client {client_uuid} timed out, cleaning up..."
+            )
+            try:
+                run_manager = bt_run_managers.get(client_uuid)
+                if run_manager:
+                    await run_manager.stop()
+                    del bt_run_managers[client_uuid]
+            except Exception as e:
+                logging.error(f"Error while cleaning up run manager: {e}")
+
+        run_manager = RunManager(
+            send_func,
+            client_uuid=client_uuid,
+            user=None,
+            pty=True,
+            connection_type=ConnectionType.BLUETOOTH,
+        )
+        run_manager.start_watchdog_timer(on_timeout_callback)
+        logging.info(f"{run_manager.id} New connection")
+        bt_run_managers[client_uuid] = run_manager
+
+    run_manager = bt_run_managers.get(client_uuid)
+    logging.debug(f"{run_manager.id} Received Message {message_dict}")
+
+    try:
+        await run_manager.handle_message(message)
+    except Exception as e:
+        msg = f"{run_manager.id} Message Exception: {e}"
+        logging.error(msg)
+        await device.write_value(msg, characteristic_to_report_on)
+        await run_manager.stop()
+        del bt_run_managers[client_uuid]
+
+
 async def run(request):
     query_params = request.query
+    client_uuid = query_params.get("client", "")
     user = query_params.get("user", None)
     pty = query_params.get("pty", "").lower() in ["1", "true"]
 
     socket = web.WebSocketResponse()
     await socket.prepare(request)
 
-    run_manager = RunManager(socket, user=user, pty=pty)
+    async def send_func(message):
+        try:
+            await socket.send_str(message)
+        except ConnectionResetError:
+            pass  # already disconnected
+
+    run_manager = RunManager(
+        send_func,
+        client_uuid=client_uuid,
+        user=user,
+        pty=pty,
+        connection_type=ConnectionType.WEBSOCKET,
+    )
     logging.info(f"{run_manager.id} New connection")
 
     try:

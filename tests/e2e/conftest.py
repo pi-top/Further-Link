@@ -3,7 +3,7 @@ import urllib.parse
 import pytest
 from aioresponses import aioresponses as aioresponses_mock
 
-from further_link.__main__ import create_app
+from further_link.__main__ import create_web_app
 
 from . import RUN_PATH
 
@@ -15,14 +15,15 @@ def loop(event_loop):
 
 @pytest.fixture()
 async def http_client(aiohttp_client):
-    client = await aiohttp_client(create_app())
+    client = await aiohttp_client(await create_web_app())
     yield client
+    await client.close()
 
 
 @pytest.fixture()
 async def run_ws_client(aiohttp_client):
-    client = await aiohttp_client(create_app())
-    async with client.ws_connect(RUN_PATH, receive_timeout=0.1) as client:
+    wclient = await aiohttp_client(await create_web_app())
+    async with wclient.ws_connect(RUN_PATH, receive_timeout=0.1) as client:
         yield client
 
 
@@ -32,7 +33,7 @@ run_ws_client2 = run_ws_client
 @pytest.fixture()
 async def run_ws_client_query(aiohttp_client, query_params):
     url = RUN_PATH + "?" + urllib.parse.urlencode(query_params)
-    client = await aiohttp_client(create_app())
+    client = await aiohttp_client(await create_web_app())
     async with client.ws_connect(url, receive_timeout=0.1) as client:
         yield client
 

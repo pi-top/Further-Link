@@ -10,6 +10,7 @@ from further_link.util.message import create_message
 from ..dirs import WORKING_DIRECTORY
 from . import E2E_PATH
 from .helpers import receive_data, wait_for_data
+from .test_data.image import jpeg_pixel_b64
 
 
 @pytest.mark.asyncio
@@ -19,7 +20,10 @@ from datetime import datetime
 print(datetime.now().strftime("%A"))
 """
     start_cmd = create_message(
-        "start", {"runner": "python3", "code": code, "directoryName": "my-dirname"}, "1"
+        "start",
+        "1",
+        {"runner": "python3", "code": code, "directoryName": "my-dirname"},
+        "1",
     )
     await run_ws_client.send_str(start_cmd)
 
@@ -36,7 +40,7 @@ async def test_run_code_relative_path(run_ws_client):
     copy("{}/test_data/print_date.py".format(E2E_PATH), WORKING_DIRECTORY)
 
     start_cmd = create_message(
-        "start", {"runner": "python3", "path": "print_date.py"}, "1"
+        "start", "1", {"runner": "python3", "path": "print_date.py"}, "1"
     )
     await run_ws_client.send_str(start_cmd)
 
@@ -52,6 +56,7 @@ async def test_run_code_relative_path(run_ws_client):
 async def test_run_code_absolute_path(run_ws_client):
     start_cmd = create_message(
         "start",
+        "1",
         {"runner": "python3", "path": "{}/test_data/print_date.py".format(E2E_PATH)},
         "1",
     )
@@ -86,7 +91,7 @@ async def test_run_as_user(run_ws_client_query):
 whoami
 echo $LOGNAME
 """
-    start_cmd = create_message("start", {"runner": "exec", "code": code}, "1")
+    start_cmd = create_message("start", "1", {"runner": "exec", "code": code}, "1")
     await run_ws_client_query.send_str(start_cmd)
 
     await receive_data(run_ws_client_query, "started", process="1")
@@ -106,12 +111,12 @@ while "BYE" != s:
     print(["HUH?! SPEAK UP, SONNY!","NO, NOT SINCE 1930"][s.isupper()])
     s = input()"""
 
-    start_cmd = create_message("start", {"runner": "python3", "code": code}, "1")
+    start_cmd = create_message("start", "1", {"runner": "python3", "code": code}, "1")
     await run_ws_client_query.send_str(start_cmd)
 
     await receive_data(run_ws_client_query, "started", process="1")
 
-    user_input = create_message("stdin", {"input": "hello\r"}, "1")
+    user_input = create_message("stdin", "1", {"input": "hello\r"}, "1")
     await run_ws_client_query.send_str(user_input)
 
     await wait_for_data(
@@ -123,7 +128,7 @@ while "BYE" != s:
         "1",
     )
 
-    user_input = create_message("stdin", {"input": "HEY GRANDMA\r"}, "1")
+    user_input = create_message("stdin", "1", {"input": "HEY GRANDMA\r"}, "1")
     await run_ws_client_query.send_str(user_input)
 
     await wait_for_data(
@@ -135,7 +140,7 @@ while "BYE" != s:
         "1",
     )
 
-    user_input = create_message("stdin", {"input": "BYE\r"}, "1")
+    user_input = create_message("stdin", "1", {"input": "BYE\r"}, "1")
     await run_ws_client_query.send_str(user_input)
 
     await wait_for_data(run_ws_client_query, "stdout", "output", "BYE\r\n", 0, "1")
@@ -154,6 +159,7 @@ sleep(1) # activity monitor takes 1s to detect the window
 """
     start_cmd = create_message(
         "start",
+        "1",
         {"runner": "python3", "code": code, "novncOptions": {"enabled": True}},
         "1",
     )
@@ -163,7 +169,6 @@ sleep(1) # activity monitor takes 1s to detect the window
 
     await wait_for_data(run_ws_client, "novnc", timeout=0, process="1")
 
-    jpeg_pixel_b64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AP//Z"  # noqa: E501
     await wait_for_data(run_ws_client, "video", "output", jpeg_pixel_b64, 0, "1")
 
     await wait_for_data(run_ws_client, "stopped", "exitCode", 0, 0, "1")

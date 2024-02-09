@@ -5,6 +5,11 @@ from time import sleep
 
 from .sdk import Singleton
 
+# buffer limit for our socket read streams. this is the limit for the size on an
+# ipc message that can be sent.it's not too large to as to support sending at a
+# good rate on a slow network
+MAX_BUFFER = 4096
+
 
 class FurtherLinkIPCClientCache(metaclass=Singleton):
     def __init__(self):
@@ -51,44 +56,74 @@ def _collect_ipc_messages(channel, incomplete, data):
     return complete, incomplete
 
 
-def start_ipc_server(channel, handle_message=None, pgid=None):
+def start_ipc_server(channel, handle_message=None, pgid=None, kBps=128):
+    buffer_time = 0 if kBps == 0 else MAX_BUFFER / kBps / 1000
+
     ipc_filepath = _get_ipc_filepath(channel, pgid=pgid)
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(ipc_filepath)
     os.chmod(ipc_filepath, 0o666)  # ensures pi user can use this too
 
-    incomplete = ""
     while True:
         server.listen(1)
         conn, addr = server.accept()
-        # put below connection handler loop in thread to support multiple
+
+        # set read buffer size to match our buffer size
+        conn.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, MAX_BUFFER)
+
+        # if we needed to handle multiple connections we would need to spawn a
+        # thread for the below connection handler loop
+        incomplete_message = ""
         while True:
-            data = conn.recv(4096)
+            # read up to the end of the socket buffer
+            data = conn.recv(MAX_BUFFER)
 
             if not data or data == b"":
                 break
 
-            complete, incomplete = _collect_ipc_messages(channel, incomplete, data)
+            # split data on channel message terminator and return list of complete
+            # messages and left over incomplete portion
+            complete_messages, incomplete_message = _collect_ipc_messages(
+                channel, incomplete_message, data
+            )
+
             if handle_message:
-                for c in complete:
+                for c in complete_messages:
                     handle_message(c)
 
+            sleep(buffer_time)
 
-async def async_start_ipc_server(channel, handle_message=None, pgid=None):
+
+async def async_start_ipc_server(channel, handle_message=None, pgid=None, kBps=128):
+    buffer_time = 0 if kBps == 0 else MAX_BUFFER / kBps / 1000
+
     async def handle_connection(reader, _):
-        incomplete = ""
+        incomplete_message = ""
+
         while True:
-            data = await reader.read(4096)
+            # read up to the end of the socket buffer
+            data = await reader.read(MAX_BUFFER)
+
             if data == b"":
                 break
 
-            complete, incomplete = _collect_ipc_messages(channel, incomplete, data)
+            # split data on channel message terminator and return list of complete
+            # messages and left over incomplete portion
+            complete_messages, incomplete_message = _collect_ipc_messages(
+                channel, incomplete_message, data
+            )
+
             if handle_message:
-                for c in complete:
+                for c in complete_messages:
                     await handle_message(c)
 
+            await asyncio.sleep(buffer_time)
+
     ipc_filepath = _get_ipc_filepath(channel, pgid=pgid)
-    server = await asyncio.start_unix_server(handle_connection, path=ipc_filepath)
+    # set the read buffer size when creating the server
+    server = await asyncio.start_unix_server(
+        handle_connection, path=ipc_filepath, limit=MAX_BUFFER
+    )
     os.chmod(ipc_filepath, 0o666)  # ensures pi user can use this too
     return server
 

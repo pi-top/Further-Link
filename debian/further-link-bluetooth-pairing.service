@@ -1,0 +1,13 @@
+[Unit]
+Description=pi-top Further Link Bluetooth Pairing
+Documentation=https://knowledgebase.pi-top.com/knowledge
+After=network.target
+
+[Service]
+Type=simple
+Environment="PYTHONUNBUFFERED=1"
+Environment="PYTHONDONTWRITEBYTECODE=1"
+ExecStart=/usr/bin/further-link-bluetooth-pairing
+
+[Install]
+WantedBy=multi-user.target

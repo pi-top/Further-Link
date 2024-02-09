@@ -1,7 +1,10 @@
 import asyncio
+import json
 from concurrent.futures import TimeoutError
 from time import time
 
+from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
+from further_link.util.bluetooth.messages.format import PtMessageFormat
 from further_link.util.message import parse_message
 
 
@@ -11,7 +14,7 @@ async def receive_data(ws, channel, data_key=None, data_value=None, process=""):
     # receive until we have enough data, or until return if non string data
     # receive has a timeout so if we don't get enough it will throw anyway
     while (not isinstance(data_value, str)) or len(received) < len(data_value):
-        m_type, m_data, m_process = parse_message((await ws.receive()).data)
+        m_type, m_data, m_process, m_client = parse_message((await ws.receive()).data)
 
         assert m_process == process, f"{m_process} != {process}, {m_type}, {m_data}"
         assert m_type == channel, f"{m_type} != {channel}\ndata: {m_data}"
@@ -40,7 +43,7 @@ async def wait_for_data(
     while timeout <= 0 or (round(time()) - start_time) <= timeout:
         try:
             message = await ws.receive()
-            m_type, m_data, m_process = parse_message(message.data)
+            m_type, m_data, m_process, m_client = parse_message(message.data)
 
             assert m_process == process, f"{m_process} != {process}"
             assert m_type == channel, f"{m_type} != {channel}\ndata: {m_data}"
@@ -69,3 +72,40 @@ async def wait_for_data(
         except (TimeoutError, asyncio.TimeoutError):
             continue
     raise TimeoutError
+
+
+async def send_formatted_bluetooth_message(
+    service, characteristic, message, assert_characteristic_value=True
+):
+    if not isinstance(message, str):
+        message = json.dumps(message)
+    chunked_message = ChunkedMessage.from_string(
+        id=0, message=message, format=PtMessageFormat
+    )
+
+    for i in range(chunked_message.received_chunks):
+        chunk = chunked_message.get_chunk(i)
+
+        # write chunk to characteristic
+        await characteristic.WriteValue(chunk.message, {})
+
+        # read characteristic value and confirm it's the same message as the one sent
+        if assert_characteristic_value:
+            assert characteristic._value == chunk.message
+
+
+async def wait_until(condition, timeout=5.0):
+    t = 0.0
+    delta_t = 0.1
+    while not condition() and t < timeout:
+        await asyncio.sleep(delta_t)
+        t += delta_t
+    if t >= timeout:
+        raise TimeoutError(f"Timed out waiting for condition {condition}")
+
+
+async def wait_until_characteristic_value_endswith(characteristic, value, timeout=5):
+    def read_and_check():
+        return characteristic._value.endswith(value)
+
+    await wait_until(read_and_check, timeout)
