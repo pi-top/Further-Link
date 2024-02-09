@@ -1,3 +1,10 @@
+further-link (5.7.0-1) bullseye; urgency=medium
+
+  * remove deprecated run_py api
+  * Support bluetooth connections (#156)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 09 Feb 2024 17:43:47 +0000
+
 further-link (5.6.0-1) bullseye; urgency=medium
 
   * feat: upload endpoint skips downloading urls when offline
