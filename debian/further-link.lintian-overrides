@@ -1,5 +1,5 @@
-further-link: no-manual-page usr/bin/further-link
-further-link: no-manual-page usr/bin/start-further
-further-link: no-manual-page usr/bin/further-link-bluetooth-pairing
-further-link: no-manual-page usr/bin/further-link-bluetooth-encryption
-further-link: no-manual-page usr/bin/further-link-set-pretty-hostname
+further-link: no-manual-page [usr/bin/further-link]
+further-link: no-manual-page [usr/bin/start-further]
+further-link: no-manual-page [usr/bin/further-link-bluetooth-pairing]
+further-link: no-manual-page [usr/bin/further-link-bluetooth-encryption]
+further-link: no-manual-page [usr/bin/further-link-set-pretty-hostname]
