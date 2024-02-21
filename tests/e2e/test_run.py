@@ -134,7 +134,7 @@ async def test_bad_code(run_ws_client):
     assert lines[0].startswith("  File")
     assert lines[1] == "    i'm not valid python"
     assert lines[2][-1] == "^"
-    assert lines[3] == "SyntaxError: EOL while scanning string literal"
+    assert lines[3] in ("SyntaxError: EOL while scanning string literal", "SyntaxError: unterminated string literal (detected at line 1)")
 
     await wait_for_data(run_ws_client, "stopped", "exitCode", 1, 0, "1")
 
