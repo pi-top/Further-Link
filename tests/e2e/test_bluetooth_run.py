@@ -343,7 +343,7 @@ async def test_bad_code(bluetooth_server):
     assert lines[0].startswith("  File")
     assert lines[1] == "    i'm not valid python\r"
     assert lines[2][-2:] == "^\r"
-    assert lines[3] == "SyntaxError: EOL while scanning string literal\r"
+    assert lines[3] in ("SyntaxError: EOL while scanning string literal\r", "SyntaxError: unterminated string literal (detected at line 1)\r")
 
 
 @pytest.mark.asyncio
