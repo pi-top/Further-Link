@@ -1,3 +1,9 @@
+further-link (5.8.0-1) bullseye; urgency=medium
+
+  * fix: set response header Access-Control-Allow-Private-Network to true (#159)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 15 Mar 2024 13:56:16 +0000
+
 further-link (5.7.0-1) bullseye; urgency=medium
 
   * remove deprecated run_py api
