@@ -43,6 +43,11 @@ async def create_bluetooth_app() -> Optional[BluetoothServer]:
 async def create_web_app():
     app = web.Application()
 
+    async def set_extra_cors_headers(request, response):
+        response.headers["Access-Control-Allow-Private-Network"] = "true"
+
+    app.on_response_prepare.append(set_extra_cors_headers)
+
     cors = aiohttp_cors.setup(
         app,
         defaults={

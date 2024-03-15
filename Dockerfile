@@ -17,7 +17,7 @@ RUN apt-get update && \
 RUN git clone https://github.com/pi-top/pi-topOS-Apt-Source.git && \
     cd pi-topOS-Apt-Source && \
     cp keys/* /usr/share/keyrings/ && \
-    cp sources/pi-top-os.list /etc/apt/sources.list.d/ && \
+    usr/lib/pi-top-os-apt-installer/pi-top-apt-source-manager install pi-top-os && \
     apt-get update && \
     rm -rf /pi-topOS-Apt-Source
 
