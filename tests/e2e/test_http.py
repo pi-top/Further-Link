@@ -13,6 +13,7 @@ from . import STATUS_PATH, VERSION_PATH
 async def test_status(http_client):
     response = await http_client.get(STATUS_PATH)
     assert response.status == 200
+    assert response.headers["Access-Control-Allow-Private-Network"] == "true"
     assert await response.text() == "OK"
 
 
