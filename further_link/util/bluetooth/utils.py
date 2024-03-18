@@ -37,4 +37,4 @@ def get_bluetooth_server_name() -> str:
         id = get_raspberry_pi_serial()[-4:]
     except Exception:
         id = "0000"
-    return f"Further-{id}"
+    return f"pi-top-{id}"
