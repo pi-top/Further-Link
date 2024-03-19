@@ -18,12 +18,12 @@ directory = {
                 "fileName": "ea3cb61e-7f31-4c52-8735-2cefe83302ee.jpeg",
             },
         },
-        "kitty.jpeg": {
+        "logo.png": {
             "type": "url",
             "content": {
-                "url": "https://placekitten.com/50/50",
-                "bucketName": "placekitten",
-                "fileName": "kitty.jpeg",
+                "url": "https://static.pi-top.com/images/logo/further.png",
+                "bucketName": "logo",
+                "fileName": "logo.png",
             },
         },
         "some_lib.py": {
