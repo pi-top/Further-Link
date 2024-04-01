@@ -7,6 +7,7 @@
 
 from glob import glob
 from os import environ
+from shlex import split
 from subprocess import run
 from typing import List, Optional
 
@@ -80,3 +81,23 @@ class Singleton(type):
         if cls.instance is None:
             cls.instance = super(Singleton, cls).__call__(*args, **kwargs)
         return cls.instance
+
+
+def run_command(command_str):
+    def __get_env():
+        env = environ.copy()
+        # Print output of commands in english
+        env["LANG"] = "en_US.UTF-8"
+        return env
+
+    try:
+        resp = run(
+            split(command_str),
+            check=False,
+            capture_output=True,
+            timeout=5,
+            env=__get_env(),
+        )
+        return str(resp.stdout, "utf8")
+    except Exception:
+        return None
