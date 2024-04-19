@@ -1,4 +1,4 @@
-further-link (5.8.1-2) bullseye; urgency=medium
+further-link (5.9.0-1) bullseye; urgency=medium
 
   * Set pretty hostname on service start (#163)
 
