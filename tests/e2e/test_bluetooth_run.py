@@ -215,12 +215,13 @@ date +%s # unix time in seconds
         }
     )
 
-    await wait_until(message_received(stdout_message.encode(), messages))
+    await wait_until(message_received(stdout_message.encode(), messages), timeout=10)
     await wait_until(
         message_received(
             b'{"type": "stopped", "data": {"exitCode": 0}, "client": "1", "process": "1"}',
             messages,
-        )
+        ),
+        timeout=10,
     )
 
 
