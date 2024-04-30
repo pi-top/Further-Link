@@ -201,7 +201,8 @@ date +%s # unix time in seconds
         message_received(
             b'{"type": "started", "data": null, "client": "1", "process": "1"}',
             messages,
-        )
+        ),
+        timeout=10,
     )
 
     seconds = str(int(time()))
