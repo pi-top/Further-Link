@@ -219,7 +219,7 @@ def FurtherGattService():
                 value = chunked.get_chunk(0).message
 
             logging.debug(
-                f"Read request for characteristic {uuid}; returning '{value!r}'"
+                f"Read request for characteristic {uuid}, returning '{value!r}'"
             )
             return value
 
