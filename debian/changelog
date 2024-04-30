@@ -1,3 +1,9 @@
+further-link (5.9.1-1) bullseye; urgency=medium
+
+  * feat: update ssl cert
+
+ -- pi-top <deb-maintainers@pi-top.com>  Tue, 30 Apr 2024 11:53:28 +0000
+
 further-link (5.9.0-1) bullseye; urgency=medium
 
   * Set pretty hostname on service start (#163)
