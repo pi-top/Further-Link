@@ -215,6 +215,10 @@ date +%s # unix time in seconds
         }
     )
 
+    await asyncio.sleep(5)
+    print(messages)
+    print(f"expecting: {stdout_message}")
+
     await wait_until(message_received(stdout_message.encode(), messages), timeout=15)
     await wait_until(
         message_received(
