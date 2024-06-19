@@ -481,7 +481,7 @@ async def test_out_of_order_commands(bluetooth_server):
 
 @pytest.mark.asyncio
 async def test_discard_old_input(bluetooth_server):
-    code = 'print("hello world")'
+    code = 'from time import sleep; sleep(0.1); print("hello world")'
     service = bluetooth_server.get_service(PT_SERVICE_UUID)
     char = service.get_characteristic(PT_RUN_WRITE_CHARACTERISTIC_UUID)
 
@@ -504,21 +504,17 @@ async def test_discard_old_input(bluetooth_server):
     )
     await send_formatted_bluetooth_message(bluetooth_server, char, unterminated_input)
 
-    await asyncio.sleep(1)
-    print(messages)
-
-    await wait_until(
-        message_received(
-            b'{"type": "stdout", "data": {"output": "hello world\\r\\n"}, "client": "1", "process": "1"}',
-            messages,
+    for message in (
+        b'{"type": "stdout", "data": {"output": "hello world\\r\\n"}, "client": "1", "process": "1"}',
+        b'{"type": "stdout", "data": {"output": "unterminated input"}, "client": "1", "process": "1"}',
+        b'{"type": "stopped", "data": {"exitCode": 0}, "client": "1", "process": "1"}',
+    ):
+        await wait_until(
+            message_received(
+                message,
+                messages,
+            )
         )
-    )
-    await wait_until(
-        message_received(
-            b'{"type": "stopped", "data": {"exitCode": 0}, "client": "1", "process": "1"}',
-            messages,
-        )
-    )
 
     messages.clear()
 
