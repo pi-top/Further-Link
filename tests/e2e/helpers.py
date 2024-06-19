@@ -93,6 +93,8 @@ async def send_formatted_bluetooth_message(
         if assert_characteristic_value:
             assert characteristic._value == chunk.message
 
+        await asyncio.sleep(0.01)
+
 
 async def wait_until(condition, timeout=5.0):
     t = 0.0

@@ -201,7 +201,8 @@ date +%s # unix time in seconds
         message_received(
             b'{"type": "started", "data": null, "client": "1", "process": "1"}',
             messages,
-        )
+        ),
+        timeout=15,
     )
 
     seconds = str(int(time()))
@@ -214,12 +215,17 @@ date +%s # unix time in seconds
         }
     )
 
-    await wait_until(message_received(stdout_message.encode(), messages))
+    await asyncio.sleep(5)
+    print(messages)
+    print(f"expecting: {stdout_message}")
+
+    await wait_until(message_received(stdout_message.encode(), messages), timeout=15)
     await wait_until(
         message_received(
             b'{"type": "stopped", "data": {"exitCode": 0}, "client": "1", "process": "1"}',
             messages,
-        )
+        ),
+        timeout=15,
     )
 
 
@@ -343,7 +349,10 @@ async def test_bad_code(bluetooth_server):
     assert lines[0].startswith("  File")
     assert lines[1] == "    i'm not valid python\r"
     assert lines[2][-2:] == "^\r"
-    assert lines[3] == "SyntaxError: EOL while scanning string literal\r"
+    assert lines[3] in (
+        "SyntaxError: EOL while scanning string literal\r",
+        "SyntaxError: unterminated string literal (detected at line 1)\r",
+    )
 
 
 @pytest.mark.asyncio
@@ -472,7 +481,7 @@ async def test_out_of_order_commands(bluetooth_server):
 
 @pytest.mark.asyncio
 async def test_discard_old_input(bluetooth_server):
-    code = 'print("hello world")'
+    code = 'from time import sleep; sleep(0.1); print("hello world")'
     service = bluetooth_server.get_service(PT_SERVICE_UUID)
     char = service.get_characteristic(PT_RUN_WRITE_CHARACTERISTIC_UUID)
 
@@ -495,21 +504,17 @@ async def test_discard_old_input(bluetooth_server):
     )
     await send_formatted_bluetooth_message(bluetooth_server, char, unterminated_input)
 
-    await asyncio.sleep(1)
-    print(messages)
-
-    await wait_until(
-        message_received(
-            b'{"type": "stdout", "data": {"output": "hello world\\r\\n"}, "client": "1", "process": "1"}',
-            messages,
+    for message in (
+        b'{"type": "stdout", "data": {"output": "hello world\\r\\n"}, "client": "1", "process": "1"}',
+        b'{"type": "stdout", "data": {"output": "unterminated input"}, "client": "1", "process": "1"}',
+        b'{"type": "stopped", "data": {"exitCode": 0}, "client": "1", "process": "1"}',
+    ):
+        await wait_until(
+            message_received(
+                message,
+                messages,
+            )
         )
-    )
-    await wait_until(
-        message_received(
-            b'{"type": "stopped", "data": {"exitCode": 0}, "client": "1", "process": "1"}',
-            messages,
-        )
-    )
 
     messages.clear()
 

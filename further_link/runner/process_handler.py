@@ -107,7 +107,7 @@ class ProcessHandler:
         # set $DISPLAY so that user can open GUI windows
         self.screenshot_manager = None
         if self.novnc:
-            process_env["DISPLAY"] = f":{self.id}"
+            process_env["DISPLAY"] = ":{}".format(self.id)
             self.screenshot_manager = await async_start(
                 display_id=self.id,
                 on_display_activity=self.handle_display_activity,
