@@ -1,4 +1,5 @@
 from os import environ, getenv
+from os.path import exists
 from shlex import split
 from subprocess import DEVNULL, Popen
 
@@ -16,14 +17,18 @@ def run_command_background(command_str, print_output=False):
     )
 
 
+def _read_from_file(file_path):
+    if exists(file_path):
+        with open(file_path, "r") as f:
+            return f.read().strip()
+    return None
+
+
 def get_further_url():
     further_url = "https://further.pi-top.com/start"
 
-    with open("/run/pt_hub_serial", "r") as f:
-        serial = f.read().strip()
-
-    with open("/run/pt_device_type", "r") as f:
-        device = f.read().strip()
+    serial = _read_from_file("/run/pt_serial_number")
+    device = _read_from_file("/run/pt_device_type")
 
     if serial or device:
         further_url += "?"
