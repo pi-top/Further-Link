@@ -27,7 +27,7 @@ def _read_from_file(file_path):
 def get_further_url():
     further_url = "https://further.pi-top.com/start"
 
-    serial = _read_from_file("/run/pt_serial_number")
+    serial = _read_from_file("/run/pt_hub_serial")
     device = _read_from_file("/run/pt_device_type")
 
     if serial or device:
