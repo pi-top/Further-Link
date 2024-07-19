@@ -1,3 +1,9 @@
+further-link (5.9.2-3) bullseye; urgency=medium
+
+  * Use correct file to get device serial number (#170)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 19 Jul 2024 13:47:58 +0000
+
 further-link (5.9.2-2) bullseye; urgency=medium
 
   * Handle device and serial files not found error (#168)
