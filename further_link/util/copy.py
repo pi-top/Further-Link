@@ -1,4 +1,5 @@
 import logging
+import stat
 import os
 from shutil import copytree, rmtree
 
@@ -31,5 +32,18 @@ async def do_copy_files_to_projects_directory(src_directory, directory, user=Non
         directory.get("name"), user, directory.get("username")
     )
     rmtree(dst_directory, ignore_errors=True)
-    copytree(src_directory, dst_directory, symlinks=False)
+
+    def ignore_files(src, names):
+        # copytree will fail if there are named pipes in src,
+        # so we ignore them (e.g. .lgd-nfy0)
+        names_to_ignore = []
+        for name in names:
+            file = os.path.join(src, name)
+            if stat.S_ISFIFO(os.stat(file).st_mode):
+                logging.warning(f"Found named pipe {file} when copying project files; ignoring ...")
+                names_to_ignore.append(name)
+        return names_to_ignore
+
+    copytree(src_directory, dst_directory, symlinks=False,
+             ignore=ignore_files)
     set_directory_ownership(dst_directory, user)
