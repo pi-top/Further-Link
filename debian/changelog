@@ -1,3 +1,9 @@
+further-link (5.9.2-4) bullseye; urgency=medium
+
+  * fix: ignore named pipes when copying project files (#172)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 23 Jan 2025 13:03:44 +0000
+
 further-link (5.9.2-3) bullseye; urgency=medium
 
   * Use correct file to get device serial number (#170)
