@@ -1,7 +1,5 @@
-further-link (5.9.2-5) bullseye; urgency=medium
+further-link (5.9.3-1) bullseye; urgency=medium
 
-  * Updated master workflow files
-  * Updated master workflow files
   * fix: use the system CA bundle instead of the OpenSSL default CA file
 
  -- pi-top <deb-maintainers@pi-top.com>  Wed, 26 Mar 2025 16:15:19 +0000
