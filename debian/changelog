@@ -1,3 +1,9 @@
+further-link (5.9.3-2) bullseye; urgency=medium
+
+  * Add Bluetooth card status check and unlock when enabling pairing mode (#176)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 02 Apr 2025 12:56:20 +0000
+
 further-link (5.9.3-1) bullseye; urgency=medium
 
   * fix: use the system CA bundle instead of the OpenSSL default CA file
