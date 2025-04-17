@@ -58,6 +58,8 @@ def FurtherGattService():
             self._received_partial_messages = {}
             self._send_partial_message = {}
             self._client_run_managers = {}
+            self._path = None
+            self._registered = False
             super().__init__(PT_SERVICE_UUID, True)
 
         async def write_value(self, value, char):
@@ -270,5 +272,14 @@ def FurtherGattService():
                 if char.UUID == uuid:
                     return char
             return None
+
+        def set_path(self, path):
+            self._path = path
+
+        def cleanup(self):
+            if self._registered:
+                # Unregister from D-Bus
+                self.unregister()  # Implement this method to remove from D-Bus
+                self._registered = False
 
     return _FurtherGattService()
