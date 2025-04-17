@@ -1,6 +1,6 @@
 import logging
-import stat
 import os
+import stat
 from shutil import copytree, rmtree
 
 from .user_config import (
@@ -40,10 +40,11 @@ async def do_copy_files_to_projects_directory(src_directory, directory, user=Non
         for name in names:
             file = os.path.join(src, name)
             if stat.S_ISFIFO(os.stat(file).st_mode):
-                logging.warning(f"Found named pipe {file} when copying project files; ignoring ...")
+                logging.warning(
+                    f"Found named pipe {file} when copying project files; ignoring ..."
+                )
                 names_to_ignore.append(name)
         return names_to_ignore
 
-    copytree(src_directory, dst_directory, symlinks=False,
-             ignore=ignore_files)
+    copytree(src_directory, dst_directory, symlinks=False, ignore=ignore_files)
     set_directory_ownership(dst_directory, user)
