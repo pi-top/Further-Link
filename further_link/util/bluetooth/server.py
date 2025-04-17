@@ -12,7 +12,7 @@ from further_link.util.bluetooth.utils import get_bluetooth_server_name
 
 
 class BluetoothServer:
-    _services_cls = [FurtherGattService, DeviceInformationService]
+    _services_cls = [DeviceInformationService, FurtherGattService]
 
     def __init__(self) -> None:
         self._adapter = None
@@ -22,23 +22,47 @@ class BluetoothServer:
 
         # Initialize services with unique paths
         for service_cls in self._services_cls:
-            service_path = (
-                f"/com/spacecheese/bluez_peripheral/service{self._next_service_id}"
-            )
-            self._next_service_id += 1
+            if service_cls == DeviceInformationService:
+                # Use a path that should take precedence to avoid conflicts with BlueZ's DIS
+                service_path = "/org/bluez/hci0/service_dis"
+            else:
+                service_path = (
+                    f"/com/spacecheese/bluez_peripheral/service{self._next_service_id}"
+                )
+                self._next_service_id += 1
 
             service_instance = service_cls()
             if hasattr(service_instance, "set_path"):
                 service_instance.set_path(service_path)
-            service_instance._path = (
-                service_path  # Set path directly if no set_path method
-            )
+            service_instance._path = service_path
             self.services.append(service_instance)
+
+    async def _configure_gap(self):
+        """Configure the GAP service properties through D-Bus to override BlueZ's default values"""
+        try:
+            # Get the adapter interface
+            adapter_obj = self.bus.get_proxy_object("org.bluez", "/org/bluez/hci0")
+            adapter_props = adapter_obj.get_interface("org.freedesktop.DBus.Properties")
+
+            # Set the device name
+            await adapter_props.call_set(
+                "Device Name", "v", get_bluetooth_server_name()
+            )
+
+            # Set appearance (Generic Computer - 0x0340)
+            await adapter_props.call_set("Appearance", "q", 0x0340)
+
+            logging.debug("Configured GAP properties")
+        except Exception as e:
+            logging.error(f"Failed to configure GAP properties: {e}")
 
     async def start(self):
         logging.debug("Starting bluetooth server...")
         self.bus = await get_message_bus()
         self._adapter = await Adapter.get_first(self.bus)
+
+        # Configure GAP properties
+        await self._configure_gap()
 
         # Configure advertisement
         if environ.get("FURTHER_LINK_BLUETOOTH_PAIR_AND_ADVERTISE") in ("1", "true"):
