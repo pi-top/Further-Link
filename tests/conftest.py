@@ -42,9 +42,14 @@ def mock_bluez_peripheral(mocker):
     from .mocks.bluetooth.characteristic import characteristicMock
     from .mocks.bluetooth.service import ServiceMock
 
+    # Mock the Service and characteristic for both regular service and DIS service
     mocker.patch("further_link.util.bluetooth.service.Service", ServiceMock)
     mocker.patch(
         "further_link.util.bluetooth.service.characteristic", characteristicMock
+    )
+    mocker.patch("further_link.util.bluetooth.dis_service.Service", ServiceMock)
+    mocker.patch(
+        "further_link.util.bluetooth.dis_service.characteristic", characteristicMock
     )
 
     mocker.patch("further_link.util.bluetooth.server.NoIoAgent", AsyncMock)
@@ -62,6 +67,15 @@ def mock_bluez_peripheral(mocker):
 
 @pytest.fixture()
 async def bluetooth_server():
+    from further_link.util.bluetooth.dis_service import DeviceInformationService
+    from further_link.util.bluetooth.uuids import DIS_SERVICE_UUID
+
     server = await create_bluetooth_app()
+
+    # Explicitly add the DIS service if it's not already there
+    if server.get_service(DIS_SERVICE_UUID) is None:
+        dis_service = DeviceInformationService()
+        server.services.append(dis_service)
+
     yield server
     server.stop()
