@@ -8,12 +8,13 @@ from bluez_peripheral.agent import NoIoAgent
 from bluez_peripheral.gatt.service import Service
 from bluez_peripheral.util import Adapter, get_message_bus
 
+from further_link.util.bluetooth.dis_service import DeviceInformationService
 from further_link.util.bluetooth.service import FurtherGattService
 from further_link.util.bluetooth.utils import get_bluetooth_server_name
 
 
 class BluetoothServer:
-    _services_cls = [FurtherGattService]
+    _services_cls = [FurtherGattService, DeviceInformationService]
     services: List
 
     def __init__(self) -> None:
