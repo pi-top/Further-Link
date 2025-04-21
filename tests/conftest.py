@@ -1,9 +1,8 @@
 import os
 from shutil import rmtree
-from unittest.mock import MagicMock
 
 import pytest
-from mock import AsyncMock
+from mock import AsyncMock, MagicMock
 
 os.environ["TESTING"] = "1"
 from further_link.__main__ import create_bluetooth_app
@@ -56,26 +55,56 @@ def mock_bluez_peripheral(mocker):
     mocker.patch("further_link.util.bluetooth.server.Advertisement", AsyncMock)
 
     adapter = AsyncMock()
-    adapter.get_first.return_value = MagicMock()
+    adapter_instance = AsyncMock()
+    adapter.get_first = AsyncMock(return_value=adapter_instance)
+
+    # Create a proxy object that's not an AsyncMock
+    proxy = MagicMock()
+    proxy.get_interface = lambda *args: adapter_props
+
+    # Attach the proxy directly without lambda
+    adapter_instance._proxy = proxy
+
     mocker.patch("further_link.util.bluetooth.server.Adapter", adapter)
 
+    # Create a class to handle the interface methods
+    class AdapterPropsInterface:
+        async def call_set(self, *args, **kwargs):
+            return None
+
+        async def call_register_application(self, *args, **kwargs):
+            return None
+
+    adapter_props = AdapterPropsInterface()
+
+    adapter_obj = AsyncMock()
+    adapter_obj.get_interface = lambda *args: adapter_props
+
+    # Create a class to handle bus operations
+    class MockBus:
+        def __init__(self):
+            self.exported = {}
+
+        def export(self, path, interface):
+            self.exported[path] = interface
+            return None
+
+        def get_proxy_object(self, *args):
+            return adapter_obj
+
+        def disconnect(self, *args, **kwargs):
+            return None
+
+    bus = MockBus()
+
     async def get_bus():
-        return MagicMock()
+        return bus
 
     mocker.patch("further_link.util.bluetooth.server.get_message_bus", get_bus)
 
 
 @pytest.fixture()
 async def bluetooth_server():
-    from further_link.util.bluetooth.dis_service import DeviceInformationService
-    from further_link.util.bluetooth.uuids import DIS_SERVICE_UUID
-
     server = await create_bluetooth_app()
-
-    # Explicitly add the DIS service if it's not already there
-    if server.get_service(DIS_SERVICE_UUID) is None:
-        dis_service = DeviceInformationService()
-        server.services.append(dis_service)
-
     yield server
     server.stop()

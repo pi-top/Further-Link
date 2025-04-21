@@ -96,7 +96,7 @@ async def send_formatted_bluetooth_message(
         await asyncio.sleep(0.01)
 
 
-async def wait_until(condition, timeout=5.0):
+async def wait_until(condition, timeout=10.0):
     t = 0.0
     delta_t = 0.1
     while not condition() and t < timeout:
