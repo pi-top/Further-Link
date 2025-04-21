@@ -1,5 +1,7 @@
 import struct
 
+import pytest
+
 from further_link.util.bluetooth.uuids import (
     DIS_MANUFACTURER_NAME_UUID,
     DIS_MODEL_NUMBER_UUID,
@@ -9,31 +11,33 @@ from further_link.util.bluetooth.uuids import (
 from further_link.version import __version__
 
 
-def test_dis_manufacturer_name(bluetooth_server):
+@pytest.fixture
+def dis_service(bluetooth_server):
     assert bluetooth_server is not None
     service = bluetooth_server.get_service(DIS_SERVICE_UUID)
-    char = service.get_characteristic(DIS_MANUFACTURER_NAME_UUID)
-    value = char.getter_func(service, {})
+    assert service is not None
+    yield service
+
+
+def test_dis_manufacturer_name(dis_service):
+    char = dis_service.get_characteristic(DIS_MANUFACTURER_NAME_UUID)
+    value = char.getter_func(dis_service, {})
 
     # Verify the returned bytearray contains the expected manufacturer name
     assert value == bytearray("pi-top", "utf-8")
 
 
-def test_dis_model_number(bluetooth_server):
-    assert bluetooth_server is not None
-    service = bluetooth_server.get_service(DIS_SERVICE_UUID)
-    char = service.get_characteristic(DIS_MODEL_NUMBER_UUID)
-    value = char.getter_func(service, {})
+def test_dis_model_number(dis_service):
+    char = dis_service.get_characteristic(DIS_MODEL_NUMBER_UUID)
+    value = char.getter_func(dis_service, {})
 
     # Verify the returned bytearray contains the expected model number
     assert value == bytearray("pi-top [4]", "utf-8")
 
 
-def test_dis_pnp_id(bluetooth_server):
-    assert bluetooth_server is not None
-    service = bluetooth_server.get_service(DIS_SERVICE_UUID)
-    char = service.get_characteristic(DIS_PNP_ID_UUID)
-    value = char.getter_func(service, {})
+def test_dis_pnp_id(dis_service):
+    char = dis_service.get_characteristic(DIS_PNP_ID_UUID)
+    value = char.getter_func(dis_service, {})
 
     # PNP ID is a structured binary value with specific format
     # First byte should be 1 (Vendor ID Source = Bluetooth SIG)
@@ -59,18 +63,14 @@ def test_dis_pnp_id(bluetooth_server):
     assert product_version == expected_product_version
 
 
-def test_dis_service_existence(bluetooth_server):
-    assert bluetooth_server is not None
-    service = bluetooth_server.get_service(DIS_SERVICE_UUID)
-
+def test_dis_service_existence(dis_service):
     # Verify service exists and is properly configured
-    assert service is not None
-    assert service.Primary is True
+    assert dis_service.Primary is True
 
     # Verify all three characteristics exist
-    manufacturer_char = service.get_characteristic(DIS_MANUFACTURER_NAME_UUID)
-    model_char = service.get_characteristic(DIS_MODEL_NUMBER_UUID)
-    pnp_char = service.get_characteristic(DIS_PNP_ID_UUID)
+    manufacturer_char = dis_service.get_characteristic(DIS_MANUFACTURER_NAME_UUID)
+    model_char = dis_service.get_characteristic(DIS_MODEL_NUMBER_UUID)
+    pnp_char = dis_service.get_characteristic(DIS_PNP_ID_UUID)
 
     assert manufacturer_char is not None
     assert model_char is not None

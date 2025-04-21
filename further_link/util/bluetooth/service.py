@@ -15,6 +15,7 @@ from further_link.util import state
 from further_link.util.bluetooth.messages.chunk import Chunk
 from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
 from further_link.util.bluetooth.messages.format import PtMessageFormat
+from further_link.util.bluetooth.utils import find_object_with_uuid
 from further_link.util.bluetooth.uuids import (
     PT_APT_VERSION_READ_CHARACTERISTIC_UUID,
     PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID,
@@ -268,10 +269,7 @@ def FurtherGattService():
                 asyncio.create_task(run_callback())
 
         def get_characteristic(self, uuid: str) -> Optional[characteristic]:
-            for char in self._characteristics:
-                if char.UUID == uuid:
-                    return char
-            return None
+            return find_object_with_uuid(self._characteristics, uuid)
 
         def set_path(self, path):
             self._path = path
