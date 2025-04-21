@@ -1,12 +1,13 @@
 import logging
 import os
 import struct
-from typing import Type, Union
+from typing import Optional, Type, Union
 
 from bluez_peripheral.gatt.characteristic import CharacteristicFlags, characteristic
 from bluez_peripheral.gatt.service import Service
 
 from further_link.util import state
+from further_link.util.bluetooth.utils import find_object_with_uuid
 from further_link.util.bluetooth.uuids import (
     DIS_MANUFACTURER_NAME_UUID,
     DIS_MODEL_NUMBER_UUID,
@@ -34,6 +35,12 @@ if os.environ.get("FURTHER_LINK_NO_BLUETOOTH_ENCRYPTION", "0").lower() in (
     CharFlags = NonSecureFlags
 
 
+MANUFACTURER = "pi-top"
+MODEL_NUMBER = "pi-top [4]"
+VENDOR_ID = 0x0590
+PRODUCT_ID = 0x0001
+
+
 class DeviceInformationService(Service):
     def __init__(self):
         self._path = None
@@ -51,23 +58,21 @@ class DeviceInformationService(Service):
 
     @characteristic(DIS_MANUFACTURER_NAME_UUID, CharFlags.READ)
     def manufacturer_name(self, options):
-        value = "pi-top"
-        logging.debug("Read request for manufacturer_name; returning '%s'", value)
-        return bytearray(value, "utf-8")
+        logging.debug(f"Read request for manufacturer_name; returning '{MANUFACTURER}'")
+        return bytearray(MANUFACTURER, "utf-8")
 
     @characteristic(DIS_MODEL_NUMBER_UUID, CharFlags.READ)
     def model_number(self, options):
-        value = "pi-top [4]"
-        logging.debug("Read request for model_number; returning '%s'", value)
-        return bytearray(value, "utf-8")
+        logging.debug(f"Read request for model_number; returning '{MODEL_NUMBER}'")
+        return bytearray(MODEL_NUMBER, "utf-8")
 
     @characteristic(DIS_PNP_ID_UUID, CharFlags.READ)
     def pnp_id(self, options):
         # PnP ID format according to Bluetooth spec:
         # Vendor ID Source: 1 byte (1 = Bluetooth SIG assigned)
-        # Vendor ID: 2 bytes (pi-top: use 0x0590 as placeholder - you should replace with your actual ID)
-        # Product ID: 2 bytes (0x0001 for pi-top [4])
-        # Product Version: 2 bytes (major.minor: 0x0100 for v1.0)
+        # Vendor ID: 2 bytes
+        # Product ID: 2 bytes
+        # Product Version: 2 bytes
 
         # Convert version string to usable product version
         # Get first two version components (major.minor)
@@ -83,10 +88,13 @@ class DeviceInformationService(Service):
         pnp_data = struct.pack(
             "<BHHH",
             1,  # Vendor ID Source (1 = Bluetooth SIG)
-            0x0590,  # Vendor ID (replace with actual Bluetooth SIG assigned ID)
-            0x0001,  # Product ID for pi-top [4]
-            product_version,  # Product Version
+            VENDOR_ID,
+            PRODUCT_ID,
+            product_version,
         )
 
         logging.debug("Read request for pnp_id; returning binary data")
         return bytearray(pnp_data)
+
+    def get_characteristic(self, uuid: str) -> Optional[characteristic]:
+        return find_object_with_uuid(self._characteristics, uuid)

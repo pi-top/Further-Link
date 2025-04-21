@@ -1,7 +1,12 @@
 import json
+import logging
 import re
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
+
+from bluez_peripheral.gatt.characteristic import characteristic
+from bluez_peripheral.gatt.service import Service
+from bluez_peripheral.uuid16 import UUID16
 
 
 def bytearray_to_dict(message: bytearray) -> Dict:
@@ -38,3 +43,16 @@ def get_bluetooth_server_name() -> str:
     except Exception:
         id = "0000"
     return f"pi-top-{id}"
+
+
+def find_object_with_uuid(
+    obj_arr: list[Service | characteristic], uuid: str
+) -> Optional[Service | characteristic]:
+    uuid16 = UUID16.parse_uuid(uuid)
+    for obj in obj_arr:
+        if not hasattr(obj, "UUID"):
+            logging.debug(f"Object {obj} does not have UUID attribute, skipping...")
+            continue
+        if obj.UUID == str(uuid16):
+            return obj
+    return None

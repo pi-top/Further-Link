@@ -1,14 +1,19 @@
 import asyncio
 import logging
 from os import environ
+from typing import Optional
 
 from bluez_peripheral.advert import Advertisement
 from bluez_peripheral.agent import NoIoAgent
+from bluez_peripheral.gatt.service import Service
 from bluez_peripheral.util import Adapter, get_message_bus
 
 from further_link.util.bluetooth.dis_service import DeviceInformationService
 from further_link.util.bluetooth.service import FurtherGattService
-from further_link.util.bluetooth.utils import get_bluetooth_server_name
+from further_link.util.bluetooth.utils import (
+    find_object_with_uuid,
+    get_bluetooth_server_name,
+)
 
 
 class BluetoothServer:
@@ -36,6 +41,9 @@ class BluetoothServer:
                 service_instance.set_path(service_path)
             service_instance._path = service_path
             self.services.append(service_instance)
+
+    def get_service(self, uuid: str) -> Optional[Service]:
+        return find_object_with_uuid(self.services, uuid)
 
     async def _configure_gap(self):
         """Configure the GAP service properties through D-Bus to override BlueZ's default values"""

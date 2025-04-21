@@ -23,18 +23,6 @@ class PairingManager:
     async def cleanup(self):
         logging.info("Cleaning up Bluetooth resources...")
         try:
-            if self.advert:
-                try:
-                    await self.advert.unregister()
-                except Exception as e:
-                    logging.error(f"Error unregistering advertisement: {e}")
-
-            if self.agent:
-                try:
-                    await self.agent.unregister()
-                except Exception as e:
-                    logging.error(f"Error unregistering agent: {e}")
-
             if self.bus:
                 self.bus.disconnect()
         except Exception as e:
