@@ -9,8 +9,9 @@ from dbus_next.errors import DBusError
 
 from further_link.util.bluetooth.utils import get_bluetooth_server_name
 from further_link.util.bluetooth.uuids import DIS_SERVICE_UUID, PT_SERVICE_UUID
+from further_link.util.bluetooth.values import APPEARANCE
 
-PAIRING_TIME = 600
+PAIRING_TIME = 60
 
 
 class PairingManager:
@@ -55,18 +56,19 @@ class PairingManager:
 
     async def start_pairing_mode(self):
         logging.info(
-            f"Starting pairing mode and advertisement of {PT_SERVICE_UUID} for {PAIRING_TIME} seconds"
+            f"Starting pairing mode and advertisement of {PT_SERVICE_UUID} and {DIS_SERVICE_UUID} for {PAIRING_TIME} seconds"
         )
 
         try:
-            self.bus = await get_message_bus()
-            self.adapter = await Adapter.get_first(self.bus)
-
             if await self.is_bt_card_blocked():
                 logging.info("Bluetooth card is blocked, unlocking it...")
                 await self.unlock_bt_card()
-                # Give the adapter a moment to initialize
-                await asyncio.sleep(2)
+
+            self.bus = await get_message_bus()
+            self.adapter = await Adapter.get_first(self.bus)
+
+            # Give the adapter a moment to initialize
+            await asyncio.sleep(2)
 
             # Make sure adapter is powered on
             powered = await self.adapter.get_powered()
@@ -81,7 +83,7 @@ class PairingManager:
             self.advert = Advertisement(
                 localName=get_bluetooth_server_name(),
                 serviceUUIDs=[PT_SERVICE_UUID, DIS_SERVICE_UUID],
-                appearance=0x0340,  # Generic Computer appearance value
+                appearance=APPEARANCE,
                 timeout=PAIRING_TIME,
             )
 
@@ -120,5 +122,4 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
     main(prog_name="further-link-bluetooth-pairing")

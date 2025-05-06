@@ -9,10 +9,25 @@ from bluez_peripheral.gatt.service import Service
 from further_link.util import state
 from further_link.util.bluetooth.utils import find_object_with_uuid
 from further_link.util.bluetooth.uuids import (
+    DIS_FIRMWARE_REVISION_UUID,
+    DIS_HARDWARE_REVISION_UUID,
     DIS_MANUFACTURER_NAME_UUID,
     DIS_MODEL_NUMBER_UUID,
     DIS_PNP_ID_UUID,
+    DIS_SERIAL_NUMBER_UUID,
     DIS_SERVICE_UUID,
+    DIS_SOFTWARE_REVISION_UUID,
+    DIS_SYSTEM_ID_UUID,
+)
+from further_link.util.bluetooth.values import (
+    FIRMWARE_REVISION,
+    HARDWARE_REVISION,
+    MANUFACTURER,
+    MODEL_NUMBER,
+    PRODUCT_ID,
+    SERIAL_NUMBER,
+    SYSTEM_ID,
+    VENDOR_ID,
 )
 from further_link.version import __version__
 
@@ -33,12 +48,6 @@ if os.environ.get("FURTHER_LINK_NO_BLUETOOTH_ENCRYPTION", "0").lower() in (
 ) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("0", "false"):
     logging.info("Using unencrypted bluetooth characteristics for DIS")
     CharFlags = NonSecureFlags
-
-
-MANUFACTURER = "pi-top"
-MODEL_NUMBER = "pi-top [4]"
-VENDOR_ID = 0x0590
-PRODUCT_ID = 0x0001
 
 
 class DeviceInformationService(Service):
@@ -98,3 +107,32 @@ class DeviceInformationService(Service):
 
     def get_characteristic(self, uuid: str) -> Optional[characteristic]:
         return find_object_with_uuid(self._characteristics, uuid)
+
+    @characteristic(DIS_SERIAL_NUMBER_UUID, CharFlags.READ)
+    def serial_number(self, options):
+        logging.debug(f"Read request for serial_number; returning '{SERIAL_NUMBER}'")
+        return bytearray(SERIAL_NUMBER, "utf-8")
+
+    @characteristic(DIS_FIRMWARE_REVISION_UUID, CharFlags.READ)
+    def firmware_revision(self, options):
+        logging.debug(
+            f"Read request for firmware_revision; returning '{FIRMWARE_REVISION}'"
+        )
+        return bytearray(FIRMWARE_REVISION, "utf-8")
+
+    @characteristic(DIS_HARDWARE_REVISION_UUID, CharFlags.READ)
+    def hardware_revision(self, options):
+        logging.debug(
+            f"Read request for hardware_revision; returning '{HARDWARE_REVISION}'"
+        )
+        return bytearray(HARDWARE_REVISION, "utf-8")
+
+    @characteristic(DIS_SOFTWARE_REVISION_UUID, CharFlags.READ)
+    def software_revision(self, options):
+        logging.debug(f"Read request for software_revision; returning '{__version__}'")
+        return bytearray(__version__, "utf-8")
+
+    @characteristic(DIS_SYSTEM_ID_UUID, CharFlags.READ)
+    def system_id(self, options):
+        logging.debug(f"Read request for system_id; returning '{SYSTEM_ID}'")
+        return bytearray(SYSTEM_ID, "utf-8")
