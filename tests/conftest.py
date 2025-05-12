@@ -8,6 +8,7 @@ os.environ["TESTING"] = "1"
 from further_link.__main__ import create_bluetooth_app
 
 from .dirs import PROJECTS_DIR, WORKING_DIRECTORY
+from .e2e.test_data.csv import cereal_csv
 
 os.environ["FURTHER_LINK_PORT"] = "8028"
 os.environ["FURTHER_LINK_NOSSL"] = "true"
@@ -20,6 +21,26 @@ def create_working_directory():
     os.makedirs(WORKING_DIRECTORY, exist_ok=True)
     yield
     rmtree(WORKING_DIRECTORY)
+
+
+@pytest.fixture
+def internet_requests_mock(aioresponses):
+    aioresponses.head("https://google.com")
+    aioresponses.get(
+        "https://backend.pi-top.com/api/v3/Containers/further-files/download/2a9a1e12-b71c-4f20-84b2-f205e9dc16fd.csv",
+        status=200,
+        body=cereal_csv,
+    )
+    aioresponses.get(
+        "https://backend.pi-top.com/api/v3/Containers/further-files/download/ea3cb61e-7f31-4c52-8735-2cefe83302ee.jpeg",
+        status=200,
+        body="",
+    )
+    aioresponses.get(
+        "https://static.pi-top.com/images/logo/further.png",
+        status=200,
+        body="",
+    )
 
 
 @pytest.fixture(autouse=True)
