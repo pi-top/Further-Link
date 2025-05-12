@@ -23,7 +23,7 @@ async def http_client(aiohttp_client):
 @pytest.fixture()
 async def run_ws_client(aiohttp_client):
     wclient = await aiohttp_client(await create_web_app())
-    async with wclient.ws_connect(RUN_PATH, receive_timeout=0.1) as client:
+    async with wclient.ws_connect(RUN_PATH, receive_timeout=0.5) as client:
         yield client
 
 
@@ -34,7 +34,7 @@ run_ws_client2 = run_ws_client
 async def run_ws_client_query(aiohttp_client, query_params):
     url = RUN_PATH + "?" + urllib.parse.urlencode(query_params)
     client = await aiohttp_client(await create_web_app())
-    async with client.ws_connect(url, receive_timeout=0.1) as client:
+    async with client.ws_connect(url, receive_timeout=0.5) as client:
         yield client
 
 

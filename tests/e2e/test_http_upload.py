@@ -17,7 +17,7 @@ from .test_data.upload_data import directory, directory_with_project
 
 
 @pytest.mark.asyncio
-async def test_upload_empty_directory(http_client):
+async def test_upload_empty_directory(http_client, internet_requests_mock):
     response = await http_client.post(UPLOAD_PATH, data=b"{}")
     assert response.status == 400
     body = await response.text()
@@ -25,7 +25,7 @@ async def test_upload_empty_directory(http_client):
 
 
 @pytest.mark.asyncio
-async def test_upload(http_client):
+async def test_upload(http_client, internet_requests_mock):
     upload_data = json.dumps(directory).encode()
     response = await http_client.post(UPLOAD_PATH, data=upload_data)
     assert response.status == 200
@@ -61,7 +61,7 @@ async def test_upload(http_client):
 
 
 @pytest.mark.asyncio
-async def test_upload_with_miniscreen_project(http_client):
+async def test_upload_with_miniscreen_project(http_client, internet_requests_mock):
     upload_data = json.dumps(directory_with_project).encode()
     response = await http_client.post(UPLOAD_PATH, data=upload_data)
     assert response.status == 200
