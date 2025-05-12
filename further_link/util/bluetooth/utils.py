@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import re
@@ -56,3 +57,30 @@ def find_object_with_uuid(
         if obj.UUID == str(uuid16):
             return obj
     return None
+
+
+async def is_bt_card_blocked() -> bool:
+    """Check if the BT card is blocked by checking if the adapter is powered on."""
+    cmd = "rfkill list bluetooth -o Soft -n"
+    try:
+        process = await asyncio.create_subprocess_shell(
+            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        stdout, _ = await process.communicate()
+        return stdout.decode().strip() == "blocked"
+    except Exception as e:
+        logging.error(f"Error checking if BT card is blocked: {e}")
+        return False
+
+
+async def unlock_bt_card() -> None:
+    """Unlock the BT card using rfkill"""
+    command = "rfkill unblock bluetooth"
+    logging.info(f"Unlocking BT card using command: {command}")
+    try:
+        process = await asyncio.create_subprocess_shell(
+            command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        await process.communicate()
+    except Exception as e:
+        logging.error(f"Error unlocking BT card: {e}")

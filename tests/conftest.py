@@ -51,8 +51,8 @@ def mock_bluez_peripheral(mocker):
         "further_link.util.bluetooth.dis_service.characteristic", characteristicMock
     )
 
-    mocker.patch("further_link.util.bluetooth.server.NoIoAgent", AsyncMock)
-    mocker.patch("further_link.util.bluetooth.server.Advertisement", AsyncMock)
+    mocker.patch("further_link.util.bluetooth.pairing.NoIoAgent", AsyncMock)
+    mocker.patch("further_link.util.bluetooth.pairing.Advertisement", AsyncMock)
 
     adapter = AsyncMock()
     adapter_instance = AsyncMock()
@@ -65,7 +65,7 @@ def mock_bluez_peripheral(mocker):
     # Attach the proxy directly without lambda
     adapter_instance._proxy = proxy
 
-    mocker.patch("further_link.util.bluetooth.server.Adapter", adapter)
+    mocker.patch("further_link.util.bluetooth.device.Adapter", adapter)
 
     # Create a class to handle the interface methods
     class AdapterPropsInterface:
@@ -100,11 +100,11 @@ def mock_bluez_peripheral(mocker):
     async def get_bus():
         return bus
 
-    mocker.patch("further_link.util.bluetooth.server.get_message_bus", get_bus)
+    mocker.patch("further_link.util.bluetooth.device.get_message_bus", get_bus)
 
 
 @pytest.fixture()
 async def bluetooth_server():
     server = await create_bluetooth_app()
     yield server
-    server.stop()
+    await server.stop()
