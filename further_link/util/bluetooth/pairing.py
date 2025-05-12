@@ -66,12 +66,10 @@ async def pairing_mode():
         bluetooth_device = await BluetoothDevice.create()
         manager = PairingManager(bluetooth_device)
         await manager.start_advertisement(
-            timeout=PAIRING_TIME, services=[PT_SERVICE_UUID, DIS_SERVICE_UUID]
+            pairing_time=PAIRING_TIME, services=[PT_SERVICE_UUID, DIS_SERVICE_UUID]
         )
-        logging.info(
-            f"Pairing mode started, sleeping for {manager.pairing_time} seconds"
-        )
-        await asyncio.sleep(manager.pairing_time)
+        logging.info(f"Pairing mode started, sleeping for {PAIRING_TIME} seconds")
+        await asyncio.sleep(PAIRING_TIME)
     except Exception as e:
         logging.error(f"Pairing mode failed: {e}")
     finally:

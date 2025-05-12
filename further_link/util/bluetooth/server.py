@@ -52,7 +52,7 @@ class BluetoothServer:
             try:
                 pairing_manager = PairingManager(self.bluetooth_device)
                 await pairing_manager.start_advertisement(
-                    timeout=0, services=[service.UUID for service in self.services]
+                    pairing_time=0, services=[service.UUID for service in self.services]
                 )
             except Exception as e:
                 logging.error(f"Error in pairing mode: {e}")
