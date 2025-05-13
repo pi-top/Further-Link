@@ -87,6 +87,11 @@ def mock_bluez_peripheral(mocker):
     adapter_instance._proxy = proxy
 
     mocker.patch("further_link.util.bluetooth.device.Adapter", adapter)
+    # Don't run rfkill commands
+    mocker.patch(
+        "further_link.util.bluetooth.device.is_bt_card_blocked", return_value=False
+    )
+    mocker.patch("further_link.util.bluetooth.device.unlock_bt_card", return_value=None)
 
     # Create a class to handle the interface methods
     class AdapterPropsInterface:
