@@ -6,7 +6,7 @@ import sys
 from asyncio.subprocess import Process
 from base64 import b64decode
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pytest
 from aiofiles.threadpool.binary import AsyncFileIO
@@ -90,7 +90,24 @@ async def test_pty():
     await p.process.wait()
     await asyncio.sleep(1)
 
-    p.on_output.assert_called_with("stdout", "hello\r\nhello\r\n")
+    if p.on_output.call_count == 2:
+        p.on_output.assert_has_calls(
+            [
+                call("stdout", "hello\r\n"),
+                call("stdout", "hello\r\n"),
+            ]
+        )
+    elif p.on_output.call_count == 1:
+        p.on_output.assert_has_calls(
+            [
+                call("stdout", "hello\r\nhello\r\n"),
+            ]
+        )
+    else:
+        raise Exception(
+            f"Unexpected number of calls to on_output: {p.on_output.call_count}"
+        )
+
     p.on_stop.assert_called_with(0)
 
 

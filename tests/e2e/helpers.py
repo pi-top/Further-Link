@@ -68,7 +68,7 @@ async def wait_for_data(
 
             # use receive_data to gather rest
             remaining_data = data_value.replace(value, "", 1)
-            return await receive_data(ws, channel, data_key, remaining_data)
+            return await receive_data(ws, channel, data_key, remaining_data, process)
         except (TimeoutError, asyncio.TimeoutError):
             continue
     raise TimeoutError
