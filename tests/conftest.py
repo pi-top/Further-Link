@@ -87,7 +87,6 @@ def mock_bluez_peripheral(mocker):
     adapter_instance._proxy = proxy
 
     mocker.patch("further_link.util.bluetooth.device.Adapter", adapter)
-    mocker.patch("further_link.util.bluetooth.device.sleep", AsyncMock())
 
     # Create a class to handle the interface methods
     class AdapterPropsInterface:
