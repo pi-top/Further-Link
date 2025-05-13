@@ -41,7 +41,7 @@ async def do_copy_files_to_projects_directory(src_directory, directory, user=Non
             file = os.path.join(src, name)
             if stat.S_ISFIFO(os.stat(file).st_mode):
                 logging.warning(
-                    f"Found named pipe {file} when copying project files; ignoring ..."
+                    f"Found named pipe {file} when copying project files, ignoring ..."
                 )
                 names_to_ignore.append(name)
         return names_to_ignore

@@ -67,12 +67,12 @@ class DeviceInformationService(Service):
 
     @characteristic(DIS_MANUFACTURER_NAME_UUID, CharFlags.READ)
     def manufacturer_name(self, options):
-        logging.debug(f"Read request for manufacturer_name; returning '{MANUFACTURER}'")
+        logging.debug(f"Read request for manufacturer_name, returning '{MANUFACTURER}'")
         return bytearray(MANUFACTURER, "utf-8")
 
     @characteristic(DIS_MODEL_NUMBER_UUID, CharFlags.READ)
     def model_number(self, options):
-        logging.debug(f"Read request for model_number; returning '{MODEL_NUMBER}'")
+        logging.debug(f"Read request for model_number, returning '{MODEL_NUMBER}'")
         return bytearray(MODEL_NUMBER, "utf-8")
 
     @characteristic(DIS_PNP_ID_UUID, CharFlags.READ)
@@ -102,7 +102,7 @@ class DeviceInformationService(Service):
             product_version,
         )
 
-        logging.debug("Read request for pnp_id; returning binary data")
+        logging.debug("Read request for pnp_id, returning binary data")
         return bytearray(pnp_data)
 
     def get_characteristic(self, uuid: str) -> Optional[characteristic]:
@@ -110,29 +110,29 @@ class DeviceInformationService(Service):
 
     @characteristic(DIS_SERIAL_NUMBER_UUID, CharFlags.READ)
     def serial_number(self, options):
-        logging.debug(f"Read request for serial_number; returning '{SERIAL_NUMBER}'")
+        logging.debug(f"Read request for serial_number, returning '{SERIAL_NUMBER}'")
         return bytearray(SERIAL_NUMBER, "utf-8")
 
     @characteristic(DIS_FIRMWARE_REVISION_UUID, CharFlags.READ)
     def firmware_revision(self, options):
         logging.debug(
-            f"Read request for firmware_revision; returning '{FIRMWARE_REVISION}'"
+            f"Read request for firmware_revision, returning '{FIRMWARE_REVISION}'"
         )
         return bytearray(FIRMWARE_REVISION, "utf-8")
 
     @characteristic(DIS_HARDWARE_REVISION_UUID, CharFlags.READ)
     def hardware_revision(self, options):
         logging.debug(
-            f"Read request for hardware_revision; returning '{HARDWARE_REVISION}'"
+            f"Read request for hardware_revision, returning '{HARDWARE_REVISION}'"
         )
         return bytearray(HARDWARE_REVISION, "utf-8")
 
     @characteristic(DIS_SOFTWARE_REVISION_UUID, CharFlags.READ)
     def software_revision(self, options):
-        logging.debug(f"Read request for software_revision; returning '{__version__}'")
+        logging.debug(f"Read request for software_revision, returning '{__version__}'")
         return bytearray(__version__, "utf-8")
 
     @characteristic(DIS_SYSTEM_ID_UUID, CharFlags.READ)
     def system_id(self, options):
-        logging.debug(f"Read request for system_id; returning '{SYSTEM_ID}'")
+        logging.debug(f"Read request for system_id, returning '{SYSTEM_ID}'")
         return bytearray(SYSTEM_ID, "utf-8")
