@@ -1,0 +1,60 @@
+#!/bin/bash
+###############################################################
+#                Unofficial 'Bash strict mode'                #
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/  #
+###############################################################
+set -euo pipefail
+IFS=$'\n\t'
+###############################################################
+
+case "${1}" in
+  configure)
+
+    CONFIG_FILE="/etc/bluetooth/main.conf"
+    if [ -f "$CONFIG_FILE" ]; then
+        # First, check if DeviceID is already set to false(to avoid duplication)
+        if grep -q '^\s*DeviceID\s*=\s*false' "$CONFIG_FILE"; then
+            echo "DeviceID already set to false in $CONFIG_FILE. No changes made."
+            exit 0
+        fi
+
+        echo "Stopping Bluez from publishing the Device Information Service (DIS)"
+
+        # If a commented-out #DeviceID line exists, insert after it.
+        # If DeviceID is set to something other than false, set it to false.
+        # Otherwise, insert under [General].
+        if grep -q '^\s*#\s*DeviceID\s*=' "$CONFIG_FILE"; then
+            sudo sed -i '/^\s*#\s*DeviceID\s*=/a DeviceID = false' "$CONFIG_FILE"
+        elif grep -q '^\s*DeviceID\s*=' "$CONFIG_FILE"; then
+            sudo sed -i 's/^\s*DeviceID\s*=.*/DeviceID = false/' "$CONFIG_FILE"
+        else
+            sudo sed -i '/^\[General\]/a DeviceID = false' "$CONFIG_FILE"
+        fi
+        echo "DeviceID set to false in $CONFIG_FILE."
+    fi
+  ;;
+\
+  abort-upgrade | abort-remove | abort-deconfigure) ;;
+
+\
+	try-restart)
+	$0 status >/dev/null 2>&1 && $0 restart
+	;;
+
+\
+	triggered)
+	# Try to restart service
+	invoke-rc.d further-link try-restart || true
+	exit 0
+	;;
+
+\
+	*)
+	echo "postinst called with unknown argument \`$1'" >&2
+	exit 1
+	;;
+esac
+
+#DEBHELPER#
+
+exit 0

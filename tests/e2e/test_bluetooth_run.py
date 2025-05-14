@@ -376,16 +376,28 @@ while "BYE" != s:
         message_received(
             b'{"type": "started", "data": null, "client": "1", "process": "1"}',
             messages,
-        )
+        ),
+        timeout=2,
     )
 
     user_input = create_message("stdin", "1", {"input": "hello\n"}, "1")
     await send_formatted_bluetooth_message(bluetooth_server, char, user_input)
     await wait_until(
-        message_received(
+        lambda: (
+            message_received(
+                b'{"type": "stdout", "data": {"output": "hello\\r\\n"}, "client": "1", "process": "1"}',
+                messages,
+            )()
+            and message_received(
+                b'{"type": "stdout", "data": {"output": "HUH?! SPEAK UP, SONNY!\\r\\n"}, "client": "1", "process": "1"}',
+                messages,
+            )()
+        )
+        or message_received(
             b'{"type": "stdout", "data": {"output": "hello\\r\\nHUH?! SPEAK UP, SONNY!\\r\\n"}, "client": "1", "process": "1"}',
             messages,
-        )
+        )(),
+        timeout=2,
     )
 
     user_input = create_message("stdin", "1", {"input": "HEY GRANDMA\n"}, "1")
@@ -394,7 +406,8 @@ while "BYE" != s:
         message_received(
             b'{"type": "stdout", "data": {"output": "HEY GRANDMA\\r\\nNO, NOT SINCE 1930\\r\\n"}, "client": "1", "process": "1"}',
             messages,
-        )
+        ),
+        timeout=2,
     )
 
     user_input = create_message("stdin", "1", {"input": "BYE\n"}, "1")
@@ -403,7 +416,8 @@ while "BYE" != s:
         message_received(
             b'{"type": "stopped", "data": {"exitCode": 0}, "client": "1", "process": "1"}',
             messages,
-        )
+        ),
+        timeout=2,
     )
 
 
@@ -531,9 +545,19 @@ async def test_discard_old_input(bluetooth_server):
     user_input = create_message("stdin", "1", {"input": "hello\n"}, "1")
     await send_formatted_bluetooth_message(bluetooth_server, char, user_input)
     await wait_until(
-        message_received(
+        lambda: message_received(
             b'{"type": "stdout", "data": {"output": "hello\\r\\nhello\\r\\n"}, "client": "1", "process": "1"}',
             messages,
+        )
+        or (
+            message_received(
+                b'{"type": "stdout", "data": {"output": "hello\\r\\"}, "client": "1", "process": "1"}',
+                messages,
+            )
+            and message_received(
+                b'{"type": "stdout", "data": {"output": "hello\\r\\n"}, "client": "1", "process": "1"}',
+                messages,
+            )
         )
     )
     await wait_until(

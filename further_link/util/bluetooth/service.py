@@ -15,6 +15,7 @@ from further_link.util import state
 from further_link.util.bluetooth.messages.chunk import Chunk
 from further_link.util.bluetooth.messages.chunked_message import ChunkedMessage
 from further_link.util.bluetooth.messages.format import PtMessageFormat
+from further_link.util.bluetooth.utils import find_object_with_uuid
 from further_link.util.bluetooth.uuids import (
     PT_APT_VERSION_READ_CHARACTERISTIC_UUID,
     PT_APT_VERSION_WRITE_CHARACTERISTIC_UUID,
@@ -58,6 +59,8 @@ def FurtherGattService():
             self._received_partial_messages = {}
             self._send_partial_message = {}
             self._client_run_managers = {}
+            self._path = None
+            self._registered = False
             super().__init__(PT_SERVICE_UUID, True)
 
         async def write_value(self, value, char):
@@ -219,7 +222,7 @@ def FurtherGattService():
                 value = chunked.get_chunk(0).message
 
             logging.debug(
-                f"Read request for characteristic {uuid}; returning '{value!r}'"
+                f"Read request for characteristic {uuid}, returning '{value!r}'"
             )
             return value
 
@@ -266,9 +269,15 @@ def FurtherGattService():
                 asyncio.create_task(run_callback())
 
         def get_characteristic(self, uuid: str) -> Optional[characteristic]:
-            for char in self._characteristics:
-                if char.UUID == uuid:
-                    return char
-            return None
+            return find_object_with_uuid(self._characteristics, uuid)
+
+        def set_path(self, path):
+            self._path = path
+
+        def cleanup(self):
+            if self._registered:
+                # Unregister from D-Bus
+                self.unregister()  # Implement this method to remove from D-Bus
+                self._registered = False
 
     return _FurtherGattService()

@@ -11,6 +11,7 @@ from further_link.endpoint.run import run as run_handler
 from further_link.endpoint.status import status, version
 from further_link.endpoint.upload import upload
 from further_link.util import vnc
+from further_link.util.bluetooth.device import BluetoothDevice
 from further_link.util.bluetooth.server import BluetoothServer
 from further_link.util.ssl_context import ssl_context
 
@@ -32,8 +33,10 @@ async def create_bluetooth_app() -> Optional[BluetoothServer]:
         return None
 
     bluetooth_server = None
+    bluetooth_device = None
     try:
-        bluetooth_server = BluetoothServer()
+        bluetooth_device = await BluetoothDevice.create()
+        bluetooth_server = BluetoothServer(bluetooth_device)
         await bluetooth_server.start()
     except Exception as e:
         logging.error(f"Error creating bluetooth device: {e}")

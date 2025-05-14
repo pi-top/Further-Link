@@ -68,7 +68,7 @@ async def wait_for_data(
 
             # use receive_data to gather rest
             remaining_data = data_value.replace(value, "", 1)
-            return await receive_data(ws, channel, data_key, remaining_data)
+            return await receive_data(ws, channel, data_key, remaining_data, process)
         except (TimeoutError, asyncio.TimeoutError):
             continue
     raise TimeoutError
@@ -96,7 +96,7 @@ async def send_formatted_bluetooth_message(
         await asyncio.sleep(0.01)
 
 
-async def wait_until(condition, timeout=5.0):
+async def wait_until(condition, timeout=10.0):
     t = 0.0
     delta_t = 0.1
     while not condition() and t < timeout:

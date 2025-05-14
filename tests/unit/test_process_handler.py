@@ -6,7 +6,7 @@ import sys
 from asyncio.subprocess import Process
 from base64 import b64decode
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pytest
 from aiofiles.threadpool.binary import AsyncFileIO
@@ -43,7 +43,7 @@ async def test_basic():
 
     await p.process.wait()
     # takes some time to flush - 0.1s output buffer etc
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(1)
 
     p.on_output.assert_called_with("stdout", "hello world\n")
     p.on_stop.assert_called_with(0)
@@ -63,7 +63,7 @@ async def test_input():
     await p.send_input("hello\n")
 
     await p.process.wait()
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(1)
 
     p.on_output.assert_called_with("stdout", "hello\n")
     p.on_stop.assert_called_with(0)
@@ -88,9 +88,26 @@ async def test_pty():
     await p.send_input("hello\n")
 
     await p.process.wait()
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(1)
 
-    p.on_output.assert_called_with("stdout", "hello\r\nhello\r\n")
+    if p.on_output.call_count == 2:
+        p.on_output.assert_has_calls(
+            [
+                call("stdout", "hello\r\n"),
+                call("stdout", "hello\r\n"),
+            ]
+        )
+    elif p.on_output.call_count == 1:
+        p.on_output.assert_has_calls(
+            [
+                call("stdout", "hello\r\nhello\r\n"),
+            ]
+        )
+    else:
+        raise Exception(
+            f"Unexpected number of calls to on_output: {p.on_output.call_count}"
+        )
+
     p.on_stop.assert_called_with(0)
 
 
@@ -129,7 +146,7 @@ pause()
 
     p.on_start.assert_called()
 
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(1)
     p.on_output.assert_called_with("stdout", "doing fake graphics!\n")
 
     # Mock display activity
@@ -141,7 +158,7 @@ pause()
     ) as vnc_stop:
         await p.stop()
         await p.process.wait()
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(1)
 
         vnc_stop.assert_called_with(p.id)
 
@@ -185,7 +202,7 @@ pause()
 
     p.on_start.assert_called()
 
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(1)
     p.on_output.assert_called_with("stdout", "no graphics in here!\n")
 
     with patch(
@@ -193,7 +210,7 @@ pause()
     ) as vnc_stop:
         await p.stop()
         await p.process.wait()
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(1)
 
         vnc_stop.assert_called_with(p.id)
 

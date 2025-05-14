@@ -62,7 +62,7 @@ async def assert_uploaded(upload_data, has_miniscreen_project):
 
 
 @pytest.mark.asyncio
-async def test_upload(bluetooth_server):
+async def test_upload(bluetooth_server, internet_requests_mock):
     service = bluetooth_server.get_service(PT_SERVICE_UUID)
     char = service.get_characteristic(PT_UPLOAD_WRITE_CHARACTERISTIC_UUID)
 
@@ -80,7 +80,7 @@ async def test_upload(bluetooth_server):
 
 
 @pytest.mark.asyncio
-async def test_upload_with_miniscreen_project(bluetooth_server):
+async def test_upload_with_miniscreen_project(bluetooth_server, internet_requests_mock):
     service = bluetooth_server.get_service(PT_SERVICE_UUID)
     char = service.get_characteristic(PT_UPLOAD_WRITE_CHARACTERISTIC_UUID)
 
