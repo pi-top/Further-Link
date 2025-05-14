@@ -1,3 +1,9 @@
+further-link (5.11.0-1) bullseye; urgency=medium
+
+  * Add Bluetooth Device Information Service with PNP_ID (#178)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 14 May 2025 16:57:01 +0000
+
 further-link (5.10.1-1) bullseye; urgency=medium
 
   * chore: update ssl cert
