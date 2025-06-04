@@ -33,6 +33,8 @@ COPY debian debian
 COPY LICENSE README.rst ./
 COPY further_link further_link
 
+# Install from our source until they release their latest version to PyPI
+RUN pip3 install bluez-peripheral==0.1.8 --extra-index-url=https://packagecloud.io/pi-top/pypi/pypi/simple
 RUN pip3 install .
 
 ENV FURTHER_LINK_NOSSL=true
