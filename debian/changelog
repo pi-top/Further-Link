@@ -1,3 +1,9 @@
+further-link (5.11.1-1) bullseye; urgency=medium
+
+  * Bluetooth server supports writes without response (#187)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 11 Jun 2025 15:07:46 +0000
+
 further-link (5.11.0-2) bullseye; urgency=medium
 
   * Dockerfile use pitop pip for bluez-peripheral 0.1.8 as its not in PyPI
