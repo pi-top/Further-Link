@@ -40,7 +40,7 @@ class SecureFlags:
 # Some OS doesn't support protected/secure characteristics
 class NonSecureFlags:
     READ = CharacteristicFlags.READ
-    WRITE = CharacteristicFlags.WRITE
+    WRITE = CharacteristicFlags.WRITE | CharacteristicFlags.WRITE_WITHOUT_RESPONSE
     NOTIFY = CharacteristicFlags.NOTIFY
 
 
