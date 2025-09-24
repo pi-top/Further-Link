@@ -1,3 +1,9 @@
+further-link (5.11.1-2) bullseye; urgency=medium
+
+  * Disable the audio sink plugin in bluetooth service (#189)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 24 Sep 2025 18:51:56 +0000
+
 further-link (5.11.1-1) bullseye; urgency=medium
 
   * Bluetooth server supports writes without response (#187)
