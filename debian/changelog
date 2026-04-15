@@ -1,3 +1,11 @@
+further-link (5.11.2-2) bullseye; urgency=medium
+
+  * update *.further-link.pi-top.com cert
+  * New changelog entry: v5.11.2-1
+  * fix: set allow_credentials to False so that we no longer see CORS errors when accessing from IFrame
+
+ -- pi-top <deb-maintainers@pi-top.com>  Wed, 15 Apr 2026 13:44:21 +0000
+
 further-link (5.11.2-1) bullseye; urgency=medium
 
   * update *.further-link.pi-top.com cert
