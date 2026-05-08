@@ -41,13 +41,15 @@ class NonSecureFlags:
     READ = CharacteristicFlags.READ
 
 
-CharFlags: Union[Type[SecureFlags], Type[NonSecureFlags]] = SecureFlags
-if os.environ.get("FURTHER_LINK_NO_BLUETOOTH_ENCRYPTION", "0").lower() in (
+# Default to non-encrypted: Windows 11 fails to read encrypted characteristics before
+# bonding completes, causing "network error" in the Further app.
+CharFlags: Union[Type[SecureFlags], Type[NonSecureFlags]] = NonSecureFlags
+if os.environ.get("FURTHER_LINK_BLUETOOTH_ENCRYPTION", "0").lower() in (
     "1",
     "true",
-) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("0", "false"):
-    logging.info("Using unencrypted bluetooth characteristics for DIS")
-    CharFlags = NonSecureFlags
+) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("1", "true"):
+    logging.info("Using encrypted bluetooth characteristics for DIS")
+    CharFlags = SecureFlags
 
 
 class DeviceInformationService(Service):
@@ -96,7 +98,10 @@ class DeviceInformationService(Service):
         # product_id: 2 bytes (little-endian), product_version: 2 bytes (little-endian)
         pnp_data = struct.pack(
             "<BHHH",
-            1,  # Vendor ID Source (1 = Bluetooth SIG)
+            # VENDOR_ID 0x0A5C is Broadcom's USB-IF assigned ID, not Bluetooth SIG.
+            # Using source=1 (BT SIG) with a USB-IF ID causes Windows to flag the
+            # PnP record as inconsistent and may reject the device.
+            2,  # Vendor ID Source (2 = USB Implementer's Forum)
             VENDOR_ID,
             PRODUCT_ID,
             product_version,

@@ -32,7 +32,8 @@ def main(use_encryption):
     if use_encryption:
         set_encryption(use_encryption)
     else:
-        print(state.get("bluetooth", "encrypt", "true"))
+        # Default is "false" (unencrypted) for Windows 11 compatibility
+        print(state.get("bluetooth", "encrypt", "false"))
 
 
 if __name__ == "__main__":
