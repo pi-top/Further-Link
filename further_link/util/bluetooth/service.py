@@ -44,16 +44,13 @@ class NonSecureFlags:
     NOTIFY = CharacteristicFlags.NOTIFY
 
 
-# Default to non-encrypted: Windows 11 fails to read encrypted characteristics before
-# bonding completes, causing "network error" in the Further app. Encryption can be
-# explicitly enabled via FURTHER_LINK_BLUETOOTH_ENCRYPTION=1 or state config.
-CharFlags: Union[Type[SecureFlags], Type[NonSecureFlags]] = NonSecureFlags
-if os.environ.get("FURTHER_LINK_BLUETOOTH_ENCRYPTION", "0").lower() in (
+CharFlags: Union[Type[SecureFlags], Type[NonSecureFlags]] = SecureFlags
+if os.environ.get("FURTHER_LINK_NO_BLUETOOTH_ENCRYPTION", "0").lower() in (
     "1",
     "true",
-) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("1", "true"):
-    logging.info("Using encrypted bluetooth characteristics")
-    CharFlags = SecureFlags
+) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("0", "false"):
+    logging.info("Using unencrypted bluetooth characteristics")
+    CharFlags = NonSecureFlags
 
 
 def FurtherGattService():

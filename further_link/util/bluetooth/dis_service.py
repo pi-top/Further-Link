@@ -1,12 +1,9 @@
 import logging
-import os
 import struct
 from typing import Optional, Type, Union
 
 from bluez_peripheral.gatt.characteristic import CharacteristicFlags, characteristic
 from bluez_peripheral.gatt.service import Service
-
-from further_link.util import state
 from further_link.util.bluetooth.utils import find_object_with_uuid
 from further_link.util.bluetooth.uuids import (
     DIS_FIRMWARE_REVISION_UUID,
@@ -41,16 +38,13 @@ class NonSecureFlags:
     READ = CharacteristicFlags.READ
 
 
-# Default to non-encrypted: Windows 11 fails to read encrypted characteristics before
-# bonding completes, causing "network error" in the Further app.
-CharFlags: Union[Type[SecureFlags], Type[NonSecureFlags]] = NonSecureFlags
-if os.environ.get("FURTHER_LINK_BLUETOOTH_ENCRYPTION", "0").lower() in (
+CharFlags: Union[Type[SecureFlags], Type[NonSecureFlags]] = SecureFlags
+if os.environ.get("FURTHER_LINK_NO_BLUETOOTH_ENCRYPTION", "0").lower() in (
     "1",
     "true",
-) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("1", "true"):
-    logging.info("Using encrypted bluetooth characteristics for DIS")
-    CharFlags = SecureFlags
-
+) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("0", "false"):
+    logging.info("Using unencrypted bluetooth characteristics for DIS")
+    CharFlags = NonSecureFlags
 
 class DeviceInformationService(Service):
     def __init__(self):
