@@ -51,13 +51,11 @@ async def create_web_app():
 
     app.on_response_prepare.append(set_extra_cors_headers)
 
-    # Configure CORS - allow all origins
-    # No credentials needed since this app doesn't use cookies or auth headers
     cors = aiohttp_cors.setup(
         app,
         defaults={
             "*": aiohttp_cors.ResourceOptions(
-                allow_credentials=False,
+                allow_credentials=True,
                 expose_headers="*",
                 allow_headers="*",
             )
