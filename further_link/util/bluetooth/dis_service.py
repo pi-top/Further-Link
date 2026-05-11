@@ -1,10 +1,12 @@
 import logging
+import os
 import struct
 from typing import Optional, Type, Union
 
 from bluez_peripheral.gatt.characteristic import CharacteristicFlags, characteristic
 from bluez_peripheral.gatt.service import Service
 from further_link.util.bluetooth.utils import find_object_with_uuid
+from further_link.util import state
 from further_link.util.bluetooth.uuids import (
     DIS_FIRMWARE_REVISION_UUID,
     DIS_HARDWARE_REVISION_UUID,
@@ -45,6 +47,7 @@ if os.environ.get("FURTHER_LINK_NO_BLUETOOTH_ENCRYPTION", "0").lower() in (
 ) or state.get("bluetooth", "encrypt", fallback="0").lower() in ("0", "false"):
     logging.info("Using unencrypted bluetooth characteristics for DIS")
     CharFlags = NonSecureFlags
+
 
 class DeviceInformationService(Service):
     def __init__(self):
