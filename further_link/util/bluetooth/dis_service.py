@@ -5,6 +5,7 @@ from typing import Optional, Type, Union
 
 from bluez_peripheral.gatt.characteristic import CharacteristicFlags, characteristic
 from bluez_peripheral.gatt.service import Service
+
 from further_link.util.bluetooth.utils import find_object_with_uuid
 from further_link.util import state
 from further_link.util.bluetooth.uuids import (
