@@ -4,7 +4,6 @@ import tempfile
 from unittest.mock import patch
 
 import pytest
-from mock import AsyncMock
 
 from further_link.runner.py_process_handler import PyProcessHandler
 
