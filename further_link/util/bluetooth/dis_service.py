@@ -96,7 +96,10 @@ class DeviceInformationService(Service):
         # product_id: 2 bytes (little-endian), product_version: 2 bytes (little-endian)
         pnp_data = struct.pack(
             "<BHHH",
-            1,  # Vendor ID Source (1 = Bluetooth SIG)
+            # VENDOR_ID 0x0A5C is Broadcom's USB-IF assigned ID, not Bluetooth SIG.
+            # Using source=1 (BT SIG) with a USB-IF ID causes Windows to flag the
+            # PnP record as inconsistent and may reject the device.
+            2,  # Vendor ID Source (2 = USB Implementer's Forum)
             VENDOR_ID,
             PRODUCT_ID,
             product_version,
