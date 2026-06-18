@@ -1,6 +1,7 @@
 import logging
 import os
 import pathlib
+import shlex
 
 import aiofiles
 
@@ -31,13 +32,23 @@ class PyProcessHandler(ProcessHandler):
                 await file.write(code)
             self._remove_entrypoint = entrypoint
 
-        command = "python3 -u " + entrypoint
+        # Check for venv in environment
+        venv = os.environ.get("FURTHER_VENV")
+        env = {}
+
+        if venv and os.path.isfile(os.path.join(venv, "bin", "python3")):
+            env = {
+                "VIRTUAL_ENV": venv,
+                "PATH": f"{venv}/bin:{os.environ.get('PATH', '')}",
+            }
+
+        command = f"python3 -u {shlex.quote(entrypoint)}"
 
         os.chown(entrypoint, uid=get_uid(self.user), gid=get_gid(self.user))
 
         work_dir = os.path.dirname(entrypoint)
 
-        await super()._start(command, work_dir, novncOptions=novncOptions)
+        await super()._start(command, work_dir, env=env, novncOptions=novncOptions)
 
     async def _clean_up(self):
         try:
