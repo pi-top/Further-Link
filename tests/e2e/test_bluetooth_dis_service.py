@@ -53,9 +53,9 @@ def test_dis_pnp_id(dis_service):
     value = char.getter_func(dis_service, {})
 
     # PNP ID is a structured binary value with specific format
-    # First byte should be 1 (Vendor ID Source = Bluetooth SIG)
+    # First byte should be 2 (Vendor ID Source = USB Implementer's Forum)
     assert len(value) == 7  # Should be 7 bytes total
-    assert value[0] == 1  # Vendor ID Source = 1 (Bluetooth SIG)
+    assert value[0] == 2  # Vendor ID Source = 2 (USB Implementer's Forum)
 
     # Extract values from the struct format used in dis_service.py
     vendor_id_source, vendor_id, product_id, product_version = struct.unpack(
@@ -63,7 +63,7 @@ def test_dis_pnp_id(dis_service):
     )
 
     # Verify values match those in the implementation
-    assert vendor_id_source == 1
+    assert vendor_id_source == 2
     assert vendor_id == VENDOR_ID  # Vendor ID from the implementation
     assert product_id == PRODUCT_ID  # Product ID for pi-top [4]
 
