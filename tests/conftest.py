@@ -15,6 +15,11 @@ os.environ["FURTHER_LINK_NOSSL"] = "true"
 os.environ["FURTHER_LINK_WORK_DIR"] = WORKING_DIRECTORY
 os.environ["FURTHER_LINK_MINISCREEN_PROJECTS_DIR"] = PROJECTS_DIR
 
+# Set shorter timeouts for CI environments to prevent hanging tests
+if os.environ.get("CI") == "true":
+    os.environ["FURTHER_LINK_CLEANUP_TIMEOUT"] = "0.2"  # 200ms instead of default 1s
+    os.environ["FURTHER_LINK_TEST_TIMEOUT"] = "2"  # 2s timeout for test operations
+
 
 @pytest.fixture(autouse=True)
 def create_working_directory():
