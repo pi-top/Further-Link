@@ -1,3 +1,14 @@
+further-link (5.11.2-2) bullseye; urgency=medium
+
+  * update *.further-link.pi-top.com cert
+  * New changelog entry: v5.11.2-1
+  * fix: set allow_credentials to False so that we no longer see CORS errors when accessing from IFrame
+  * Revert "fix: set allow_credentials to False so that we no longer see CORS err…"
+  * FLEX-53: Allow venv to be used from futher link
+  * FLEX-53: touching up tests
+
+ -- pi-top <deb-maintainers@pi-top.com>  Thu, 18 Jun 2026 14:20:07 +0000
+
 further-link (5.11.2-1) bullseye; urgency=medium
 
   * update *.further-link.pi-top.com cert
