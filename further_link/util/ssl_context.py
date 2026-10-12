@@ -4,13 +4,11 @@ import ssl
 
 from OpenSSL.crypto import FILETYPE_PEM, dump_privatekey, load_privatekey
 
-tls_exception = Exception(
-    """
+tls_exception = Exception("""
     TLS configuration error!
     Set the environment variable FURTHER_LINK_NOSSL=1 to run the server without
     TLS or consult the TLS section of the project readme for more information.\
-"""
-)
+""")
 
 
 class SslFiles:

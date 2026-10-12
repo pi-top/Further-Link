@@ -18,7 +18,9 @@ async def test_venv_not_set():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch.dict(os.environ, env_copy, clear=True):
-            with patch("further_link.runner.py_process_handler.ProcessHandler._start") as mock_super_start:
+            with patch(
+                "further_link.runner.py_process_handler.ProcessHandler._start"
+            ) as mock_super_start:
                 mock_super_start.return_value = None
 
                 handler = PyProcessHandler(user=user)
@@ -50,7 +52,9 @@ async def test_venv_set_valid():
         env_copy["FURTHER_VENV"] = venv_path
 
         with patch.dict(os.environ, env_copy, clear=True):
-            with patch("further_link.runner.py_process_handler.ProcessHandler._start") as mock_super:
+            with patch(
+                "further_link.runner.py_process_handler.ProcessHandler._start"
+            ) as mock_super:
                 mock_super.return_value = None
 
                 handler = PyProcessHandler(user=user)
@@ -72,7 +76,9 @@ async def test_venv_set_invalid():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch.dict(os.environ, env_copy, clear=True):
-            with patch("further_link.runner.py_process_handler.ProcessHandler._start") as mock_super:
+            with patch(
+                "further_link.runner.py_process_handler.ProcessHandler._start"
+            ) as mock_super:
                 mock_super.return_value = None
 
                 handler = PyProcessHandler(user=user)
@@ -98,7 +104,9 @@ async def test_venv_no_python_binary():
         env_copy["FURTHER_VENV"] = venv_path
 
         with patch.dict(os.environ, env_copy, clear=True):
-            with patch("further_link.runner.py_process_handler.ProcessHandler._start") as mock_super:
+            with patch(
+                "further_link.runner.py_process_handler.ProcessHandler._start"
+            ) as mock_super:
                 mock_super.return_value = None
 
                 handler = PyProcessHandler(user=user)
