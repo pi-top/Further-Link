@@ -106,5 +106,5 @@ async def test_ringbuf_read_done_condition():
     await asyncio.sleep(buffer_time + 0.01)
 
     read_callback.assert_called_with("hello")
-    await asyncio.sleep(done_time - buffer_time)
-    assert ringbuf_read_task.done()
+    # write() only sees completion on its next buffer_time tick
+    await asyncio.wait_for(ringbuf_read_task, timeout=done_time + buffer_time)
