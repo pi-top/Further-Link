@@ -1,4 +1,7 @@
-FROM debian:bullseye
+FROM debian:bookworm
+
+# Install python packages globally with pip on bookworm
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 ARG PYTHON_PACKAGE_VERSION
 
