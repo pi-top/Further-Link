@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from concurrent.futures import TimeoutError
 from time import time
 
@@ -39,10 +40,29 @@ async def receive_data(ws, channel, data_key=None, data_value=None, process=""):
 async def wait_for_data(
     ws, channel, data_key=None, data_value=None, timeout=0, process=""
 ):
-    start_time = round(time())
-    while timeout <= 0 or (round(time()) - start_time) <= timeout:
+    # Get timeout from environment if in CI mode
+    if os.environ.get("CI") == "true" and timeout == 0:
         try:
-            message = await ws.receive()
+            timeout = int(os.environ.get("FURTHER_LINK_TEST_TIMEOUT", "2"))
+        except (ValueError, TypeError):
+            timeout = 2
+
+    start_time = round(time())
+    max_time = timeout if timeout > 0 else 120  # Set a maximum timeout for safety
+
+    while timeout <= 0 or (round(time()) - start_time) <= timeout:
+        # Prevent tests from hanging indefinitely
+        if round(time()) - start_time > max_time:
+            raise TimeoutError(f"Test operation timed out after {max_time}s")
+
+        try:
+            # Set a reasonable receive timeout to prevent indefinite hangs
+            receive_timeout = min(0.5, max_time - (round(time()) - start_time))
+            if receive_timeout <= 0:
+                raise TimeoutError("Receive timeout expired")
+
+            # Use wait_for to prevent indefinite blocking
+            message = await asyncio.wait_for(ws.receive(), timeout=receive_timeout)
             m_type, m_data, m_process, m_client = parse_message(message.data)
 
             assert m_process == process, f"{m_process} != {process}"
@@ -71,7 +91,7 @@ async def wait_for_data(
             return await receive_data(ws, channel, data_key, remaining_data, process)
         except (TimeoutError, asyncio.TimeoutError):
             continue
-    raise TimeoutError
+    raise TimeoutError(f"Test operation timed out after {timeout}s")
 
 
 async def send_formatted_bluetooth_message(
