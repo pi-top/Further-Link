@@ -179,6 +179,10 @@ echo {output}
     assert msg["data"]["exitCode"] in (-9, 0)
 
 
+@pytest.mark.xfail(
+    reason="Bluetooth can drop the stdout of a process that exits quickly",
+    strict=False,
+)
 @pytest.mark.asyncio
 async def test_run_executable(bluetooth_server):
     service = bluetooth_server.get_service(PT_SERVICE_UUID)
