@@ -1,7 +1,7 @@
-from pkg_resources import get_distribution
+from importlib.metadata import version
 
 __version__ = "N/A"
 try:
-    __version__ = get_distribution("further_link").version
+    __version__ = version("further_link")
 except Exception:
     pass

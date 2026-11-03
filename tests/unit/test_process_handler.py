@@ -38,7 +38,7 @@ async def test_basic():
     # should get the output still
     await p.start("echo 'hello world'")
 
-    assert type(p.process) == Process
+    assert type(p.process) is Process
     p.on_start.assert_called()
 
     await p.process.wait()
@@ -78,10 +78,10 @@ async def test_pty():
     p.on_output = AsyncMock()
 
     await p.start('python3 -u -c "print(input())"')
-    assert type(p.process) == Process
+    assert type(p.process) is Process
     assert p.pty
-    assert type(p.pty_master) == AsyncFileIO
-    assert type(p.pty_slave) == AsyncFileIO
+    assert type(p.pty_master) is AsyncFileIO
+    assert type(p.pty_slave) is AsyncFileIO
 
     p.on_start.assert_called()
 
