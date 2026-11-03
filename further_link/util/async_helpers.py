@@ -47,36 +47,44 @@ async def ringbuf_read(
     # example limit 128kBps = 50 max_chunks * 256 byte chunk_size / 0.1s
 
     ringbuf = deque(maxlen=max_chunks)
-    completed = False
+    read_finished = asyncio.Event()
 
     async def read():
-        nonlocal completed
-        while True:
-            read_data = asyncio.create_task(stream_read(stream, chunk_size))
-            wait_done = asyncio.create_task(done_condition())
+        process_done = asyncio.create_task(done_condition())
+        read_data = None
+        try:
+            while True:
+                if read_data is None:
+                    read_data = asyncio.create_task(stream_read(stream, chunk_size))
 
-            done = await race([read_data, wait_done])
+                # never cancel a read in flight: a threaded file read (pty) that
+                # is cancelled still consumes its bytes and they are lost
+                await asyncio.wait(
+                    [read_data, process_done], return_when=asyncio.FIRST_COMPLETED
+                )
 
-            if read_data not in done:
-                completed = True
-                break
+                if not read_data.done():
+                    # process ended; let the pending read return what it wrote last
+                    await asyncio.wait([read_data], timeout=buffer_time / 2)
+                    if not read_data.done():
+                        break
 
-            result = read_data.result()
-
-            if result == b"":
-                completed = True
-                break
-
-            ringbuf.append(read_data.result())
+                result = read_data.result()
+                read_data = None
+                if not result:
+                    break
+                ringbuf.append(result)
+        finally:
+            for task in (read_data, process_done):
+                if task and not task.done():
+                    task.cancel()
+            read_finished.set()
 
     async def write():
-        nonlocal completed
         while True:
-            # let data buffer in ringbuf for buffer_time or until process ends
-            # if process ends ringbuf still needs to be handled
+            # let data buffer in ringbuf for buffer_time or until reading ends
             try:
-                await asyncio.wait_for(done_condition(), timeout=buffer_time)
-                completed = True
+                await asyncio.wait_for(read_finished.wait(), timeout=buffer_time)
             except (TimeoutError, asyncio.TimeoutError):
                 pass
 
@@ -86,11 +94,10 @@ async def ringbuf_read(
                 output = data.decode(encoding="utf-8")
                 if output_callback:
                     await output_callback(output)
-            if completed:
+            if read_finished.is_set() and not ringbuf:
                 break
 
-    # when read is completed it will set a flag causing write to complete after
-    # flushing a final time
+    # write completes after read has finished and the ring buffer is flushed
     return await asyncio.wait(
         [asyncio.create_task(read()), asyncio.create_task(write())]
     )
