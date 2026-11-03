@@ -249,9 +249,10 @@ class ProcessHandler:
         # wait a little for the io tasks to complete to let them send
         # output produced right before the process stopped
         # but cancel them after a timeout if they don't stop themselves
-        await timeout(output_tasks, 1)
+        cleanup_timeout = float(os.environ.get("FURTHER_LINK_CLEANUP_TIMEOUT", "1"))
+        await timeout(output_tasks, cleanup_timeout)
         if hasattr(self, "ipc_tasks"):
-            await timeout(self.ipc_tasks, 0.1)
+            await timeout(self.ipc_tasks, cleanup_timeout * 0.1)
 
         await self._handle_process_end()
 

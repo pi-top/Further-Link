@@ -19,6 +19,7 @@ jobs:
         run: |
           docker run --rm \
             --volume ${{ github.workspace }}:/${{ github.event.repository.name }} \
+            -e CI=true \
             debian:${{ matrix.debian }} \
             /bin/bash -c " \
               apt-get update && \
@@ -32,7 +33,7 @@ jobs:
               # Install from our source until they release their latest version to PyPI
               pip3 install bluez-peripheral==0.1.8 --extra-index-url=https://packagecloud.io/pi-top/pypi/pypi/simple && \
               pip3 install .[test] && \
-              pytest -v --cov=further_link && \
+              CI=true pytest -v --cov=further_link && \
               coverage xml \
             "
 
