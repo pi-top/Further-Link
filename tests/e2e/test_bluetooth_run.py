@@ -169,8 +169,7 @@ echo {output}
     await send_formatted_bluetooth_message(bluetooth_server, char, stop_cmd)
 
     # really we expect a -15 exit code but this isn't necessarily a problem.
-    # in buster, an extra 'exit' message is received and the process exits with code 0.
-    # sleep for a bit to make sure test passes in buster and bullseye.
+    # sometimes an extra 'exit' message is received and the process exits with code 0.
     await asyncio.sleep(1)
     await wait_until(lambda: len(messages) >= 3)
     chunk = Chunk(messages[-1])
