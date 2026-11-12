@@ -1,3 +1,16 @@
+further-link (5.11.2-3) bullseye; urgency=medium
+
+  * Regenerate Debian workflows: drop bullseye
+  * Move CI to bookworm and fix the failing test checks
+  * Remove debian/bullseye-overrides
+  * Create releases with the workflow's own token
+  * Fix the pre-commit hooks
+  * Stop losing the output of processes that exit quickly
+  * Move CodeQL to codeql-action v4 and drop the schedule
+  * Remove buster/bullseye note from Bluetooth e2e test (#207)
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 06 Nov 2026 15:20:21 +0000
+
 further-link (5.11.2-2) bullseye; urgency=medium
 
   * update *.further-link.pi-top.com cert
