@@ -1,4 +1,4 @@
-further-link (5.11.3-1) bookworm; urgency=medium
+further-link (5.12.0-1) bookworm; urgency=medium
 
   * Run tests and Docker build on pull requests (#208)
   * Allow running the changelog bump by hand
