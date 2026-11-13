@@ -1,3 +1,10 @@
+further-link (5.12.0-1) bookworm; urgency=medium
+
+  * Run tests and Docker build on pull requests (#208)
+  * Allow running the changelog bump by hand
+
+ -- pi-top <deb-maintainers@pi-top.com>  Fri, 13 Nov 2026 14:14:09 +0000
+
 further-link (5.11.2-3) bullseye; urgency=medium
 
   * Regenerate Debian workflows: drop bullseye
