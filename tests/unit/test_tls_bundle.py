@@ -1,7 +1,9 @@
+import asyncio
 import ssl
 from datetime import timedelta
 
 import pytest
+from aiohttp import web
 from aioresponses import aioresponses as mock_http
 from cryptography import x509
 
@@ -162,6 +164,43 @@ async def test_update_once_rejects_large_bundle(http, bundle_path, mocker):
     http.get(tls_bundle.BUNDLE_URL, body=b"x" * (tls_bundle.MAX_BUNDLE_BYTES + 1))
     with pytest.raises(ValueError):
         await tls_bundle.update_once(mocker.Mock(), NOW, mocker.Mock())
+
+
+@pytest.fixture
+async def piecewise_server(aiohttp_server, monkeypatch):
+    """Serves the bundle in two writes, as networks deliver it."""
+
+    async def serve(data):
+        async def handler(request):
+            response = web.StreamResponse()
+            await response.prepare(request)
+            await response.write(data[: len(data) // 2])
+            await asyncio.sleep(0.1)
+            await response.write(data[len(data) // 2 :])
+            await response.write_eof()
+            return response
+
+        app = web.Application()
+        app.router.add_get("/bundle.pem", handler)
+        server = await aiohttp_server(app)
+        monkeypatch.setattr(
+            tls_bundle, "BUNDLE_URL", str(server.make_url("/bundle.pem"))
+        )
+
+    return serve
+
+
+async def test_fetch_reads_bundle_sent_in_pieces(piecewise_server):
+    data = make_bundle(days=90)
+    await piecewise_server(data)
+    bundle = await tls_bundle.fetch()
+    assert bundle.data == data
+
+
+async def test_fetch_rejects_large_bundle_sent_in_pieces(piecewise_server):
+    await piecewise_server(b"x" * (tls_bundle.MAX_BUNDLE_BYTES + 1))
+    with pytest.raises(ValueError, match="too large"):
+        await tls_bundle.fetch()
 
 
 def test_new_certificate_served_without_restart(bundle_path, tmp_path):
