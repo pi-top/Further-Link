@@ -183,7 +183,9 @@ async def piecewise_server(aiohttp_server, monkeypatch):
         app = web.Application()
         app.router.add_get("/bundle.pem", handler)
         server = await aiohttp_server(app)
-        monkeypatch.setattr(tls_bundle, "BUNDLE_URL", str(server.make_url("/bundle.pem")))
+        monkeypatch.setattr(
+            tls_bundle, "BUNDLE_URL", str(server.make_url("/bundle.pem"))
+        )
 
     return serve
 
