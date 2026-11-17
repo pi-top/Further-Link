@@ -1,3 +1,10 @@
+further-link (5.13.1-1) bookworm; urgency=medium
+
+  * Read the whole TLS bundle download, not just its first piece
+  * [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+ -- pi-top <deb-maintainers@pi-top.com>  Tue, 17 Nov 2026 21:34:56 +0000
+
 further-link (5.13.0-1) bookworm; urgency=medium
 
   * Name GitHub releases after their tag and add changelog notes (#211)
