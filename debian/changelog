@@ -1,3 +1,10 @@
+further-link (5.12.1-1) bookworm; urgency=medium
+
+  * Name GitHub releases after their tag and add changelog notes (#211)
+  * Download the auto-renewed TLS certificate instead of relying on the packaged one
+
+ -- pi-top <deb-maintainers@pi-top.com>  Tue, 17 Nov 2026 15:16:53 +0000
+
 further-link (5.12.0-1) bookworm; urgency=medium
 
   * Run tests and Docker build on pull requests (#208)
