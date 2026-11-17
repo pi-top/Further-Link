@@ -1,8 +1,13 @@
 import codecs
+import logging
 import os
 import ssl
+from datetime import datetime
+from typing import Optional
 
 from OpenSSL.crypto import FILETYPE_PEM, dump_privatekey, load_privatekey
+
+from further_link.util import tls_bundle
 
 tls_exception = Exception(
     """
@@ -44,7 +49,28 @@ def ssl_context():
     except (FileNotFoundError, ssl.SSLError):
         raise tls_exception from None
 
+    if newer_saved_bundle(ssl_files):
+        try:
+            tls_bundle.load_saved_into(context)
+        except (OSError, ssl.SSLError) as e:
+            logging.warning(f"Using packaged TLS certificate: {e}")
+
     return context
+
+
+def newer_saved_bundle(ssl_files: SslFiles) -> Optional[tls_bundle.Bundle]:
+    saved = tls_bundle.read_saved()
+    if saved and saved.not_after > tls_bundle.certificate_not_after(cert(ssl_files)):
+        return saved
+    return None
+
+
+def active_not_after() -> datetime:
+    ssl_files = SslFiles()
+    saved = newer_saved_bundle(ssl_files)
+    return (
+        saved.not_after if saved else tls_bundle.certificate_not_after(cert(ssl_files))
+    )
 
 
 def password(ssl_files: SslFiles):

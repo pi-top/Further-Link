@@ -7,5 +7,6 @@ aiohttp_cors python3-aiohttp-cors; PEP386
 numpy python3-numpy; s/^/1:/
 Pillow python3-pil; PEP386
 pyOpenSSL python3-openssl
+cryptography python3-cryptography; PEP386
 pt_web_vnc pt-web-vnc
 bluez-peripheral python3-bluez-peripheral; PEP386
