@@ -134,9 +134,11 @@ async def fetch() -> Bundle:
     async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.get(BUNDLE_URL) as response:
             response.raise_for_status()
-            data = await response.content.read(MAX_BUNDLE_BYTES + 1)
-    if len(data) > MAX_BUNDLE_BYTES:
-        raise ValueError("bundle too large")
+            data = b""
+            async for chunk in response.content.iter_any():
+                data += chunk
+                if len(data) > MAX_BUNDLE_BYTES:
+                    raise ValueError("bundle too large")
     return parse_bundle(data)
 
 
