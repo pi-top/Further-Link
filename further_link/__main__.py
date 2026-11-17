@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from typing import Optional
@@ -10,10 +11,10 @@ from further_link.endpoint.apt_version import apt_version
 from further_link.endpoint.run import run as run_handler
 from further_link.endpoint.status import status, version
 from further_link.endpoint.upload import upload
-from further_link.util import vnc
+from further_link.util import tls_bundle, vnc
 from further_link.util.bluetooth.device import BluetoothDevice
 from further_link.util.bluetooth.server import BluetoothServer
-from further_link.util.ssl_context import ssl_context
+from further_link.util.ssl_context import active_not_after, ssl_context
 
 logging.basicConfig()
 logging.getLogger().setLevel(
@@ -80,19 +81,35 @@ async def create_web_app():
     return app
 
 
-async def create_app():
+def tls_updates(context):
+    async def run_in_background(app):
+        task = asyncio.create_task(
+            tls_bundle.keep_updated(
+                context, active_not_after(), vnc.create_ssl_certificate
+            )
+        )
+        yield
+        task.cancel()
+
+    return run_in_background
+
+
+async def create_app(context=None):
     await create_bluetooth_app()
     app = await create_web_app()
+    if context is not None:
+        app.cleanup_ctx.append(tls_updates(context))
     return app
 
 
 @click.command()
 def main():
+    context = ssl_context()
     vnc.create_ssl_certificate()
     return web.run_app(
-        create_app(),
+        create_app(context),
         port=port(),
-        ssl_context=ssl_context(),
+        ssl_context=context,
         # Default handle_signals=True will ignore sigterm signals whilst there
         # are requests that are not complete. This isn't appropriate for our
         # indefinitely running websockets and can cause device shutdown to hang
